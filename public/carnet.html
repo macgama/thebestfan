@@ -9,7 +9,7 @@
 <script>/* Le bas caché sous les boutons du téléphone. Depuis l'icône, sur le S24+ de Gaël, Chrome dessine la page jusqu'au bas de l'écran, sous les trois boutons, sans toujours en dire la hauteur (var(--bas) à zéro) : le bas de l'accueil restait dessous (captures du 26 octobre 2026), celui de la fiche d'un Fanzzy aussi (28 octobre). Toutes les pages le gardent par var(--bas) (ui.css). Quand la fenêtre descend jusqu'au bas de l'écran (moins de 60 px d'écart : la seule barre d'état), on garde 52 px, la hauteur des boutons ; --bas prend le plus grand des deux. Un onglet, une fenêtre que Chrome tient au-dessus des boutons, ou le plein écran de l'icône (manifeste « fullscreen », 30 octobre 2026 : les boutons y sont cachés), ne garde rien. */try{if(/Android/i.test(navigator.userAgent)&&!matchMedia('(display-mode: browser)').matches&&!matchMedia('(display-mode: fullscreen)').matches&&screen.height-innerHeight<60)document.documentElement.style.setProperty('--bas-cache','52px')}catch(e){}</script>
 <script>/* La hauteur vraie de l'écran (4 novembre 2026). Dans l'appli Android (Play Store, plein écran), les boutons ÉVOLUER / EMMENER EN DUEL de la fiche tombaient sous le bas de l'écran : Chrome y annonçait une page (100dvh) plus haute que l'écran qu'on voit. Hors d'un onglet, les écrans de jeu prennent donc la plus petite de trois hauteurs : 100dvh, la fenêtre (innerHeight) et l'écran (screen.height) — var(--h-ecran), ui.css. Le clavier ouvert ne rétrécit rien : on ne remesure pas pendant une saisie. */try{if(/Android/i.test(navigator.userAgent)&&!matchMedia('(display-mode: browser)').matches){var tbfH=function(){var a=document.activeElement;if(a&&/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName))return;var h=Math.min(innerHeight||1e4,screen.height||1e4);if(h>0&&h<1e4)document.documentElement.style.setProperty('--h-ecran','min(100dvh, '+h+'px)')};tbfH();addEventListener('resize',tbfH)}}catch(e){}</script>
 <title>Mon carnet — thebestfan</title>
-<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Permanent+Marker&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/ui.css">
 <script src="/dialogue.js" defer></script>
 <style>
@@ -146,6 +146,92 @@ html[data-calme~="animations"] .sv.presence.brille .in::after{animation:none}
   .achat .left{font-size:4.2cqw}
 }
 
+/* ------------------------------------------------------------ l'album
+   (6 novembre 2026, maquette « L'album de la saison »). La tête de la page
+   du club : la photo d'un virage, le nom, la barre de ce qui est collé, et
+   le Fanzzy du joueur qui fête, à droite. */
+.tete{position:relative;margin:0 14px 10px;height:196px;border-radius:12px;overflow:hidden;
+  border:1px solid var(--trait);background:#0B0E13 url(/img/stade/an-terrace.jpg) center 30%/cover;
+  background-image:image-set(url(/img/stade/an-terrace.avif) type("image/avif"),
+    url(/img/stade/an-terrace.webp) type("image/webp"), url(/img/stade/an-terrace.jpg) type("image/jpeg"))}
+.tete::before{content:"";position:absolute;inset:0;
+  background:linear-gradient(90deg,rgba(7,9,12,.92) 30%,rgba(7,9,12,.25) 75%),
+    linear-gradient(transparent 70%,rgba(7,9,12,.8))}
+.tete::after{content:"";position:absolute;left:0;right:0;top:0;height:6px;
+  background:repeating-linear-gradient(90deg,var(--c1) 0 18px,var(--c2) 18px 30px)}
+.tete[hidden]{display:none}
+.tete-txt{position:relative;z-index:2;padding:16px 0 0 14px;width:62%}
+.tete-txt small{font-family:var(--banner);font-size:11px;letter-spacing:.16em;color:#F5C33B}
+.tete-nom{display:block;font-family:var(--banner);font-size:23px;line-height:1.05;letter-spacing:.04em;
+  text-transform:uppercase;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:2px}
+.tete-jauge{margin:9px 0 0}
+.tete-txt p{margin:5px 0 0;font-size:11.5px;line-height:1.35}
+.badges{display:flex;gap:6px;margin-top:9px}
+.badges span{font-family:var(--banner);font-size:9.5px;letter-spacing:.06em;background:rgba(17,22,29,.9);
+  border:1px solid var(--trait);border-radius:5px;padding:3px 6px;text-align:center;line-height:1.1}
+.badges b{display:block;color:#F5C33B;font-size:16px}
+.tete .moi{position:absolute;right:-4px;bottom:-2px;height:96%;z-index:1;
+  filter:drop-shadow(0 0 12px rgba(255,210,122,.45)) drop-shadow(0 6px 8px rgba(0,0,0,.8))}
+.pages{display:flex;gap:8px;overflow-x:auto;padding:0 14px 10px;scrollbar-width:none}
+.pages[hidden]{display:none}
+.page-btn{flex:none;font-family:var(--banner);font-size:12px;letter-spacing:.08em;color:var(--craie);
+  background:var(--panneau);border:1px solid var(--trait);border-radius:20px;padding:6px 12px;cursor:pointer}
+.page-btn.on{background:#E9DFC6;color:#1A1A1A;border-color:#E9DFC6}
+.tab .pt{display:inline-block;margin-left:6px;background:var(--flare,#E0402C);color:#fff;border-radius:9px;
+  padding:0 6px;font-size:11px;line-height:17px}
+.tab .pt[hidden]{display:none}
+/* La page de l'album : du papier, et les cartes dessus, trois par rangée. */
+.list.album{grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin:4px 14px 0;padding:12px 9px 16px;
+  background:#E9DFC6;border-radius:4px 4px 12px 12px;box-shadow:inset 0 0 30px #B9A77D}
+.list.album>.empty{background:none;border:0;color:#3B3123}
+.list.album>.empty a{color:#3B3123}
+/* Trois par rangée, la carte garde l'essentiel : la ligue et le jour, le
+   dessin et la minute, le buteur et le score. Touchée, elle s'ouvre en grand
+   avec tout le reste. */
+.list.album .sv{padding:4px}
+.list.album .sv .eq,.list.album .sv .foot{display:none}
+@container (min-width:1px){
+  .list.album .sv .lg{font-size:6.4cqw;padding:2.6cqw 3.4cqw}
+  .list.album .sv .lg .d{display:none}
+  .list.album .sv .bt{font-size:10cqw}
+  .list.album .sv .mt .sc{font-size:11cqw}
+  .list.album .sv .mt img{width:11cqw;height:11cqw}
+  .list.album .sv .art .mn{font-size:20cqw}
+  .list.album .stamp.tbf-sticker,.list.album .stamp.v{font-size:5cqw}
+}
+.list.album .sv .bd{padding-bottom:4px}
+/* La case vide : un but qu'on peut encore coller, en pointillés, avec son
+   temps et son prix. */
+.sv.vide{background:none;border:2px dashed #8B7E66;padding:3px;box-shadow:none;cursor:default}
+.sv.vide .in{background:rgba(20,26,38,.92)}
+.sv.vide .art .ombre{position:absolute;left:0;bottom:0;width:100%;height:92%;object-fit:contain;
+  object-position:50% 100%;filter:brightness(0);opacity:.35}
+.sv.vide .tps{position:absolute;left:6%;right:6%;top:8%;text-align:center;font-family:var(--banner);
+  font-size:11px;color:#fff;background:#39425A;border-radius:3px;padding:1px 2px}
+.sv.vide .tps.urgent{background:var(--flare,#E0402C)}
+.sv.vide .bt{text-align:center}
+.sv.vide .eq{display:flex!important}
+.sv.vide .buy{margin:4px 6px 6px;min-height:32px;font-size:13px;padding:4px;gap:4px}
+.sv.vide .buy img{width:16px;height:16px;vertical-align:-3px;margin-right:3px}
+.sv.vide.attend .art{aspect-ratio:1/1.08}
+@container (min-width:1px){ .sv.vide .tps{font-size:7.5cqw} .sv.vide .bt{font-size:8cqw} .sv.vide .eq{font-size:6cqw} }
+/* L'album vide : le Fanzzy devant la page, qui appelle au Virage. */
+.debut{grid-column:1/-1;text-align:center}
+.debut-scene{position:relative;height:330px;border-radius:12px;overflow:hidden;
+  background:#0B0E13 url(/img/fond-tribune.jpg) center 60%/cover;
+  background-image:image-set(url(/img/fond-tribune.avif) type("image/avif"),
+    url(/img/fond-tribune.webp) type("image/webp"), url(/img/fond-tribune.jpg) type("image/jpeg"))}
+.debut-scene .moi{position:absolute;left:50%;bottom:-6px;translate:-50% 0;height:96%;
+  filter:drop-shadow(0 8px 10px rgba(0,0,0,.8))}
+.bulle{position:absolute;left:6%;top:14%;background:#fff;color:#151515;font-family:var(--marqueur);font-size:15px;
+  padding:6px 12px;border-radius:18px;box-shadow:2px 3px 0 rgba(0,0,0,.45);rotate:-3deg;z-index:2}
+.bulle.or{left:auto;right:6%;top:42%;background:#F5C33B;rotate:3deg}
+.debut-page{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin:-30px 0 0;position:relative;
+  padding:12px 9px;background:#E9DFC6;border-radius:12px;box-shadow:inset 0 0 30px #B9A77D}
+.debut-page .bt{font-family:var(--banner);font-size:11px;color:var(--craie);padding:4px 0 6px}
+.debut .gros{margin-top:16px}
+.debut p{font-size:12.5px;line-height:1.7;margin:12px 4px 0}
+
 .empty{text-align:center;padding:52px 24px;opacity:.9;font-size:13px;line-height:1.8;
   background:var(--panneau);border:1px solid var(--trait);border-radius:var(--r)}
 .empty a{color:var(--craie);font-weight:700}
@@ -189,14 +275,21 @@ html[data-calme~="animations"] .sv.presence.brille .in::after{animation:none}
     <p class="tbf-sous">Ce que tu as vécu</p>
   </div>
 
+  <!-- L'album (6 novembre 2026) : la tête de la page du club, son Fanzzy,
+       ce qui est collé et ce qui manque. -->
+  <section class="tete" id="tete" hidden></section>
+  <nav class="pages" id="pages" aria-label="Les pages de l'album" hidden></nav>
+
   <!-- Le rail au bleu de ce qu'on possède, le ton de cet écran sur l'accueil. -->
   <div class="tabs tbf-onglets" data-ton="bleu">
     <button class="tab tbf-onglet on" data-tab="mine">MES SOUVENIRS</button>
-    <button class="tab tbf-onglet" data-tab="market">À RÉCUPÉRER</button>
+    <button class="tab tbf-onglet" data-tab="market">À RÉCUPÉRER<b class="pt" id="nmarche" hidden></b></button>
   </div>
 
-  <div class="stats" id="stats"></div>
-  <div class="list" id="list"></div>
+  <div class="feuille" id="feuille">
+    <div class="stats" id="stats"></div>
+    <div class="list" id="list"></div>
+  </div>
 </main>
 <div class="toast" id="toast"></div>
 <div class="zoom" id="zoom" role="dialog" aria-modal="true"></div>
@@ -357,46 +450,193 @@ function toast(txt) {
   clearTimeout(t._t); t._t = setTimeout(() => { t.className = 'toast'; }, 2600);
 }
 
+/* ------------------------------------------------------------ l'album
+
+   **Le carnet est un album** (maquette « L'album de la saison », choisie
+   par Gaël le 6 novembre 2026). Une page par club suivi : son nom, son
+   Fanzzy, la barre de ce qui est collé sur ce que ses matchs ont frappé,
+   puis les cases. Les buts vécus brillent, les vignettes sont mates, et les
+   buts qu'on peut encore récupérer sont des cases vides, avec leur temps et
+   leur prix, **dans l'album même** : on voit ce qui manque là où ça manque.
+   L'onglet À RÉCUPÉRER garde tout le marché d'un coup d'œil.
+
+   Les cartes d'un match qui n'oppose aucun club suivi vont sur une page
+   AUTRES MATCHS. Sans club suivi (ou un serveur d'avant l'album), une seule
+   page, comme avant. */
+let album = [];          // les clubs suivis : { id, nom, logo, total, couleurs }
+let pageVue = null;      // l'id du club dont on regarde la page, ou 'autres'
+let moi = null;          // mon avatar, pour le Fanzzy de la page et les cases vides
+let donnees = { mine: [], market: [] };
+
+const duClub = (s, id) => Number(s.home_id) === Number(id) || Number(s.away_id) === Number(id);
+
+function pages() {
+  const toutes = [...donnees.mine, ...donnees.market];
+  const liste = album.map((c) => ({ ...c, cle: String(c.id) }));
+  const autres = toutes.filter((s) => !album.some((c) => duClub(s, c.id)));
+  if (!liste.length) return [{ cle: 'tout', nom: 'MON CARNET', total: null }];
+  if (autres.length) liste.push({ cle: 'autres', nom: 'AUTRES MATCHS', total: null });
+  return liste;
+}
+
+function dePage(liste, pg) {
+  if (pg.cle === 'tout') return liste;
+  if (pg.cle === 'autres') return liste.filter((s) => !album.some((c) => duClub(s, c.id)));
+  return liste.filter((s) => duClub(s, pg.id));
+}
+
+/** Le Fanzzy du joueur, en pied, dans l'expression voulue. */
+function enPied(etat) {
+  const src = moi ? window.FZART?.dessinAvatar?.(moi, 'plein', { etat }) : null;
+  return src ? `<img class="moi" src="${esc(src)}" alt=""
+    onerror="this.onerror=null;this.src=window.TBF_ETATS?.secours?.(this.src,true)||''">` : '';
+}
+
+/** La case vide d'un but qu'on peut encore récupérer. */
+function caseVide(s) {
+  const reste = restant(s.expires_at);
+  const nomBut = s.scorer_team === s.away_id ? s.away_name : s.home_name;
+  const ombre = moi ? window.FZART?.dessinAvatar?.(moi, 'plein', { etat: 'neutre' }) : null;
+  return `<div class="sv vide">
+    <div class="in">
+      <div class="lg"><span>${esc(s.league_name ?? '')}</span><span class="d">${esc(jour(s.kickoff_at))}</span></div>
+      <div class="art">
+        ${ombre ? `<img class="ombre" src="${esc(ombre)}" alt="">` : ''}
+        <span class="tps ${reste && reste.includes('h') ? 'urgent' : ''}">${reste ? 'encore ' + reste : 'expirée'}</span>
+      </div>
+      <div class="bd">
+        <div class="bt">${esc(s.player ?? 'But')}${s.minute == null ? '' : ` ${s.minute}'`}</div>
+        <div class="eq"><span class="but">${esc(nomBut ?? '')}</span><span>${s.score_home} – ${s.score_away}</span></div>
+      </div>
+      <button class="buy tbf-plaque" data-ton="or" data-buy="${s.id}" ${scarves < s.price ? 'disabled' : ''}
+        aria-label="Récupérer ce but pour ${s.price} écharpes"><img src="/img/gains/echarpes.webp" alt="">${s.price}</button>
+    </div>
+  </div>`;
+}
+
+function rendreTete(pg, colles, aPrendre) {
+  const t = $('tete');
+  const vecus = colles.filter((s) => s.kind === 'presence').length;
+  const total = Number.isFinite(Number(pg.total)) && pg.total !== null ? Number(pg.total) : null;
+  const part = total ? Math.min(1, colles.length / total) : null;
+  const c = pg.couleurs ?? [];
+  t.style.setProperty('--c1', c[0] ?? 'var(--bleu, #1F4C9E)');
+  t.style.setProperty('--c2', c[1] ?? c[0] ?? '#F2EEE4');
+  t.innerHTML = `<div class="tete-txt">
+      <small>${pg.cle === 'autres' || pg.cle === 'tout' ? 'MON ALBUM' : 'ALBUM DU CLUB'}</small>
+      <b class="tete-nom">${esc(pg.nom)}</b>
+      ${part === null ? '' : `<div class="tbf-jauge tbf-jauge--fine tete-jauge"><i style="width:${(part * 100).toFixed(1)}%"></i></div>
+        <p><b>${colles.length} / ${total}</b> ${total > 1 ? 'buts' : 'but'} de ce club dans ton album</p>`}
+      <div class="badges">
+        <span><b>${vecus}</b>${vecus > 1 ? 'VÉCUS' : 'VÉCU'}</span>
+        <span><b>${colles.length - vecus}</b>${colles.length - vecus > 1 ? 'RÉCUPÉRÉS' : 'RÉCUPÉRÉ'}</span>
+        <span><b>${aPrendre}</b>À PRENDRE</span>
+      </div>
+    </div>${enPied('joie')}`;
+  t.hidden = false;
+}
+
+function rendrePages(liste) {
+  const n = $('pages');
+  n.hidden = liste.length < 2;
+  n.innerHTML = liste.map((pg) => `<button class="page-btn ${pg.cle === pageVue ? 'on' : ''}"
+    data-page="${esc(pg.cle)}">${esc(pg.nom)}</button>`).join('');
+}
+
+/** L'album vide : le Fanzzy devant une page qui attend sa première carte. */
+function rendreDebut() {
+  $('tete').hidden = true;
+  $('pages').hidden = true;
+  $('stats').innerHTML = '';
+  $('list').innerHTML = `<div class="debut">
+      <div class="debut-scene">${enPied('pousse')}
+        <span class="bulle">MON ALBUM EST VIDE !</span>
+        <span class="bulle or">ON VA AU VIRAGE ?</span>
+      </div>
+      <div class="debut-page">${'<div class="sv vide attend"><div class="in"><div class="art"></div><div class="bd"><div class="bt">TON 1ER BUT</div></div></div></div>'.repeat(3)}</div>
+      <a class="tbf-plaque tbf-bloc gros" data-ton="flare" href="/virage">ENTRER AU GRAND VIRAGE</a>
+      <p>Ton carnet est vide. Entre dans le Grand Virage pendant un match de ton club :
+        chaque but marqué pendant que tu chantes te laisse une carte que personne
+        ne pourra t'acheter.</p>
+    </div>`;
+}
+
+function rendre() {
+  const liste = pages();
+  if (!liste.some((pg) => pg.cle === pageVue)) {
+    /* La première page qui a quelque chose à montrer, sinon la première. */
+    pageVue = (liste.find((pg) => dePage([...donnees.mine, ...donnees.market], pg).length) ?? liste[0]).cle;
+  }
+  const pg = liste.find((x) => x.cle === pageVue);
+  const colles = dePage(donnees.mine, pg);
+  const aPrendre = dePage(donnees.market, pg);
+
+  const nm = $('nmarche');
+  nm.hidden = !donnees.market.length;
+  nm.textContent = String(donnees.market.length);
+
+  if (onglet === 'mine' && !donnees.mine.length && !donnees.market.length) { rendreDebut(); return; }
+
+  rendrePages(liste);
+  rendreTete(pg, colles, aPrendre.length);
+  /* Au marché, la page du club s'efface : on y voit tout ce qui se vend. */
+  $('tete').hidden = onglet !== 'mine';
+  $('pages').hidden ||= onglet !== 'mine';
+  $('stats').hidden = onglet === 'mine';
+
+  const vecus = donnees.mine.filter((s) => s.kind === 'presence').length;
+  $('stats').innerHTML = `
+    <div><b>${vecus}</b>vécus</div>
+    <div><b>${donnees.mine.length - vecus}</b>récupérés</div>
+    <div><b>${donnees.market.length}</b>disponibles</div>`;
+
+  const L = $('list');
+  if (onglet === 'mine') {
+    L.className = 'list album';
+    const cases = aPrendre.map(caseVide).join('') + colles.map((s) => carte(s, 'mine')).join('');
+    L.innerHTML = cases || `<div class="empty">Rien sur cette page pour l'instant.<br><br>
+      Entre dans le <a href="/virage">Grand Virage</a> pendant un match de ce club :
+      chaque but marqué pendant que tu chantes te laisse une carte.</div>`;
+  } else {
+    L.className = 'list';
+    L.innerHTML = donnees.market.length ? donnees.market.map((s) => carte(s, 'market')).join('')
+      : `<div class="empty">Rien à récupérer pour l'instant.<br><br>
+           Les vignettes des buts récents apparaissent ici pendant quinze jours.</div>`;
+  }
+}
+
 /* ------------------------------------------------------------ chargement */
 
 async function load() {
   try {
-    const [mine, market, fz] = await Promise.all([
+    const [mine, market, fz, alb] = await Promise.all([
       api('/mine'),
       api('/market'),
       fetch('/api/fanzzy/state', { credentials: 'same-origin' })
         .then((r) => r.json()).catch(() => ({ wallet: { scarves: 0 } })),
+      /* L'album : muet (un serveur d'avant), le carnet tient sur une page. */
+      api('/album').catch(() => ({ clubs: [] })),
       /* Le manifeste des dessins, attendu avec le reste : sans lui, le
          Fanzzy retomberait sur l'ancien plein-pied et perdrait sa tenue. Il
          ne lève jamais. */
       window.TBF_ETATS?.charger?.(),
     ]);
     scarves = fz.wallet?.scarves ?? 0;
-    /* La barre ne porte plus la bourse — le carnet affiche la sienne. */
-
-    const vecus = mine.souvenirs.filter((s) => s.kind === 'presence').length;
-    const recup = mine.souvenirs.length - vecus;
-    $('stats').innerHTML = `
-      <div><b>${vecus}</b>vécus</div>
-      <div><b>${recup}</b>récupérés</div>
-      <div><b>${market.souvenirs.length}</b>disponibles</div>`;
-
-    const liste = onglet === 'mine' ? mine.souvenirs : market.souvenirs;
-    if (!liste.length) {
-      $('list').innerHTML = onglet === 'mine'
-        ? `<div class="empty">Ton carnet est vide.<br><br>
-             Entre dans le <a href="/virage">Grand Virage</a> pendant un match de ton club :
-             chaque but marqué pendant que tu chantes te laisse une carte que personne
-             ne pourra t'acheter.</div>`
-        : `<div class="empty">Rien à récupérer pour l'instant.<br><br>
-             Les vignettes des buts récents apparaissent ici pendant quinze jours.</div>`;
-      return;
-    }
-    $('list').innerHTML = liste.map((s) => carte(s, onglet)).join('');
+    moi = fz.wallet?.avatar?.id ? fz.wallet.avatar : null;
+    album = Array.isArray(alb?.clubs) ? alb.clubs : [];
+    donnees = { mine: mine.souvenirs ?? [], market: market.souvenirs ?? [] };
+    rendre();
   } catch (e) {
     if (e.message !== 'auth') $('list').innerHTML = `<div class="empty">Serveur injoignable.</div>`;
   }
 }
+
+$('pages').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-page]');
+  if (!b) return;
+  pageVue = b.dataset.page;
+  rendre();
+});
 
 $('zoom').addEventListener('click', () => $('zoom').classList.remove('on'));
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape') $('zoom').classList.remove('on'); });
@@ -428,7 +668,7 @@ document.querySelector('.tabs').addEventListener('click', (e) => {
   if (!t) return;
   onglet = t.dataset.tab;
   document.querySelectorAll('.tab').forEach((x) => x.classList.toggle('on', x === t));
-  load();
+  rendre();
 });
 
 load();

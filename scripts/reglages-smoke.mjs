@@ -131,6 +131,8 @@ const PLAN = [
   ['saison.tampons_moyenne', 'saison', 'entier', 0, 10, 1],
   ['saison.tampons_difficile', 'saison', 'entier', 0, 10, 2],
   ['saison.tampons_sachet', 'saison', 'entier', 0, 10, 1],
+  ['saison.tampons_victoire', 'saison', 'entier', 0, 5, 1],
+  ['saison.victoires_jour', 'saison', 'entier', 0, 20, 3],
   ['saison.relais_packs', 'saison', 'entier', 0, 5, 2],
   ['saison.relais_seuil', 'saison', 'entier', 0, 1000, 10],
   ['collection.actif', 'saison', 'booleen', null, null, true],
@@ -198,6 +200,7 @@ const PLAN = [
     tifo: 'jeux.actif', boss: 'jeux.actif',
     cadeau: 'amis.actif', defi: 'amis.actif',
     hebdo: 'defis.actif', voie: 'defis.actif',
+    victoire: 'saison.tampons_victoire',
   };
   /* Un interrupteur est une bascule — ou un montant qui descend à 0 et dont
      l'aide dit qu'à 0 la source s'arrête : c'est ce que lira celui qui

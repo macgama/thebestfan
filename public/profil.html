@@ -465,6 +465,151 @@ html[data-calme~="animations"] .spin{animation-duration:3s}
    Les écrans de jeu ne passent pas par ici : ils ne défilent pas, leur budget
    vertical est compté au pixel, et leur ajouter de la marge couperait ce
    qu'ils tiennent tout juste — voir la fiche du Fanzzy. */
+/* ===================================================== MON VESTIAIRE
+
+   Gaël, 6 novembre 2026 : « tu penses qu'on peut rendre cette page plus
+   gaming », et la variante 1 des quatre maquettes. Le profil prend **le plan
+   de l'accueil** : la carte de supporter devient une scène de la hauteur de
+   l'écran, le Fanzzy équipé en grand au centre dans le décor de sa tenue, et
+   tout le reste autour de lui, comme dans un vestiaire de jeu.
+
+   - en haut, ce qu'il possède en pastilles (`#stats`, les mêmes liens) ;
+   - à gauche et à droite, les tuiles de couleur de l'accueil (`.tbf-case`) :
+     chacune ouvre sa rubrique en tiroir par le bas (`.vt-volet`) ;
+   - dans le coin, le niveau dans son anneau d'XP (`.vt-niv`) ;
+   - sous ses pieds, le pseudo et le club : la carte d'avant, en bandeau ;
+   - tout en bas, le bonus du jour en coffre.
+
+   Rien n'a disparu : les rubriques sont dans les tiroirs, avec leurs
+   identifiants, et les scripts les remplissent comme avant. */
+#carte.vestiaire{
+  --vt-rail:clamp(62px,18.5vw,78px);
+  display:grid;grid-template-columns:var(--vt-rail) minmax(0,1fr) var(--vt-rail);
+  grid-template-rows:auto minmax(0,1fr) auto auto;column-gap:6px;
+  height:clamp(560px,calc(var(--h-ecran,100dvh) - 78px),780px);
+  margin:10px 0 0;padding:16px 10px 12px}
+/* Le décor occupe toute la scène, et un voile en haut et en bas fait lire ce
+   qui s'y écrit ; le milieu, où se tient le Fanzzy, reste clair. */
+#carte.vestiaire .carte-fond{inset:6.5px 0 0}
+#carte.vestiaire .carte-fond.plaque{background-position:50% 40%}
+#carte.vestiaire .carte-fond::after{
+  background:linear-gradient(180deg,rgba(12,17,24,.78) 0%,rgba(12,17,24,.1) 22%,rgba(12,17,24,0) 52%,
+    rgba(12,17,24,.82) 74%,rgba(12,17,24,.97) 100%)}
+
+/* ---- les pastilles de ce qu'il possède */
+#carte .stats{grid-row:1;grid-column:1 / -1;position:relative;z-index:4;display:flex;gap:5px;padding:0 0 10px}
+#carte .stats>.vt-res{flex:1 1 0;min-width:0;display:flex;align-items:center;gap:5px;height:32px;
+  padding:0 6px 0 3px;border-radius:17px;background:rgba(7,9,12,.78);
+  box-shadow:inset 0 0 0 1.5px rgba(242,238,228,.16);color:var(--craie);text-decoration:none;
+  font-family:var(--banner);font-weight:700;font-size:15px;font-variant-numeric:tabular-nums}
+#carte .stats>.vt-res:focus-visible{outline:3px solid var(--projo);outline-offset:2px}
+#carte .vt-res>i{flex:none;display:grid;place-items:center;width:25px;height:25px;border-radius:50%;
+  background:var(--f,var(--parpaing))}
+#carte .vt-res>i>img{width:20px;height:20px;object-fit:contain}
+#carte .vt-res>i>svg{width:15px;height:15px;fill:none;stroke:var(--craie);stroke-width:2}
+#carte .vt-res>span{min-width:0;overflow:hidden;text-overflow:ellipsis}
+@media (max-width:370px){#carte .stats>.vt-res{font-size:13px;gap:3px}#carte .vt-res>i{width:22px;height:22px}}
+
+/* ---- les deux rails de tuiles */
+.vt-rail{grid-row:2;position:relative;z-index:3;display:flex;flex-direction:column;justify-content:flex-end;
+  gap:6px;min-height:0;padding-bottom:4px}
+.vt-g{grid-column:1}
+.vt-d{grid-column:3}
+.vt-rail>.tbf-case{flex:0 1 auto;min-height:0;max-height:13dvh;--epaisseur:4px;
+  font-family:var(--banner);cursor:pointer}
+/* Le coin du haut, à gauche : VÉRIFIÉ (À VÉRIFIER se voit), les tampons de
+   saison et l'écusson du PASS, l'un sous l'autre au-dessus des tuiles. */
+.vt-coin{margin-bottom:auto;display:flex;flex-direction:column;align-items:flex-start;gap:10px;padding-top:4px}
+#carte .vt-coin .carte-tampon{position:static;font-size:10.5px}
+#carte .vt-coin .carte-saisons{position:static;max-width:none;flex-wrap:wrap}
+#carte .vt-coin .carte-pass{position:static}
+
+/* ---- le niveau, dans son anneau d'XP (le même `--p` que le buste) */
+.vt-niv{margin-bottom:auto;align-self:center;position:relative;width:70px;height:70px;border:0;padding:0;
+  border-radius:50%;cursor:pointer;color:var(--craie);
+  background:conic-gradient(var(--projo) 0 var(--p,0%),rgba(242,238,228,.18) var(--p,0%) 100%);
+  display:grid;place-items:center;box-shadow:0 0 0 2px var(--encre),2px 3px 0 2px rgba(7,9,12,.6)}
+.vt-niv::before{content:"";position:absolute;inset:6px;border-radius:50%;background:var(--encre)}
+.vt-niv>*{position:relative}
+#carte .vt-niv .carte-niv{position:relative;right:auto;bottom:auto;--taille:38px;font-size:21px;--rot:0deg;margin-top:-13px}
+.vt-niv>small{position:absolute;bottom:10px;font-family:var(--banner);font-size:8px;font-weight:700;letter-spacing:.12em}
+.vt-niv:focus-visible{outline:3px solid var(--projo);outline-offset:3px}
+
+/* ---- le Fanzzy, au centre */
+.vt-scene{grid-row:2;grid-column:2;position:relative;z-index:2;min-height:0;display:grid;place-items:end center}
+.vt-scene::before{content:"";position:absolute;left:4%;right:4%;top:14%;bottom:6%;z-index:-1;border-radius:50%;
+  background:radial-gradient(closest-side,rgba(245,195,59,.3),transparent);pointer-events:none}
+.vt-scene>.mon-fz-scene{width:100%;height:100%}
+.vt-scene>.mon-fz-scene::after{display:none}
+/* Sans dessin d'états : son buste en grand, qui mène à sa page. */
+.vt-repli{display:grid;place-items:center;width:100%;height:100%;text-decoration:none}
+.vt-repli>.tbf-avatar{--taille:min(46vw,170px)}
+
+/* ---- le bandeau du nom, sous ses pieds : la carte d'avant */
+#carte.vestiaire .carte-corps{grid-row:3;grid-column:1 / -1;position:relative;z-index:3;
+  min-height:0;padding:8px 4px 2px;align-items:center;gap:11px}
+#carte.vestiaire[data-tampons] .carte-corps{padding-top:8px}
+#carte.vestiaire .carte-buste{--taille:58px}
+#carte.vestiaire h1{display:inline-block;padding:1px 12px 0;background:var(--craie);color:var(--encre);
+  text-shadow:none;rotate:-1.5deg;box-shadow:3px 4px 0 var(--encre);font-size:25px}
+#carte.vestiaire h1.long{font-size:21px}
+#carte.vestiaire h1.tres-long{font-size:17px}
+#carte.vestiaire h1.pseudo-or{color:transparent;background-color:transparent;box-shadow:none;rotate:0deg;padding:0}
+#carte.vestiaire .club{margin-top:7px}
+
+/* ---- le bonus du jour, en coffre */
+#carte .bonus{grid-row:4;grid-column:1 / -1;position:relative;z-index:3;margin:10px 0 0}
+/* Sur une ligne : le paquet, le titre et sa série, puis RÉCUPÉRER ou PRIS. */
+.vt-coffre{position:relative;flex-wrap:nowrap;gap:10px;padding-left:10px}
+.vt-coffre>.tbf-bonus-corps{min-width:0}
+.vt-coffre .tbf-serie>em{margin-left:8px}
+/* Sous 380 px, la série prend la ligne et le geste passe dessous. */
+@media (max-width:380px){.vt-coffre{flex-wrap:wrap}.vt-coffre>.tbf-bonus-corps{min-width:min-content}}
+.vt-coffre>.vt-cadeau{flex:none;width:34px;height:34px;color:var(--encre)}
+.vt-coffre>.vt-cadeau svg{width:100%;height:100%;fill:none;stroke:currentColor;stroke-width:1.8}
+/* Prêt : le coffre brille d'or, doucement ; au calme, il brille sans battre.
+   La lueur passe par le conteneur : le ticket, déchiré, rogne son ombre. */
+#carte .bonus:has(.vt-coffre[data-pret]){filter:drop-shadow(0 0 3px var(--projo)) drop-shadow(0 0 14px rgba(245,195,59,.6))}
+.vt-coffre[data-pret]>.vt-cadeau{animation:vt-coffre 1.6s ease-in-out infinite}
+@keyframes vt-coffre{0%,100%{transform:none}50%{transform:rotate(-8deg) scale(1.08)}}
+@media (prefers-reduced-motion:reduce){.vt-coffre[data-pret]>.vt-cadeau{animation:none}}
+html[data-calme~="animations"] .vt-coffre[data-pret]>.vt-cadeau{animation:none}
+
+/* ---- les tiroirs */
+.vt-voile{position:fixed;inset:0;z-index:60;background:rgba(4,6,10,.62)}
+.vt-voile[hidden],.vt-volet[hidden]{display:none}
+.vt-volet{position:fixed;z-index:61;left:50%;bottom:0;translate:-50% 0;
+  width:min(100%,var(--colonne,480px));max-height:min(86dvh,calc(var(--h-ecran,100dvh) - 40px));
+  display:flex;flex-direction:column;background:#11161C;border-radius:18px 18px 0 0;
+  box-shadow:0 -2px 0 var(--vt-ton,var(--parpaing)),0 -18px 40px rgba(0,0,0,.6);
+  animation:vt-monte .26s cubic-bezier(.2,.9,.3,1)}
+@keyframes vt-monte{from{translate:-50% 40px;opacity:0}}
+@media (prefers-reduced-motion:reduce){.vt-volet{animation:none}}
+html[data-calme~="animations"] .vt-volet{animation:none}
+.vt-volet[data-tiroir=clubs]{--vt-ton:var(--face-bleu)}
+.vt-volet[data-tiroir=saison]{--vt-ton:var(--projo)}
+.vt-volet[data-tiroir=parcours]{--vt-ton:var(--face-violet)}
+.vt-volet[data-tiroir=niveau]{--vt-ton:var(--face-vert)}
+.vt-volet[data-tiroir=equipement]{--vt-ton:var(--face-flare)}
+.vt-tete{flex:none;position:relative;height:42px}
+.vt-poignee{position:absolute;left:50%;top:10px;translate:-50% 0;width:44px;height:5px;border-radius:3px;
+  background:rgba(242,238,228,.3)}
+.vt-fermer{position:absolute;right:4px;top:0;width:44px;height:44px;border:0;background:none;
+  color:var(--craie);font-size:20px;cursor:pointer;z-index:2}
+.vt-fermer:focus-visible{outline:3px solid var(--projo);outline-offset:-4px;border-radius:8px}
+.vt-corps{overflow-y:auto;overscroll-behavior:contain;
+  padding:0 var(--gouttiere,14px) calc(var(--bas,0px) + env(safe-area-inset-bottom) + 22px)}
+.vt-corps>h2:first-child,.vt-corps>[hidden]:first-child+h2{margin-top:2px}
+.vt-corps h2{margin:22px 2px 10px}
+.vt-note{margin:12px 4px 0;font-size:12.5px;line-height:1.45}
+/* Le tiroir de la saison sans saison du tout. */
+.vt-sans-saison{display:none}
+#tiroir-saison:not(:has(#saison:not([hidden]),#historique:not([hidden]))) .vt-sans-saison{display:block}
+#tiroir-saison .vt-sans-saison:is(h2){margin-top:2px}
+/* Les réglages ne sont plus derrière une bâche : le tiroir en est une. */
+#tiroir-reglages .tbf-reglages-corps{padding:0}
+html.vt-ouvert{overflow:hidden}
+
 /* tbf-degagement */
 #app{padding-bottom:calc(var(--bas) + 40px)}
 </style>
@@ -479,8 +624,52 @@ html[data-calme~="animations"] .spin{animation-duration:3s}
 <body>
 <main id="app"><div class="spin" id="spin"></div><div id="page" style="display:none">
 
-  <section class="carte tbf-cadre" id="carte" data-echarpe aria-label="Ma carte de supporter">
+  <!-- **Mon vestiaire** (Gaël, 6 novembre 2026, variante 1 des quatre
+       maquettes « plus gaming ») : le profil prend le plan de l'accueil. Son
+       Fanzzy en grand au centre, dans le décor de sa tenue ; ce qu'il possède
+       en pastilles de jeu en haut ; le niveau en anneau dans le coin ; chaque
+       partie du profil derrière une tuile de couleur qui l'ouvre en tiroir
+       par le bas ; le pseudo peint sous ses pieds, et le bonus du jour en
+       coffre tout en bas. Rien n'a disparu : les rubriques d'avant sont dans
+       les tiroirs, avec leurs identifiants. -->
+  <section class="carte vestiaire tbf-cadre" id="carte" data-echarpe aria-label="Mon vestiaire">
     <div class="carte-fond" id="fond" aria-hidden="true"></div>
+
+    <div class="stats" id="stats"></div>
+
+    <nav class="vt-rail vt-g" aria-label="Mon profil">
+      <div class="vt-coin">
+        <span class="tbf-tampon tbf-tampon--plein carte-tampon" id="badge" hidden></span>
+        <!-- Les tampons de saison du carnet (`insignes` de /api/quotidien) :
+             posés seulement s'il y en a. -->
+        <div class="carte-saisons" id="saisonsCarte" role="img" hidden></div>
+        <a class="carte-pass" id="passCarte" href="/abonnement" hidden></a>
+      </div>
+      <button type="button" class="tbf-case" data-ton="bleu" data-tiroir="clubs" id="caseClubs">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l7 3v5c0 4.4-2.9 8.2-7 10-4.1-1.8-7-5.6-7-10V6z"/></svg><span class="lib">CLUBS</span></button>
+      <button type="button" class="tbf-case" data-ton="or" data-tiroir="saison" id="caseSaison">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l2.6 5.6 6 .7-4.5 4.1 1.2 6-5.3-3-5.3 3 1.2-6L3.4 9.3l6-.7z"/></svg><span class="lib">SAISON</span></button>
+      <button type="button" class="tbf-case" data-ton="violet" data-tiroir="parcours" id="caseParcours">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2M9 2h6"/></svg><span class="lib">PARCOURS</span></button>
+    </nav>
+
+    <!-- Le Fanzzy équipé, vivant (`fanzzy-scene.js`) : il respire, cligne,
+         saute au toucher et pousse son cri. Sans dessin d'états, son buste
+         en grand (`vt-repli`). -->
+    <div class="vt-scene" id="heroFz"></div>
+
+    <nav class="vt-rail vt-d" aria-label="Ma progression">
+      <button type="button" class="vt-niv" data-tiroir="niveau" id="nivAnneau" aria-label="Mon niveau">
+        <b class="tbf-sticker tbf-sticker--rond carte-niv" id="nivCoin" role="img" hidden></b>
+        <small aria-hidden="true">NIVEAU</small></button>
+      <button type="button" class="tbf-case" data-ton="vert" data-tiroir="niveau" id="caseNiveau">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20V5M6 11l6-6 6 6M5 21h14"/></svg><span class="lib">NIVEAU</span></button>
+      <button type="button" class="tbf-case" data-ton="flare" data-tiroir="equipement" id="caseEquipement">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 8V6a5 5 0 0 1 10 0v2M4 8h16l-1 13H5zM9 12h6"/></svg><span class="lib">ÉQUIPEMENT</span></button>
+      <button type="button" class="tbf-case" data-tiroir="reglages" id="caseReglages">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/></svg><span class="lib">RÉGLAGES</span></button>
+    </nav>
+
     <div class="carte-corps">
       <a class="tbf-avatar carte-buste" id="buste" href="/fanzzy" aria-label="Mon Fanzzy">
         <span class="tbf-anneau" style="--p:0%"><span class="tbf-avatar-buste"></span></span>
@@ -499,52 +688,86 @@ html[data-calme~="animations"] .spin{animation-duration:3s}
         <div class="depuis" id="depuis"></div>
       </div>
     </div>
-    <span class="tbf-tampon tbf-tampon--plein carte-tampon" id="badge" hidden></span>
-    <!-- Les tampons de saison du carnet (`insignes` de /api/quotidien) :
-         posés seulement s'il y en a. -->
-    <div class="carte-saisons" id="saisonsCarte" role="img" hidden></div>
-    <b class="tbf-sticker tbf-sticker--rond carte-niv" id="nivCoin" role="img" hidden></b>
-    <a class="carte-pass" id="passCarte" href="/abonnement" hidden></a>
+
+    <div class="bonus" id="bonus"></div>
   </section>
 
-  <div class="stats" id="stats"></div>
+  <!-- ## Les tiroirs du vestiaire
+       Une tuile ouvre le sien par le bas, par-dessus le vestiaire voilé ; la
+       croix, le voile, la touche Échap ou le retour du téléphone le ferment.
+       Ce sont les rubriques d'avant, avec leurs identifiants. -->
+  <div class="vt-voile" id="vtVoile" hidden></div>
 
-  <div class="bonus" id="bonus"></div>
+  <section class="vt-volet" id="tiroir-clubs" data-tiroir="clubs" role="dialog" aria-modal="true" aria-label="Mes clubs" hidden>
+    <div class="vt-tete"><span class="vt-poignee" aria-hidden="true"></span>
+      <button type="button" class="vt-fermer" aria-label="Fermer">✕</button></div>
+    <div class="vt-corps">
+      <!-- **Mes clubs, à découvert** (Gaël, 30 octobre 2026 : « caché dans
+           réglage n'est pas adapté ») : leur propre tuile, la première. -->
+      <h2 class="tbf-cousu">MES CLUBS<i id="clubsCompte"></i></h2>
+      <div class="pan bloc" id="clubs"></div>
+      <p class="vt-note">Tes duels et ton Virage donnent de la ferveur à ton club principal.</p>
+    </div>
+  </section>
 
-  <!-- **Mes clubs, à découvert** (Gaël, 30 octobre 2026 : « caché dans
-       réglage n'est pas adapté »). Ils décident où va la ferveur et pour qui
-       l'on joue : ils passent avant le niveau, juste sous la carte, et plus
-       derrière la bâche RÉGLAGES. -->
-  <h2 class="tbf-cousu">MES CLUBS<i id="clubsCompte"></i></h2>
-  <div class="pan bloc" id="clubs"></div>
+  <section class="vt-volet" id="tiroir-niveau" data-tiroir="niveau" role="dialog" aria-modal="true" aria-label="Mon niveau" hidden>
+    <div class="vt-tete"><span class="vt-poignee" aria-hidden="true"></span>
+      <button type="button" class="vt-fermer" aria-label="Fermer">✕</button></div>
+    <div class="vt-corps">
+      <h2 class="tbf-cousu">MON NIVEAU<i id="nivXp"></i></h2>
+      <div id="niveau"><div class="pan bloc"><div class="vide">chargement…</div></div></div>
+    </div>
+  </section>
 
-  <h2 class="tbf-cousu">MON NIVEAU<i id="nivXp"></i></h2>
-  <div id="niveau"><div class="pan bloc"><div class="vide">chargement…</div></div></div>
+  <section class="vt-volet" id="tiroir-saison" data-tiroir="saison" role="dialog" aria-modal="true" aria-label="Ma saison" hidden>
+    <div class="vt-tete"><span class="vt-poignee" aria-hidden="true"></span>
+      <button type="button" class="vt-fermer" aria-label="Fermer">✕</button></div>
+    <div class="vt-corps">
+      <h2 class="tbf-cousu" id="saisonTitre" hidden>MA SAISON</h2>
+      <div class="pan bloc saison" id="saison" hidden></div>
 
-  <h2 class="tbf-cousu" id="saisonTitre" hidden>MA SAISON</h2>
-  <div class="pan bloc saison" id="saison" hidden></div>
+      <h2 class="tbf-cousu" id="historiqueTitre" hidden>MES SAISONS</h2>
+      <div class="pan bloc historique" id="historique" hidden></div>
+      <!-- Ni saison classée ni saison finie : le tiroir le dit. -->
+      <h2 class="tbf-cousu vt-sans-saison">MA SAISON</h2>
+      <div class="pan bloc vt-sans-saison"><div class="vide">Ta saison s’affichera ici dès ton premier match classé.
+        <br><a href="/carnet">Ouvrir mon carnet</a></div></div>
+    </div>
+  </section>
 
-  <h2 class="tbf-cousu" id="historiqueTitre" hidden>MES SAISONS</h2>
-  <div class="pan bloc historique" id="historique" hidden></div>
+  <section class="vt-volet" id="tiroir-parcours" data-tiroir="parcours" role="dialog" aria-modal="true" aria-label="Mon parcours" hidden>
+    <div class="vt-tete"><span class="vt-poignee" aria-hidden="true"></span>
+      <button type="button" class="vt-fermer" aria-label="Fermer">✕</button></div>
+    <div class="vt-corps">
+      <h2 class="tbf-cousu">MON PARCOURS</h2>
+      <div class="serie" id="serie"></div>
+      <div id="parcours"><div class="pan bloc"><div class="vide">chargement…</div></div></div>
+    </div>
+  </section>
 
-  <h2 class="tbf-cousu">MON PARCOURS</h2>
-  <div class="serie" id="serie"></div>
-  <div id="parcours"><div class="pan bloc"><div class="vide">chargement…</div></div></div>
+  <section class="vt-volet" id="tiroir-equipement" data-tiroir="equipement" role="dialog" aria-modal="true" aria-label="Mon équipement" hidden>
+    <div class="vt-tete"><span class="vt-poignee" aria-hidden="true"></span>
+      <button type="button" class="vt-fermer" aria-label="Fermer">✕</button></div>
+    <div class="vt-corps">
+      <h2 class="tbf-cousu">MON FANZZY</h2>
+      <div class="pan bloc" id="fanzzy"></div>
 
-  <h2 class="tbf-cousu">MON FANZZY</h2>
-  <div class="pan bloc" id="fanzzy"></div>
+      <!-- Ce qu’on possède, et où l’on s’en sert : le sac, puis le deck, où
+           chaque Fanzzy porte ses deux pièces. -->
+      <h2 class="tbf-cousu">ÉQUIPEMENT</h2>
+      <div class="pan bloc"><div class="sac" id="sac"></div></div>
+      <a class="tbf-plaque tbf-bloc deck" data-ton="bleu" href="/deck">
+        <span class="tbf-lib2"><small>ÉQUIPER MES FANZZY, MES DIX CARTES</small><b>MON DECK</b></span>
+        <span aria-hidden="true">›</span></a>
+    </div>
+  </section>
 
-  <!-- Ce qu’on possède, et où l’on s’en sert : le sac, puis le deck, où
-       chaque Fanzzy porte ses deux pièces. -->
-  <h2 class="tbf-cousu">ÉQUIPEMENT</h2>
-  <div class="pan bloc"><div class="sac" id="sac"></div></div>
-  <a class="tbf-plaque tbf-bloc deck" data-ton="bleu" href="/deck">
-    <span class="tbf-lib2"><small>ÉQUIPER MES FANZZY, MES DIX CARTES</small><b>MON DECK</b></span>
-    <span aria-hidden="true">›</span></a>
-
-  <details class="tbf-reglages reglages" id="reglages">
-    <summary class="tbf-plaque tbf-bloc">RÉGLAGES</summary>
-    <div class="tbf-reglages-corps">
+  <section class="vt-volet" id="tiroir-reglages" data-tiroir="reglages" role="dialog" aria-modal="true" aria-label="Réglages" hidden>
+    <div class="vt-tete"><span class="vt-poignee" aria-hidden="true"></span>
+      <button type="button" class="vt-fermer" aria-label="Fermer">✕</button></div>
+    <div class="vt-corps">
+    <h2 class="tbf-cousu">RÉGLAGES</h2>
+    <div class="tbf-reglages-corps reglages" id="reglages">
       <h3 class="tbf-cousu">LANGUE</h3>
       <div class="langues tbf-onglets" data-ton="craie" id="langues"></div>
       <!-- **Les notifications**, venues de « Mon compte » quand les deux pages
@@ -585,7 +808,8 @@ html[data-calme~="animations"] .spin{animation-duration:3s}
       <p class="legal"><a href="/confidentialite">Ce que le jeu garde de toi</a>
         · <a href="/conditions">Les conditions</a></p>
     </div>
-  </details>
+    </div>
+  </section>
   <!-- Ce que la page fait sans le dire avec des mots — l'insigne posé —,
        dit aux lecteurs d'écran. -->
   <p class="vh" role="status" id="annonce"></p>
@@ -613,10 +837,11 @@ html[data-calme~="animations"] .spin{animation-duration:3s}
 
 <script>
 /* =======================================================================
-   Profil.
-   Tout ce qui concerne le joueur au même endroit : sa carte de supporter,
-   ses clubs, ce qu'il possède, son niveau, sa saison, ce qu'il a joué — et,
-   rangés derrière une bâche, sa langue, ses notifications, son compte.
+   Profil : « Mon vestiaire » (6 novembre 2026).
+   Tout ce qui concerne le joueur au même endroit : son Fanzzy en grand, ce
+   qu'il possède, son niveau, et derrière six tuiles qui s'ouvrent en
+   tiroir, ses clubs, sa saison, ce qu'il a joué, son équipement, sa langue,
+   ses notifications et son compte.
    ======================================================================= */
 
 const $ = (id) => document.getElementById(id);
@@ -841,6 +1066,7 @@ function poserBuste() {
 
   /* MON FANZZY montre la carte de l'âge que ce visage montre. */
   rendreFanzzy();
+  poserRepli();
 }
 
 /* **L'écharpe de la carte aux couleurs du club principal.** La bande était
@@ -934,13 +1160,15 @@ function rendreStats() {
   /* `data-solde` : l'achat d'un emplacement et le bonus du jour font compter
      ce chiffre. Il est dans son propre `span` : `FX.compter` réécrit le
      texte de l'élément, et le jeton dessiné devant disparaîtrait avec. */
+  /* Les pastilles de jeu du vestiaire : le jeton et le chiffre. Chaque
+     pastille garde sa destination et dit son nom au lecteur d'écran. */
   $('stats').innerHTML = `
-    <a class="tbf-stat" href="/boutique" data-ton="or"><b><img src="${JETON}" alt=""><span
-      data-solde="echarpes">${etat.scarves}</span></b><small>ÉCHARPES</small></a>
-    <a class="tbf-stat" href="/boosters" data-ton="or"><b>${svg('sachet', 'var(--face-flare)')}<span
-      data-solde="packs">${etat.packs}</span></b><small>BOOSTERS</small></a>
-    <a class="tbf-stat" href="/carnet" data-ton="bleu"><b>${svg('vecu', 'var(--face-bleu)')}${vecus}</b><small>VÉCUS</small></a>
-    <a class="tbf-stat" href="/carnet" data-ton="bleu"><b>${svg('souvenir', 'var(--face-bleu)')}${souvenirs.length}</b><small>SOUVENIRS</small></a>`;
+    <a class="vt-res" href="/boutique" aria-label="Écharpes : ${etat.scarves}, la boutique"><i style="--f:var(--face-flare)"><img
+      src="${JETON}" alt=""></i><span data-solde="echarpes">${etat.scarves}</span></a>
+    <a class="vt-res" href="/boosters" aria-label="Boosters : ${etat.packs}"><i style="--f:#8a6a12">${svg('sachet')}</i><span
+      data-solde="packs">${etat.packs}</span></a>
+    <a class="vt-res" href="/carnet" aria-label="Vécus : ${vecus}"><i style="--f:var(--face-bleu)">${svg('vecu')}</i><span>${vecus}</span></a>
+    <a class="vt-res" href="/carnet" aria-label="Souvenirs : ${souvenirs.length}"><i style="--f:var(--face-bleu)">${svg('souvenir')}</i><span>${souvenirs.length}</span></a>`;
 }
 
 /** Fait compter un solde affiché de sa valeur d'avant à la nouvelle. */
@@ -1000,6 +1228,7 @@ function rendreNiveau(n) {
     hote.innerHTML = '<div class="pan bloc"><div class="vide">Ta progression n’est pas lisible pour le moment.</div></div>';
     $('nivXp').textContent = '';
     $('nivCoin').hidden = true;
+    $('nivAnneau').style.removeProperty('--p');
     return;
   }
   const niveau = Number(n.niveau);
@@ -1079,6 +1308,10 @@ function rendreNiveau(n) {
   if (Number(n.etoiles) > 0) coin.dataset.etoiles = String(n.etoiles); else delete coin.dataset.etoiles;
   coin.hidden = false;
   $('buste').querySelector('.tbf-anneau').style.setProperty('--p', `${Math.round(part * 100)}%`);
+  /* Le même anneau, en grand, dans le coin du vestiaire. */
+  const anneau = $('nivAnneau');
+  anneau.style.setProperty('--p', `${Math.round(part * 100)}%`);
+  anneau.setAttribute('aria-label', `Mon niveau : ${niveau}${n.grade ? `, ${n.grade}` : ''}`);
 }
 
 async function chargerNiveau() {
@@ -1134,7 +1367,10 @@ function rendreBonus() {
   const geste = b.pret
     ? '<button class="tbf-plaque" data-ton="or" id="prendreBonus">RÉCUPÉRER</button>'
     : c.prise ? '<span class="tbf-tampon" data-ton="vert">PRIS</span>' : '';
-  hote.innerHTML = `<div class="tbf-ticket tbf-bonus">
+  /* En coffre (le vestiaire) : le paquet cadeau devant, et l'or qui brille
+     tant qu'il est à prendre. */
+  hote.innerHTML = `<div class="tbf-ticket tbf-bonus vt-coffre"${b.pret ? ' data-pret' : ''}>
+    <span class="vt-cadeau" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 11h16v10H4zM3 7h18v4H3zM12 7v14M12 7c-1.5-3-5-4-5.5-2S9.5 7 12 7c2.5 0 6-.2 5.5-2S13.5 4 12 7"/></svg></span>
     <div class="tbf-bonus-corps">
       <b class="tbf-bonus-titre">BONUS DU JOUR ${stickersGain(gain)}</b>
       <span class="tbf-serie" role="img" aria-label="Jour ${jour} sur ${cases}">${noeuds}${em}</span>
@@ -1259,6 +1495,11 @@ document.addEventListener('click', async (e) => {
     /* Le gain se voit : le ticket monte, son jeton vole jusqu'au sticker
        ÉCHARPES, et le solde compte. La barre l'apprend par l'annonce
        qu'elle écoute déjà. */
+    /* Le Fanzzy du vestiaire saute de joie. */
+    if (!window.FX?.calme?.('animations')) {
+      sceneProfil?.saute?.();
+      sceneProfil?.pose?.('joie', 1800);
+    }
     const t = ticketGain(r.gain, 'bonus du jour');
     const cible = $('stats').querySelector('[data-solde="echarpes"]');
     const jeton = t?.querySelector('img');
@@ -1762,6 +2003,8 @@ function rendreClubs() {
   const libres = Math.max(0, etat.slots.total - etat.slots.used);
   const prix = prixSlot();
   $('clubsCompte').textContent = `${etat.slots.used} / ${etat.slots.total}`;
+  /* La tuile dit combien de places sont prises. */
+  $('caseClubs').dataset.pastille = `${etat.slots.used}/${etat.slots.total}`;
   $('clubs').innerHTML =
     (etat.follows ?? []).map((f) => `
       <div class="ligne suivi">
@@ -1831,6 +2074,10 @@ function rendreFanzzy() {
       <div class="mon-fz-carte mon-fz-vide" aria-hidden="true">${svg('fanzzy')}</div>
       <div class="mon-fz-txt"><b>Aucun Fanzzy</b><span>Le premier sort d’un booster.</span>
         <a class="tbf-plaque changer" data-ton="bleu" href="/boosters">OUVRIR UN BOOSTER</a></div></div>`;
+    $('carte').removeAttribute('data-vivant');
+    sceneProfil?.arreter?.();
+    sceneProfil = null;
+    poserRepli();
     return;
   }
   const carte = carteDuFanzzy();
@@ -1848,16 +2095,37 @@ function rendreFanzzy() {
   fanzzyVu = sig;
   sceneProfil?.arreter?.();
   sceneProfil = null;
-  const emplacement = vif
-    ? `<div class="mon-fz-scene" id="monFzScene" role="button" tabindex="0"
-        aria-label="${esc(nom ? `Faire crier ${nom}` : 'Faire crier mon Fanzzy')}"></div>`
-    : carte
+  /* **Le Fanzzy vivant est au centre du vestiaire** (6 novembre 2026), en
+     grand ; le tiroir ÉQUIPEMENT garde sa carte, son nom, son cri et
+     CHANGER. Sans dessin d'états, le vestiaire montre son buste en grand. */
+  const emplacement = carte
     ? `<div class="mon-fz-carte" aria-hidden="true">${window.TBF_CARTES.cardHTML(carte, { mini: true })}</div>`
     : cartesPretes === null ? '<div class="mon-fz-carte" aria-hidden="true"></div>' : '';
   $('fanzzy').innerHTML = `<div class="mon-fz">${emplacement}
     <div class="mon-fz-txt"><b>${esc(nom)}</b>${cri ? `<span>Cri : ${esc(cri)}</span>` : ''}
       <a class="tbf-plaque changer" data-ton="bleu" href="/fanzzy">CHANGER</a></div></div>`;
-  if (vif) animerMonFanzzy(vif, cri, sig);
+  $('carte').toggleAttribute('data-vivant', Boolean(vif));
+  if (vif) {
+    $('heroFz').innerHTML = `<div class="mon-fz-scene" id="monFzScene" role="button" tabindex="0"
+        aria-label="${esc(nom ? `Faire crier ${nom}` : 'Faire crier mon Fanzzy')}"></div>`;
+    animerMonFanzzy(vif, cri, sig);
+  } else {
+    poserRepli();
+  }
+}
+
+/* Le centre du vestiaire sans personnage vivant : le buste du Fanzzy en
+   grand, qui mène à sa page ; sans Fanzzy du tout, sa place en pointillé,
+   qui mène au kiosque. */
+function poserRepli() {
+  if ($('carte').hasAttribute('data-vivant')) return;
+  const src = monAvatar
+    ? (window.FZART?.dessinAvatar?.(monAvatar, 'buste') ?? portraitRetenu) : null;
+  const vide = !monAvatar && !loadout?.fanzzy;
+  $('heroFz').innerHTML = `<a class="vt-repli" href="${vide ? '/boosters' : '/fanzzy'}"
+      aria-label="${vide ? 'Choisis ton Fanzzy' : 'Mon Fanzzy'}">
+    <span class="tbf-avatar${vide ? ' tbf-avatar--vide' : ''}"><span class="tbf-anneau" style="--p:0%">${
+      src ? `<img class="tbf-avatar-buste" src="${esc(src)}" alt="">` : '<span class="tbf-avatar-buste"></span>'}</span></span></a>`;
 }
 
 /* La scène de MON FANZZY. Un personnage sans dessin d'états (`definir`
@@ -1868,7 +2136,9 @@ let dernierCri = -Infinity;
 async function animerMonFanzzy(avatar, cri, sig) {
   const hote = $('monFzScene');
   if (!hote) return;
-  const scene = window.TBF_SCENE.creer(hote, { fond: 'neutre', taille: { 1: 0.8, 2: 0.88, 3: 0.96, L: 1.08 } });
+  /* Au centre du vestiaire, sous les pastilles : un peu de place au-dessus
+     de la tête pour le saut. */
+  const scene = window.TBF_SCENE.creer(hote, { fond: 'neutre', taille: { 1: 0.66, 2: 0.72, 3: 0.78, L: 0.88 } });
   sceneProfil = scene;
   let vu = false;
   try { vu = await scene.definir(avatar); } catch { vu = false; }
@@ -2129,6 +2399,55 @@ $('supprimer').onclick = async () => {
   });
 };
 
+/* ------------------------------------------------- les tiroirs du vestiaire
+
+   Une tuile ouvre sa rubrique en tiroir par le bas ; un seul à la fois. Il
+   se ferme par sa croix, le voile, Échap, ou le retour du téléphone : à
+   l'ouverture, la page pousse une entrée d'historique (sans changer
+   d'adresse), que le retour dépile. `/profil#clubs` (ou #niveau, #saison,
+   #parcours, #equipement, #reglages) arrive tiroir ouvert. Le focus entre
+   dans le tiroir, et revient à la tuile en sortant. */
+let tiroirOuvert = null;
+let tiroirDepuis = null;
+function ouvrirTiroir(nom, { historique = true } = {}) {
+  const t = $(`tiroir-${nom}`);
+  if (!t) return;
+  if (tiroirOuvert === t) return;
+  if (tiroirOuvert) fermerTiroir({ historique: false });
+  tiroirDepuis = document.activeElement;
+  tiroirOuvert = t;
+  t.hidden = false;
+  $('vtVoile').hidden = false;
+  document.documentElement.classList.add('vt-ouvert');
+  t.querySelector('.vt-corps').scrollTop = 0;
+  t.querySelector('.vt-fermer').focus({ preventScroll: true });
+  if (historique) {
+    try { history.pushState({ tiroir: nom }, ''); } catch { /* sans historique */ }
+  }
+  window.FX?.son?.('tic');
+}
+function fermerTiroir({ historique = true } = {}) {
+  if (!tiroirOuvert) return;
+  tiroirOuvert.hidden = true;
+  tiroirOuvert = null;
+  $('vtVoile').hidden = true;
+  document.documentElement.classList.remove('vt-ouvert');
+  if (historique && history.state?.tiroir) history.back();
+  if (tiroirDepuis?.isConnected) tiroirDepuis.focus({ preventScroll: true });
+  tiroirDepuis = null;
+}
+document.addEventListener('click', (e) => {
+  const tuile = e.target.closest('[data-tiroir]:not(.vt-volet)');
+  if (tuile) { ouvrirTiroir(tuile.dataset.tiroir); return; }
+  if (e.target.closest('.vt-fermer') || e.target.id === 'vtVoile') fermerTiroir();
+});
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && tiroirOuvert) { e.preventDefault(); fermerTiroir(); }
+});
+window.addEventListener('popstate', () => {
+  if (tiroirOuvert && !history.state?.tiroir) fermerTiroir({ historique: false });
+});
+
 /* -------------------------------------------------------- démarrage */
 
 /* Les scripts différés (la fête de niveau, les effets) sont exécutés avant
@@ -2163,6 +2482,11 @@ const domPret = new Promise((r) => (document.readyState === 'loading'
     pagePrete = true;
     $('spin').style.display = 'none';
     $('page').style.display = 'block';
+    const ancre = location.hash.slice(1);
+    if (ancre && $(`tiroir-${ancre}`)) {
+      history.replaceState(null, '', location.pathname + location.search);
+      ouvrirTiroir(ancre);
+    }
 
     /* Le manifeste des états donne au buste la tenue et l'expression
        exactes ; sans lui, c'est le buste de l'âge. Il ne lève jamais. */

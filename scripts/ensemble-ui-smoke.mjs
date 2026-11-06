@@ -117,6 +117,13 @@ check('le geste reçu se voit, avec qui l’a fait', /ILS T’ONT FAIT SIGNE/.te
   || (console.log('        il y a :', t.slice(0, 200)), false));
 check('ce que l’amitié ouvre est dit', /ENTRE AMIS, VOUS POUVEZ/.test(t) && /Échanger vos doubles/.test(t));
 check('chaque ami porte JOUER ENSEMBLE', /JOUER ENSEMBLE/.test(t));
+/* La tribune des amis (6 novembre 2026) : chaque ami y est debout, en pied,
+   et le toucher ouvre sa fiche ; sous un geste reçu, RÉPONDRE. */
+check('la tribune montre l’ami debout, qui ouvre sa fiche', await page.evaluate((b) =>
+  Boolean(document.querySelector(`.tribune .place [data-fiche="${b}"] .n`)?.textContent.includes('Bruno'))
+  && /TA TRIBUNE/.test(document.querySelector('.tribune h2')?.textContent ?? ''), B));
+check('sous son geste, RÉPONDRE', await page.evaluate((b) =>
+  Boolean(document.querySelector(`.signe [data-repondre="${b}"]`)), B));
 await capture(page, 'liste');
 const vus = Number((await pool.query(`SELECT COUNT(*) n FROM amis_gestes WHERE a = ? AND vu = 0`, [A]))[0][0].n);
 check('affiché, le geste est vu', await jusqua(async () => Number((await pool.query(
@@ -133,10 +140,20 @@ check('sa collection dit ce qu’on n’a pas', /2 Fanzzy, dont 0 que tu as auss
   && /TU NE L’AS PAS/.test(t) && /DOUBLE/.test(t));
 await capture(page, 'fiche');
 
+check('la scène montre son Fanzzy, entouré des cases', await page.evaluate(() =>
+  Boolean(document.querySelector('.scene-ami .heros') && document.querySelector('.scene-ami .rail [data-roue]')
+    && document.querySelector('.scene-ami .rail a[href="/duel-nvn"]'))));
+check('sa dernière bulle se voit au-dessus de lui', /BRAVO/.test(await page.evaluate(() =>
+  document.querySelector('.scene-ami .bulle.lui')?.textContent ?? '')));
+await toucher(page, '.rail [data-roue]');
+check('la case GESTES ouvre la roue des dix gestes', await page.evaluate(() =>
+  document.querySelector('#roue.on') !== null && document.querySelectorAll('#roue [data-geste]').length === 10));
 await toucher(page, '[data-geste="allez"]');
 await jusqua(async () => /Geste envoyé/.test(await dernierToast(page)));
 check('un geste part, et la page le dit', /Geste envoyé/.test(await dernierToast(page))
   && Number((await pool.query(`SELECT COUNT(*) n FROM amis_gestes WHERE de = ? AND geste = 'allez'`, [A]))[0][0].n) === 1);
+check('la roue se ferme, et ta bulle part', await page.evaluate(() =>
+  !document.querySelector('#roue.on') && /ALLEZ/.test(document.querySelector('.scene-ami .bulle.moi')?.textContent ?? '')));
 
 await toucher(page, '[data-cadeau]');
 await jusqua(async () => /Déjà offert/.test(await texte(page)));
@@ -165,6 +182,12 @@ check('on revient à la liste', /JOUER ENSEMBLE/.test(await texte(page)));
 /* --------------------------------------------- de l'autre côté */
 
 moi = B;
+const liste = await ouvrir('/amis');
+await toucher(liste, `[data-repondre="${A}"]`);
+await jusqua(async () => /SA COLLECTION/.test(await texte(liste)));
+check('RÉPONDRE ouvre sa fiche, la roue déjà ouverte', await liste.evaluate(() =>
+  document.querySelector('#roue.on [data-geste]') !== null));
+await liste.close();
 const chezLui = await ouvrir(`/amis?ami=${A}`);
 await jusqua(async () => /SA COLLECTION/.test(await texte(chezLui)));
 t = await texte(chezLui);
