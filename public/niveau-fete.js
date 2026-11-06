@@ -366,7 +366,8 @@
    *   `src` (le dessin de la scène, ou rien : la cocarde seule), `avant` et
    *   `n` (le chiffre qui compte, de l'un à l'autre), `ecarpes` (le compte
    *   du sticker `.tbf-niv-ech`), `son`, `petit` (un titre long : un corps
-   *   plus petit), `boutons` (`[{ texte, valeur }]`, avant CONTINUER).
+   *   plus petit), `boutons` (`[{ texte, valeur }]`, avant CONTINUER),
+   *   `scene` (HTML qui remplace la cocarde dans la scène).
    * @returns {Promise<string|undefined>} la valeur du bouton touché, ou rien
    *   pour CONTINUER.
    */
@@ -397,7 +398,7 @@
            aria-label="${esc(nomDeLaFete)}">
         <div class="tbf-niv-scene${src ? ' tbf-niv-scene--perso' : ''}" aria-hidden="true">
           ${src ? `<img class="tbf-niv-perso" alt="" decoding="async" src="${esc(src)}">` : ''}
-          ${ROSETTE}
+          ${typeof p.scene === 'string' ? p.scene : ROSETTE}
         </div>
         <div class="tbf-niv-corps">
           <span class="tbf-sticker${sans ? '' : ' tbf-colle" style="--d:200ms'}" data-ton="flare">${esc(quoi)}</span>
@@ -519,7 +520,7 @@
       /* La rosette se serre d'un coup, avec un rebond — le nœud de plus sur
          l'écharpe, dit la direction —, puis se tient immobile : elle ne
          tourne plus sans fin. */
-      try {
+      if (rosette) try {
         rosette.animate([{ scale: '0' }, { scale: '1.18', offset: 0.6 }, { scale: '1' }],
           { duration: 440, delay: 160, easing: 'cubic-bezier(.2,1.3,.35,1)', fill: 'backwards' });
       } catch { /* elle est là, sans rebond */ }
