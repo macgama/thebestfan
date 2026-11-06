@@ -126,7 +126,9 @@ await raw.query(`INSERT INTO leagues (id,name) VALUES (207,'Super League')`);
 // ×2 — c’est exactement ce qui distingue les deux portées.
 await raw.query(`INSERT INTO fixtures (id,league_id,season,home_id,away_id,status_short,kickoff_at)
   VALUES (7,207,2026,85,91,'1H', UTC_TIMESTAMP() - INTERVAL 20 MINUTE),
-         (8,207,2026,60,61,'NS', UTC_TIMESTAMP() + INTERVAL 2 DAY)`);
+         (8,207,2026,60,61,'NS', UTC_TIMESTAMP() - INTERVAL 30 MINUTE)`);
+/* Le second match est du jour aussi, comme le premier : l'onglet MATCHS DU
+   JOUR (6 novembre 2026) ne montre que ceux d'aujourd'hui. */
 /* **Chacun son club, et ce sont les deux du match.** Les deux joueurs
    suivaient Sion : depuis que les tribunes d'un duel sont les deux clubs de la
    rencontre, ils seraient tous deux du côté du domicile et ne se
@@ -495,7 +497,15 @@ const stadeAnnonce = await A.page.evaluate(() => window.__lireStade());
     return { defile: Math.round(prepa.scrollTop), port: [Math.round(port.top), Math.round(port.bottom)],
       entrer: r ? [Math.round(r.top), Math.round(r.bottom)] : null, actif: Boolean(b && !b.disabled),
       rangee: q ? [Math.round(q.top), Math.round(q.bottom)] : null,
-      suivant: choisi?.nextElementSibling?.matches('.entree') ?? false,
+      /* Ce qui sépare l'affiche de la rangée d'entrée : les deux étapes de
+         Gaël (6 novembre 2026), l'équipe puis le format, et rien d'autre. */
+      etapes: (() => {
+        const t = [];
+        for (let n = choisi?.nextElementSibling; n && !n.matches('.entree'); n = n.nextElementSibling) {
+          t.push(n.querySelector('h3')?.textContent.replace(/\s+/g, ' ').trim() ?? n.className);
+        }
+        return t;
+      })(),
       marques: choisi ? [...choisi.querySelectorAll('.tbf-affiche-club')]
         .map((c) => c.querySelector('.tribune-mienne')?.textContent.trim() ?? '') : [],
       regles: rr ? [Math.round(rr.top), Math.round(rr.bottom)] : null,
@@ -512,8 +522,10 @@ const stadeAnnonce = await A.page.evaluate(() => window.__lireStade());
   check(`à 360 × 640, chez soi, ENTRER EN FILE est à l’écran sans rien faire défiler (${
     vu.entrer?.join('–') ?? 'absent'} dans ${vu.port.join('–')})`,
   vu.defile === 0 && vu.actif && aLEcran(vu) || (console.log('        ', JSON.stringify(vu)), false));
-  check('rien entre l’affiche et lui : ni phrase, ni rubrique d’un camp qui ne se choisit pas',
-    vu.suivant || (console.log('        ', JSON.stringify(vu)), false));
+  check(`entre l’affiche et lui, les deux étapes seulement : l’équipe, puis le format (${vu.etapes.join(' | ')})`,
+    vu.etapes.length === 2 && /^1\. TON ÉQUIPE/.test(vu.etapes[0]) && /Sion/.test(vu.etapes[0])
+    && /^2\. CHOISIS TON FORMAT/.test(vu.etapes[1])
+    || (console.log('        ', JSON.stringify(vu)), false));
   check(`l’affiche dit le camp : « TA TRIBUNE » sur Sion, et sur lui seul (${JSON.stringify(vu.marques)})`,
     vu.marques.length === 2 && vu.marques[0] === 'TA TRIBUNE' && vu.marques[1] === '');
   check(`la rangée d’entrée ne cache rien de lisible (${vu.couvre.join(' | ') || 'rien'})`,
@@ -650,9 +662,13 @@ const lireAnnonce = (page) => page.evaluate(async () => {
    Le serveur savait déjà répondre à `?tous=1` ; aucune page ne le lui
    demandait, ce qui rendait la fonction invisible, donc inexistante. */
 
+/* MES CLUBS et TOUS LES MATCHS sont devenus le filtre MES ÉQUIPES de
+   l'onglet MATCHS DU JOUR (6 novembre 2026, Gaël). */
 const portee = async (quoi) => {
-  await A.page.evaluate((q) =>
-    document.querySelector(`[data-portee="${q}"]`)?.click(), quoi);
+  await A.page.evaluate((q) => {
+    const b = document.querySelector('[data-mes-equipes]');
+    if (b && (b.getAttribute('aria-pressed') === 'true') !== (q === 'miens')) b.click();
+  }, quoi);
   await dodo(600);
   return A.page.evaluate(() => ({
     matchs: [...document.querySelectorAll('[data-fixture]')].map((m) => m.textContent.trim()),
@@ -664,14 +680,14 @@ const portee = async (quoi) => {
 };
 
 const miens = await portee('miens');
-check('par défaut, seuls les matchs de ses clubs sont proposés',
+check('par défaut, MES ÉQUIPES ne propose que les matchs de ses clubs',
   miens.matchs.length === 1 && /Sion/.test(miens.matchs[0]));
 check('et celui-là porte le badge du double', miens.doubles === 1);
 check('la page explique pourquoi, dans les règles du « i »', /rapporte le double/.test(miens.regles)
   || (console.log('        règles :', miens.regles), false));
 
 const tousM = await portee('tous');
-check('« tous les matchs » en propose davantage', tousM.matchs.length === 2);
+check('sans le filtre, tous les matchs du jour', tousM.matchs.length === 2);
 check('dont un match sans club suivi', tousM.matchs.some((m) => /Lugano/.test(m)));
 check('et un seul porte le badge du double', tousM.doubles === 1);
 
@@ -778,8 +794,10 @@ const place = await A.page.evaluate(() => {
 });
 check('le choix se déplie juste sous le match', place.juste === true);
 check('et le bouton d’entrée le suit, dans le bloc du match choisi', place.dedans === true);
-check('à portée de doigt, pas à un écran de là',
-  place.ecart !== null && place.ecart >= 0 && place.ecart < 260
+/* L'équipe puis le format se choisissent entre les deux (6 novembre 2026,
+   Gaël) : deux rangées de bâches, sous un écran de téléphone. */
+check(`à portée de doigt, pas à un écran de là (${place.ecart} px)`,
+  place.ecart !== null && place.ecart >= 0 && place.ecart < 400
   || (console.log('        écart :', place.ecart, 'px'), false));
 
 // On revient sur ses clubs : la suite du test compte sur ce match-là.

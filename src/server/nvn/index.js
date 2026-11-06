@@ -76,7 +76,34 @@ const GRACE_MS = 90_000;
 
    Chaque place porte aussi **un code** : celui du lien d'invitation
    (`/duel-nvn?duel=<code>`). Le lien mène droit au vestiaire de ce duel-là,
-   dans la tribune d'en face quand le club de l'invité le permet. */
+   dans la tribune d'en face quand le club de l'invité le permet.
+
+   ================================================== un duel privé
+
+   Gaël, 6 novembre 2026 : « Si un joueur a créé un duel pour un match, les
+   autres n'ont pas d'autre choix que d'y participer », et l'organisateur
+   veut pouvoir bloquer la venue d'autres joueurs quand il a envoyé le lien
+   à quelqu'un.
+
+   La file publique est un appariement : tous ceux qui entrent sur ce match
+   et ce format tombent dans la même salle. **Un duel privé a la sienne**,
+   un salon (`salon`, le code du créateur) qui s'ajoute à la clé de file :
+
+     — on n'y entre que par le lien ou une invitation (le code d'une de ses
+       places) ; il ne paraît ni dans les files affichées (`filesParMatch`,
+       EN ATTENTE, l'alerte de l'accueil) ni dans l'alerte aux supporters ;
+     — il ne se mélange jamais à une autre file (`tenterLarge` l'ignore) ;
+     — **pas de supporters d'appoint automatiques** : on attend l'ami. JOUER
+       CONTRE DES BOTS reste là, et le salon expire au bout de
+       `duel.attente_absent_min` minutes sans duel ;
+     — **l'invité prend la tribune vide**, même s'il suit le club de celui
+       qui l'invite : sinon deux amis du même club ne pourraient jamais
+       jouer l'un contre l'autre. Il y est alors neutre (ferveur et points de
+       club d'un neutre), comme quiconque tient une tribune qui n'est pas la
+       sienne ;
+     — il compte au classement comme un duel public (choix de Gaël) ;
+     — le vestiaire le ferme ou le rouvre (`nvn:prive`). Fermer n'emmène que
+       soi ; rouvrir rend tout le salon à la file publique.  */
 const RAPPEL_MS = 60_000;
 /** Invitations « en jeu » qu'une place peut envoyer : de quoi inviter tous
     ses amis, pas de quoi en faire un moyen de harceler. */
@@ -364,16 +391,21 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
     const [rows] = await pool.execute(sql, params);
     return rows;
   };
-  const cle = (format, fixtureId, camp) => `${format}:${fixtureId}:${camp}`;
+  /* Un salon privé s'ajoute au bout : `1v1:901:0:s3f…`. La clé publique ne
+     change pas, et aucune clé publique ne finit par un salon. */
+  const cle = (format, fixtureId, camp, salon = null) =>
+    (salon ? `${format}:${fixtureId}:${camp}:${salon}` : `${format}:${fixtureId}:${camp}`);
 
   /* ------------------------------------------------------- appariement */
 
-  async function entrerEnFile(socket, { format, fixtureId, camp, contreBot, souple, duel }) {
+  async function entrerEnFile(socket, { format, fixtureId, camp, contreBot, souple, duel, prive }) {
     const u = socket.data?.user;
     /* **Par un lien d'invitation** : le code désigne une place qui attend.
        Format et match sont les siens ; le camp, celui d'en face — le club
        de l'invité a encore le dernier mot, plus bas. Un code inconnu est
        un duel déjà parti ou abandonné : la page le dit et montre le match. */
+    let salon = null;
+    let campImpose = null;
     if (duel !== undefined && duel !== null && duel !== '') {
       const hote = placeDuCode(String(duel));
       if (!hote) throw new Cheat('duel_parti');
@@ -383,6 +415,18 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
       camp = hote.camp ^ 1;
       contreBot = false;
       souple = false;
+      /* **Le salon d'un duel privé** : l'invité y entre, dans la tribune
+         qui a de la place — en face d'abord —, quel que soit son club. */
+      if (hote.salon) {
+        salon = hote.salon;
+        const n = (k) => (files.get(cle(format, fixtureId, k, salon)) ?? []).length;
+        campImpose = n(hote.camp ^ 1) < FORMATS[format] || n(hote.camp) >= FORMATS[format]
+          ? hote.camp ^ 1 : hote.camp;
+      }
+    } else if (prive) {
+      salon = `s${nouveauCode()}`;
+      souple = false;
+      contreBot = false;
     }
     // On vérifie l'identifiant, pas seulement la présence de l'objet : une
     // session à moitié montée donnait un `{ userId: undefined }` bien truthy,
@@ -415,10 +459,16 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
      *
      * **Ailleurs, il se choisit**, et c'est tout l'objet de ce duel-ci : on
      * vient tenir une tribune qui n'est pas la sienne. */
-    const club = await clubSoutenu(q, u.userId, maison, exterieur);
-    const monCamp = club.neutre
+    let club = await clubSoutenu(q, u.userId, maison, exterieur);
+    let monCamp = club.neutre
       ? (Number(camp) === 1 ? 1 : 0)
       : campDe(club.teamId, maison, exterieur);
+    /* Invité dans un duel privé : la tribune vide, et neutre s'il n'y est
+       pas chez lui. Voir « un duel privé », en tête de module. */
+    if (campImpose !== null && campImpose !== monCamp) {
+      monCamp = campImpose;
+      club = { ...club, neutre: true, teamId: null };
+    }
 
     /* **Les Fanzzy liés à son club** (`shared/fanzzy/clubs.js`) poussent plus
        fort, chez soi seulement : un neutre n'a pas de club dans ce match. Le
@@ -437,9 +487,9 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
     quitterFile(u.userId);
 
     const taille = FORMATS[format];
-    const c = cle(format, fixtureId, monCamp);
+    const c = cle(format, fixtureId, monCamp, salon);
     const file = files.get(c) ?? [];
-    const enFace = files.get(cle(format, fixtureId, monCamp ^ 1)) ?? [];
+    const enFace = files.get(cle(format, fixtureId, monCamp ^ 1, salon)) ?? [];
 
     /* Le renfort.
      *
@@ -469,17 +519,21 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
                 contreBot: Boolean(contreBot),
                 /* Le code du lien d'invitation, et les amis déjà invités :
                    voir « un duel qui attend », en tête de module. */
-                code: nouveauCode(), invites: new Set(), absentDepuis: null });
+                code: nouveauCode(), invites: new Set(), absentDepuis: null,
+                /* Le salon d'un duel privé, ou `null` : voir « un duel privé ». */
+                salon });
     files.set(c, file);
 
     /* À toute la file, et non au seul arrivant : ceux qui attendaient déjà ne
        voyaient jamais personne entrer. Voir `diffuserFile`. */
-    diffuserFile(format, Number(fixtureId));
+    diffuserFile(format, Number(fixtureId), salon);
 
     annoncerAttentes();
     if (contreBot) return ouvrirAvecBots(c);
-    const partiVite = tenterAppariement(format, Number(fixtureId));
+    const partiVite = tenterAppariement(format, Number(fixtureId), null, salon);
     if (partiVite) return partiVite;
+    /* Un salon privé ne se mélange à rien, et ne sonne personne. */
+    if (salon) return null;
 
     /* **Sans attendre la veille**, si quelqu’un accepte déjà de jouer avec
        celui qui vient d’arriver. C’est le cas d’un joueur souple — « peu
@@ -538,10 +592,10 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
    * seul moyen que « en haut, c'est moi » reste vrai pour tout le monde, ce qui
    * est la convention de tous les écrans du jeu.
    */
-  function etatFile(format, fixtureId, camp, support) {
+  function etatFile(format, fixtureId, camp, support, salon = null) {
     const taille = FORMATS[format];
-    const mien = files.get(cle(format, fixtureId, camp)) ?? [];
-    const face = files.get(cle(format, fixtureId, camp ^ 1)) ?? [];
+    const mien = files.get(cle(format, fixtureId, camp, salon)) ?? [];
+    const face = files.get(cle(format, fixtureId, camp ^ 1, salon)) ?? [];
     const clubs = [support.fixture.home, support.fixture.away];
 
     /* Le Fanzzy **titulaire** : c'est lui qu'on voit entrer au coup d'envoi, et
@@ -578,8 +632,12 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
       /* L'instant où les bots entrent, et non la durée restante : une durée
          envoyée une fois est fausse une seconde plus tard, et la page ne
          pouvait qu'afficher une phrase figée. Avec un instant, elle décompte. */
-      botA: Date.now() + attenteAvantBots(support.mode),
-      botDansMs: attenteAvantBots(support.mode),
+      /* Un duel privé : pas de supporters d'appoint, on attend l'ami. Le
+         vestiaire ne montre alors aucun rebours. */
+      ...(salon ? { prive: true } : {
+        botA: Date.now() + attenteAvantBots(support.mode),
+        botDansMs: attenteAvantBots(support.mode),
+      }),
     };
   }
 
@@ -590,16 +648,16 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
    * déjà ne voyaient donc jamais personne arriver : leur écran restait sur
    * « 1 sur 3 » jusqu'au coup d'envoi, et l'attente n'avait aucun signe de vie.
    */
-  function diffuserFile(format, fixtureId) {
+  function diffuserFile(format, fixtureId, salon = null) {
     for (const camp of [0, 1]) {
-      const file = files.get(cle(format, fixtureId, camp)) ?? [];
+      const file = files.get(cle(format, fixtureId, camp, salon)) ?? [];
       for (const f of file) {
         // Une place absente n'a personne à qui parler : elle lira `/moi`.
         if (!present(f)) continue;
         /* Le renfort est **celui de chacun**, figé à son entrée : le recalculer
            ici donnerait à tout le monde celui du dernier arrivé. */
         f.socket.emit('nvn:file', {
-          ...etatFile(format, fixtureId, camp, f.support),
+          ...etatFile(format, fixtureId, camp, f.support, salon),
           neutre: f.neutre,
           renfort: Number(f.bonus.toFixed(2)),
           moi: f.userId,
@@ -630,27 +688,24 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
   function quitterFile(userId) {
     let parti = false;
     // Les files touchées, pour ne les rediffuser qu’une fois chacune.
-    const vidangees = new Set();
+    const vidangees = new Map();
     for (const [c, file] of files) {
       const i = file.findIndex((f) => f.userId === userId);
       if (i === -1) continue;
-      file.splice(i, 1);
+      const [f] = file.splice(i, 1);
       if (!file.length) files.delete(c);
       else files.set(c, file);
       parti = true;
-      /* Le format et le match, tirés de la clé : ceux qui restent doivent voir
-         la place se vider. Une salle d’attente où personne ne part jamais
-         montre des gens qui ne viendront pas. */
+      /* Le format, le match et le salon de la place : ceux qui restent
+         doivent voir la place se vider. Une salle d’attente où personne ne
+         part jamais montre des gens qui ne viendront pas. */
       const [fmt, fix] = c.split(':');
-      vidangees.add(`${fmt}:${fix}`);
+      vidangees.set(`${fmt}:${fix}:${f.salon ?? ''}`, [fmt, Number(fix), f.salon ?? null]);
     }
     /* On n'annonce que si quelque chose a bougé : `quitterFile` est appelée à
        chaque déconnexion, et la plupart ne concernent personne qui attendait. */
     if (parti) {
-      for (const v of vidangees) {
-        const [fmt, fix] = v.split(':');
-        diffuserFile(fmt, Number(fix));
-      }
+      for (const [fmt, fix, salon] of vidangees.values()) diffuserFile(fmt, fix, salon);
       annoncerAttentes();
     }
   }
@@ -696,7 +751,7 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
     if (!f || f.socket !== socket) return;
     f.socket = null;
     f.absentDepuis = Date.now();
-    diffuserFile(f.format, Number(f.support.fixture.id));
+    diffuserFile(f.format, Number(f.support.fixture.id), f.salon);
   }
 
   /**
@@ -717,9 +772,10 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
     f.absentDepuis = null;
     f.depuis = Date.now();
     const fixtureId = Number(f.support.fixture.id);
-    diffuserFile(f.format, fixtureId);
+    diffuserFile(f.format, fixtureId, f.salon);
     annoncerAttentes();
-    if (tenterAppariement(f.format, fixtureId)) return true;
+    if (tenterAppariement(f.format, fixtureId, null, f.salon)) return true;
+    if (f.salon) return true;
     for (let k = Math.max(...Object.values(FORMATS)); k >= 1; k--) {
       if (tenterLarge(fixtureId, k)) break;
     }
@@ -774,9 +830,9 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
    * c'était la bonne réponse tant que les deux tribunes n'étaient qu'un ordre
    * d'arrivée. Elles portent maintenant les couleurs d'un vrai club.
    */
-  function tenterAppariement(format, fixtureId, minimum = null) {
+  function tenterAppariement(format, fixtureId, minimum = null, salon = null) {
     const taille = FORMATS[format];
-    const cles = [cle(format, fixtureId, 0), cle(format, fixtureId, 1)];
+    const cles = [cle(format, fixtureId, 0, salon), cle(format, fixtureId, 1, salon)];
     // Les présents seulement : un absent n'entre en duel qu'en revenant.
     const camps = cles.map((k) => (files.get(k) ?? []).filter(present));
 
@@ -847,6 +903,8 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
       const pris = [];
       for (const [k, file] of files) {
         if (!k.includes(suffixe) || !k.endsWith(`:${camp}`)) continue;
+        // Un salon privé ne se mélange à aucune autre file.
+        if (file[0]?.salon) continue;
         for (const f of file) if (present(f) && accepte(f, taille, t)) pris.push({ k, f });
       }
       return pris.sort((a, b) => a.f.depuis - b.f.depuis).slice(0, taille);
@@ -892,14 +950,14 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
   function ouvrirAvecBots(c) {
     const file = files.get(c);
     if (!file?.length) return null;
-    const { format } = file[0];
+    const { format, salon } = file[0];
     const taille = FORMATS[format];
     const fixtureId = Number(file[0].support?.fixture?.id);
 
     /* Les deux files du même match et du même format. Celle qui a déclenché la
        minuterie n'a aucune priorité : ce qui compte est qu'un maximum de gens
        jouent ensemble. */
-    const cles = [0, 1].map((camp) => cle(format, fixtureId, camp));
+    const cles = [0, 1].map((camp) => cle(format, fixtureId, camp, salon));
     /* Les présents seulement : un bot ne remplace pas quelqu'un parti voir
        ailleurs, et un absent ne joue pas contre des bots sans le savoir. */
     const humains = cles.map((k) => (files.get(k) ?? []).filter(present).slice(0, taille));
@@ -943,8 +1001,8 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
     const taille = FORMATS[f.format];
     f.socket = socket;
     f.absentDepuis = null;
-    retirer([cle(f.format, fixtureId, f.camp)], [f]);
-    diffuserFile(f.format, fixtureId);
+    retirer([cle(f.format, fixtureId, f.camp, f.salon)], [f]);
+    diffuserFile(f.format, fixtureId, f.salon);
     annoncerAttentes();
     const equipes = [[], []];
     equipes[f.camp].push(f);
@@ -954,6 +1012,58 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
       }
     }
     return ouvrir(equipes, { ...f.support, mode: 'entrainement' });
+  }
+
+  /**
+   * **Fermer ou rouvrir son duel**, depuis le vestiaire (le cadenas). Voir
+   * « un duel privé », en tête de module.
+   *
+   * Fermer n'emmène que soi : ceux qui attendaient dans la file publique
+   * n'ont pas demandé à être enfermés avec quelqu'un. Rouvrir rend tout le
+   * salon à la file publique — chacun y est entré pour jouer avec lui.
+   *
+   * @returns {boolean} faux hors de toute file
+   */
+  function basculerPrive(socket, prive) {
+    const u = socket.data?.user;
+    const f = u?.userId ? placeDe(u.userId) : null;
+    if (!f) return false;
+    f.socket = socket;
+    f.absentDepuis = null;
+    const fixtureId = Number(f.support.fixture.id);
+    if (Boolean(prive) === Boolean(f.salon)) {
+      diffuserFile(f.format, fixtureId, f.salon);
+      return true;
+    }
+    if (prive) {
+      retirer([cle(f.format, fixtureId, f.camp)], [f]);
+      f.salon = `s${nouveauCode()}`;
+      f.souple = false;
+      f.depuis = Date.now();
+      const k = cle(f.format, fixtureId, f.camp, f.salon);
+      files.set(k, [...(files.get(k) ?? []), f]);
+      diffuserFile(f.format, fixtureId, null);
+      diffuserFile(f.format, fixtureId, f.salon);
+      annoncerAttentes();
+      return true;
+    }
+    const salon = f.salon;
+    for (const camp of [0, 1]) {
+      const kp = cle(f.format, fixtureId, camp, salon);
+      const places = files.get(kp) ?? [];
+      files.delete(kp);
+      const k = cle(f.format, fixtureId, camp);
+      for (const x of places) x.salon = null;
+      if (places.length) files.set(k, [...(files.get(k) ?? []), ...places]);
+    }
+    diffuserFile(f.format, fixtureId, null);
+    annoncerAttentes();
+    if (!tenterAppariement(f.format, fixtureId)) {
+      for (let k = Math.max(...Object.values(FORMATS)); k >= 1; k--) {
+        if (tenterLarge(fixtureId, k)) break;
+      }
+    }
+    return true;
   }
 
   function faireBot(modele, i, side) {
@@ -1972,6 +2082,12 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
       catch (e) { erreur(e); }
     });
 
+    /* Le cadenas du vestiaire : fermer son duel, ou le rouvrir à tous. */
+    socket.on('nvn:prive', (p = {}) => {
+      try { if (!basculerPrive(socket, Boolean(p?.prive))) socket.emit('nvn:hors_file'); }
+      catch (e) { erreur(e); }
+    });
+
     socket.on('nvn:leave_queue', () => {
       const u = moi();
       if (u) quitterFile(u.userId);
@@ -2125,7 +2241,8 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
     for (const [c, file] of [...files]) {
       if (!file.length) continue;
       const fixtureId = Number(file[0].support?.fixture?.id);
-      const paire = `${file[0].format}:${fixtureId}`;
+      const { salon } = file[0];
+      const paire = `${file[0].format}:${fixtureId}:${salon ?? ''}`;
       if (vus.has(paire)) continue;
       vus.add(paire);
 
@@ -2133,9 +2250,29 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
          est celui dont la patience décide, quel que soit son côté. Parmi les
          présents : l'attente d'un absent ne compte pas, il n'attend rien. */
       const tous = [0, 1].map((camp) =>
-        files.get(cle(file[0].format, fixtureId, camp)) ?? []).flat();
+        files.get(cle(file[0].format, fixtureId, camp, salon)) ?? []).flat();
       const deux = tous.filter(present);
       if (!deux.length) continue;
+
+      /* **Un salon privé** n'appelle pas de bots : il attend l'ami. Il se
+         contente plus petit avec le temps, comme une file publique, et
+         s'en va au bout de `duel.attente_absent_min` minutes sans duel. */
+      if (salon) {
+        const ecoulePrive = t - Math.min(...deux.map((f) => f.depuis));
+        if (ecoulePrive > absentMax) {
+          for (const f of tous) {
+            f.socket?.emit('nvn:prive_expire');
+            quitterFile(f.userId);
+          }
+          continue;
+        }
+        const attenteP = attenteAvantBots('classe');
+        const seuilP = tailleAcceptee(FORMATS[file[0].format], ecoulePrive, attenteP);
+        if (seuilP < FORMATS[file[0].format]) {
+          tenterAppariement(file[0].format, fixtureId, seuilP, salon);
+        }
+        continue;
+      }
       /* Un absent est rappelé : on lui laisse le temps de revenir avant que
          les bots prennent sa place. */
       const attente = tous.some((f) => !present(f))
@@ -2192,6 +2329,8 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
     const parMatch = new Map();
     for (const file of files.values()) {
       if (!file.length) continue;
+      // Un duel privé ne s'affiche pas : on n'y entre que par invitation.
+      if (file[0].salon) continue;
       const { format, camp, support } = file[0];
       const fixture = support?.fixture;
       if (!fixture?.id) continue;
@@ -2425,10 +2564,11 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
     let file = null;
     if (f) {
       const fixtureId = Number(f.support.fixture.id);
-      const face = files.get(cle(f.format, fixtureId, f.camp ^ 1)) ?? [];
+      const face = files.get(cle(f.format, fixtureId, f.camp ^ 1, f.salon)) ?? [];
       const clubs = [f.support.fixture.home, f.support.fixture.away];
       file = {
         format: f.format, fixtureId, camp: f.camp, absent: !present(f),
+        prive: Boolean(f.salon),
         club: clubs[f.camp] ?? null, enFaceClub: clubs[f.camp ^ 1] ?? null,
         // Quelqu'un de présent en face : le duel n'attend plus que moi.
         adversaire: face.some(present),

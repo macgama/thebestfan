@@ -369,9 +369,17 @@ const RUBRIQUES = [
           + 'la violette DUEL qu’un joueur y attend un adversaire. Un appui t’y emmène. '
           + 'Le filtre À JOUER de MATCHS ne garde que ces matchs-là.'],
       ['Quelqu’un attend un duel : où le trouver ?',
-        'Sur la page du duel, l’onglet EN ATTENTE montre les duels où quelqu’un attend '
-          + 'un joueur. Un appui choisit le match, le format et la tribune qui manque : '
-          + 'il ne reste qu’à entrer en file.'],
+        'Sur la page du duel, l’onglet EN ATTENTE DE JOUEURS montre les duels où quelqu’un '
+          + 'attend un joueur ; tu peux les filtrer par format (1v1, 2v2…) et garder seulement '
+          + 'tes équipes. Un appui choisit le match, le format et la tribune qui manque : '
+          + 'il ne reste qu’à toucher REJOINDRE LE DUEL.'],
+      ['Comment créer un duel ?',
+        'Sur la page du duel, l’onglet MATCHS DU JOUR liste les matchs d’aujourd’hui (MES '
+          + 'ÉQUIPES pour ne garder que les tiens, et une recherche par équipe, compétition '
+          + 'ou pays). Touche un match, puis choisis ton équipe, ton format, et CRÉER LE DUEL. '
+          + 'Si quelqu’un attend déjà en face sur ce match et ce format, le bouton devient '
+          + 'REJOINDRE LE DUEL. Un jour sans match, la page montre le prochain jour de match, '
+          + 'en entraînement.'],
       ['Si je quitte la salle d’attente, mon duel disparaît-il ?',
         () => 'Non. Il reste ouvert et les autres le voient toujours ; le jeu te '
           + 'rappelle dès que quelqu’un arrive en face. S’il ne te voit pas revenir '
@@ -389,6 +397,15 @@ const RUBRIQUES = [
         'Ouvre un duel, puis, dans la salle d’attente, invite ton ami depuis le jeu '
           + 'ou envoie-lui le lien : un appui l’amène directement dans ton duel. Tu '
           + 'peux aussi le défier aux tirs au but, dans les mini-jeux.'],
+      ['Puis-je jouer seul avec mon ami, sans qu’un autre joueur entre ?',
+        () => 'Oui : coche DUEL PRIVÉ dans la case du match avant CRÉER LE DUEL, ou touche RENDRE PRIVÉ '
+          + 'dans la salle d’attente. Ton duel n’apparaît alors dans aucune liste : '
+          + 'seuls ceux à qui tu envoies le lien ou une invitation peuvent entrer, '
+          + 'dans la tribune qui a de la place, même s’ils suivent ton club. Les '
+          + 'supporters d’appoint n’y entrent pas d’eux-mêmes, et le duel compte au '
+          + `classement comme les autres. Sans adversaire au bout de ${reglage('duel.attente_absent_min')} `
+          + 'minutes, il se ferme. Les autres joueurs peuvent toujours jouer le même '
+          + 'match, dans la file publique ou dans leur propre duel privé.'],
       ['C’est quoi, le duel guidé ?',
         'Trois minutes sur un match fictif, contre un adversaire patient, avec des '
           + 'bulles qui te montrent quoi faire. Il ne rapporte rien, ne compte nulle '
