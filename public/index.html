@@ -3921,7 +3921,9 @@ function caler(img) {
     for (const v of ['--taille', '--sous', '--decale']) img.style.removeProperty(v);
     return;
   }
-  const t = equipe ? window.TBF_ETATS?.taille?.(equipe.id, equipe.evo) : null;
+  /* Avec l'image : sans mesure au catalogue, elle se mesure elle-même et
+     garde la taille de son âge (6 novembre 2026). */
+  const t = equipe ? window.TBF_ETATS?.taille?.(equipe.id, equipe.evo, undefined, img) : null;
   let rh = t ? parseFloat(t.hauteur) / 100 : ({ 1: 0.8, 2: 0.9 }[equipe?.evo] ?? 1);
   /* `contain` dans une boîte deux fois large comme la pile (448 × 900) : une
      image plus large que ça se cale sur la largeur, et rend moins haut. */

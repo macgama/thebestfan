@@ -755,9 +755,12 @@ function styleEtat(src) {
 function poserAuSol(img) {
   const m = window.TBF_ETATS?.pieds?.(img);
   const e = ETAT_SRC.exec(img?.getAttribute?.('src') ?? '');
-  const t = m && e ? window.TBF_ETATS?.taille?.(e[1], e[2], PART_CARTE[e[2]]) : null;
+  /* Avec l'image : sans mesure au catalogue, elle se mesure elle-même, et
+     la taille de l'âge est posée ici même si le HTML est né sans elle. */
+  const t = m && e ? window.TBF_ETATS?.taille?.(e[1], e[2], PART_CARTE[e[2]], img) : null;
   if (!t) return;
   const h = parseFloat(t.hauteur) / 100;
+  Object.assign(img.style, { height: t.hauteur, left: '50%', width: 'auto', maxWidth: 'none' });
   img.style.bottom = `calc(${(-m.sous * h * 100).toFixed(2)}% - 6%)`;
   img.style.translate = `calc(-50% + ${(-m.decal * h * 100).toFixed(2)}cqh) 0`;
 }
@@ -765,7 +768,9 @@ function cadrerEtat(html) {
   return html.replace(/<img class="illu fz-pied([^"]*)"([^>]*?) src="(\/img\/fanzzy\/[A-Z]+\d+\/e\d\/[^"]+)"/g,
     (tout, cls, entre, src) => {
       const style = styleEtat(src);
-      return style ? `<img class="illu fz-pied${cls}" style="${style}" onload="window.TBF_CARTES?.poserAuSol?.(this)"${entre} src="${src}"` : tout;
+      /* Sans mesure au catalogue, pas de style d'avance, mais l'image se
+         posera elle-même une fois décodée (`poserAuSol`). */
+      return `<img class="illu fz-pied${cls}"${style ? ` style="${style}"` : ''} onload="window.TBF_CARTES?.poserAuSol?.(this)"${entre} src="${src}"`;
     });
 }
 /**
@@ -781,7 +786,7 @@ function cadrerImage(img, src) {
   const style = styleEtat(src);
   for (const k of ['height', 'bottom', 'left', 'width', 'max-width', 'translate']) img.style.removeProperty(k);
   if (style) img.style.cssText += `;${style}`;
-  if (style) img.addEventListener('load', () => poserAuSol(img), { once: true });
+  if (ETAT_SRC.test(src)) img.addEventListener('load', () => poserAuSol(img), { once: true });
   img.src = src;
 }
 

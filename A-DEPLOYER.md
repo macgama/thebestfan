@@ -1,5 +1,14 @@
 # À déposer sur Infomaniak
 
+**Fanzzy à la taille de leur âge, partout** (branche `claude/project-thread-1jgro8`,
+6 novembre 2026, demande de Gaël). Code et `index.json` seuls, sans schéma ni
+image. La mesure qui donne à chaque Fanzzy la taille de son âge avait été effacée
+du catalogue des images pour 818 âges sur 958 : la fiche montrait un Fanzzy à la
+moitié de sa carte, de taille variable. Mesure restaurée et protégée. Pas besoin
+de « Redémarrer » (pages et catalogue servis tels quels), mais sans risque.
+
+---
+
 **Traductions à jour et images des autres clones** (branche
 `claude/project-thread-ojr7rb`, 6 novembre 2026, demande de Gaël). Code et
 textes seuls, sans schéma. Les 199 textes encore en français (page du PASS,
