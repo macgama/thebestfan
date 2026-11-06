@@ -1,5 +1,15 @@
 # À déposer sur Infomaniak
 
+**Un tampon par duel classé gagné** (branche `claude/project-thread-8ynk3z`,
+6 novembre 2026, choix de Gaël « Oui, 1 par victoire, max 3/jour »). Code
+seul, sans schéma : chaque duel classé gagné verse 1 tampon au carnet de la
+saison, 3 fois par jour au plus (réglables dans /admin › SAISON). Le bilan du
+duel le montre (CARNET DE LA SAISON +1), l'encadré « Comment gagner des
+tampons » aussi. Traduit, QUESTIONS et /comment-jouer à jour. Après la mise
+en ligne : « Redémarrer ».
+
+---
+
 **La page Amis devient « La tribune des amis »** (PR #377, 6 novembre 2026,
 choix de Gaël parmi 4 maquettes). Code seul, sans schéma : les Fanzzy des amis
 debout dans une tribune (ceux qui jouent éclairés), RÉPONDRE / MERCI ! sous les
