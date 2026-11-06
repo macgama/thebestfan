@@ -301,10 +301,17 @@
      */
     function poserAuSol(img) {
       for (const v of ['--sous', '--decale']) img.style.removeProperty(v);
-      const t = perso ? window.TBF_ETATS?.taille?.(perso.id, perso.evo, opts.taille?.[perso.evo]) : null;
+      const t = perso ? window.TBF_ETATS?.taille?.(perso.id, perso.evo, opts.taille?.[perso.evo], img) : null;
       const m = t ? window.TBF_ETATS?.pieds?.(img) : null;
       if (!m) return;
       const h = parseFloat(t.hauteur) / 100;
+      /* Sans mesure au catalogue, la scène n'a pas reçu sa taille : l'image
+         mesurée la lui donne (6 novembre 2026). */
+      if (!el.style.getPropertyValue('--taille')) {
+        el.style.setProperty('--taille', t.hauteur);
+        el.style.setProperty('--sous', '0%');
+        el.style.setProperty('--decale', '0cqh');
+      }
       img.style.setProperty('--sous', `${(-m.sous * h * 100).toFixed(2)}%`);
       img.style.setProperty('--decale', `${(-m.decal * h * 100).toFixed(2)}cqh`);
     }

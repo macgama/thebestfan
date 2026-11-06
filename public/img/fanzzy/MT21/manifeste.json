@@ -1,6 +1,6 @@
 {
   "id": "MT21",
-  "rev": 6,
+  "rev": 7,
   "evolutions": {
     "e1": {
       "skins": {
@@ -140,6 +140,18 @@
           "portrait": true,
           "repli": "base",
           "sha": "fc112dfb9f0f"
+        },
+        "halloween": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "2a2bf077aae0"
         }
       }
     }

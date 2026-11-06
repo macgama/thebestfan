@@ -1095,6 +1095,11 @@ html[data-calme~="animations"] .pass-vol{animation:passVolCalme 2s linear forwar
 .bilan-fz-boite{position:relative;display:grid;place-items:center;margin:-30px auto -40px;z-index:1;
   width:min(420px,100%);pointer-events:none}
 .bilan-fz-boite>.tbf-bilan-fz{grid-area:1/1;margin:0;height:min(48vh,420px);position:relative;z-index:1}
+/* Le personnage, et non son cadre, à la taille de son âge (`TBF_ETATS.caler`,
+   6 novembre 2026 : deux Fanzzy d'âge 1 n'avaient pas la même taille). La
+   boîte garde la hauteur du héros ; l'image s'y pose, pieds sur l'ombre. */
+.bilan-fz-boite{height:min(48vh,420px)}
+.bilan-fz-boite>.tbf-bilan-fz[data-cale]{position:absolute;max-height:none}
 .bilan-fz-boite::after{content:"";grid-area:1/1;align-self:end;width:46%;height:22px;margin-bottom:34px;
   border-radius:50%;background:radial-gradient(closest-side,rgba(0,0,0,.55),transparent)}
 #bilan>.bilan-case .tbf-vignette{scale:.86}
@@ -5313,6 +5318,9 @@ const nombre = (n) => String(Math.round(Number(n) || 0)).replace(/\B(?=(\d{3})+(
  * `.gain small` et `.stat .quoi` restent : la suite du duel lit les écharpes
  * et les trois chiffres du match sous ces noms.
  */
+/** La part de la boîte du héros que prend le Fanzzy à chaque âge. */
+const PART_BILAN = { 1: 0.74, 2: 0.82, 3: 0.9 };
+
 function montrerBilan(b) {
   S.bilanVu = true;
   clearTimeout(S.entreeT);
@@ -5364,6 +5372,7 @@ function montrerBilan(b) {
   fz.hidden = !src;
   $('bilanFzBoite').hidden = !src;
   if (src) fz.src = src; else fz.removeAttribute('src');
+  if (src) window.TBF_ETATS?.caler?.(fz, { part: PART_BILAN, sol: '38px' });
 
   /* --- la tête de la feuille : le lieu, la sorte de duel, le tampon --- */
   ecrire($('bilanLieu'), [b.stade?.nom,
