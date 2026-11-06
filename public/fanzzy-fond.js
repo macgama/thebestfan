@@ -331,6 +331,22 @@
     return `${s}<rect x="-4" y="88" width="108" height="12" fill="#000" opacity=".6"/>`;
   };
 
+  /* LE PARCAGE : la grille du parcage visiteurs, ses barreaux et la fumée
+     d'un fumigène qui monte derrière. */
+  LIEUX.FR = (p, r) => {
+    let s = '';
+    for (let i = 0; i < 4; i++) {
+      s += `<circle cx="${(20 + r() * 60).toFixed(1)}" cy="${(20 + r() * 25).toFixed(1)}"
+        r="${(10 + r() * 12).toFixed(1)}" fill="${p.brume}" opacity=".18"/>`;
+    }
+    for (let x = -2; x <= 104; x += 6) {
+      s += `<rect x="${x}" y="30" width="1.4" height="52" fill="#000" opacity=".45"/>`;
+    }
+    s += `<rect x="-4" y="30" width="108" height="1.6" fill="#000" opacity=".5"/>`;
+    s += `<rect x="-4" y="56" width="108" height="1.2" fill="#000" opacity=".4"/>`;
+    return `${s}<rect x="-4" y="80" width="108" height="20" fill="#000" opacity=".6"/>`;
+  };
+
   /* DIE KURVE a le sien aussi : la montagne en face, ses neiges, et le lac
      au pied du virage. C'est ce que voient presque toutes les tribunes du
      pays, et aucune autre série ne l'a. */

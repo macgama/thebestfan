@@ -311,12 +311,17 @@ const RUBRIQUES = [
           + 'D’autres demandent d’être mené au score. Et les cartes d’un PASS arrivent pour '
           + 'tout le monde le jour où sa saison commence.'],
       ['C’est quoi, une pièce de club ?',
-        () => 'Une pièce d’équipement aux couleurs d’un club, deux par club des Terraces '
-          + 'pour commencer. Portée par un Fanzzy lié au même club, c’est le COMBO : son '
+        () => 'Une pièce d’équipement aux couleurs d’un club, deux par club des séries de '
+          + 'championnat (LES TERRACES, DIE KURVE, puis LE PARCAGE avec le PASS 2). Portée par un Fanzzy lié au même club, c’est le COMBO : son '
           + `revers perd ${reglage('stuff.club_revers')} %, dans tous les matchs. Et dans un `
           + `match de ton club principal, c’est PLEIN CLUB : chacune rapporte ${reglage('stuff.club_gain')} % `
           + 'd’écharpes en duel, ou de ferveur au Virage, en plus du lien du Fanzzy. '
           + 'La force, elle, ne change pas.'],
+      ['Quelles séries de Fanzzy suivent un vrai championnat ?',
+        () => 'LES TERRACES (le championnat anglais) et DIE KURVE (le championnat suisse). '
+          + 'LE PARCAGE, la série du championnat de France, arrive avec le PASS 2 : trois '
+          + 'Fanzzy par club, le cri de chaque club, deux pièces de club par équipe et six '
+          + 'légendaires, trois liées aux équipes de France et trois au championnat.'],
       ['Mon deck change-t-il quelque chose au Grand Virage ?',
         () => 'Très peu : le Virage se joue au chant, pas au deck. Il compte pour le '
           + 'duel, où ton titulaire et ton équipement pèsent sur chaque geste.'],
