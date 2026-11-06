@@ -3460,4 +3460,559 @@ export const AGES = {
       + 'gardent leur petite inquiétude.',
       'TOUTES LES LIGNES PAR CŒUR'],
   ],
+
+  /* **LE PARCAGE** (`dex-parcage.js`, 6 novembre 2026) : les deuxième et
+     troisième âges des cinquante-quatre lignées, tirés des fiches
+     `fanzzy-prompts/FR-les-kops.md`. Les légendaires FR55 à FR60 n'en ont pas. */
+  FR1: [
+    ['La Rosiériste d’Anjou', 'Long tablier de toile noire surpiqué de blanc, chapeau de paille '
+      + 'à ruban noir et sécateur dans son étui. Elle porte au creux du bras une gerbe de roses '
+      + 'blanches, et son arrosoir est devenu grand et brillant.',
+      'LES ROSES SONT LÀ'],
+    ['La Reine des Pépinières', 'Sa longue cape noire est une roseraie vivante, des rangs de roses '
+      + 'blanches qui grimpent sur un treillis de fer. Elle porte une couronne de tiges tressées — '
+      + 'et dans sa main, toujours, une petite bouture dans un pot de yaourt.',
+      'TOUTE LA ROSERAIE DEBOUT'],
+  ],
+  FR2: [
+    ['L’Horlogère de la Tour', 'Blouse de travail bleu roi à passepoil blanc, loupe d’horloger sur '
+      + 'le front et un anneau de clés de laiton à la ceinture. Sa montre de poche a grandi, elle '
+      + 'tictaque d’une douce lumière blanche.',
+      'À L’HEURE PILE'],
+    ['La Maîtresse du Soleil et de la Lune', 'Son armure est un grand cadran bleu roi semé '
+      + 'd’étoiles, un soleil blanc sur une épaule et un croissant de lune sur l’autre, qui '
+      + 'tournent comme des aiguilles. C’est elle qui donne l’heure à toute la tribune.',
+      'LE SOLEIL ET LA LUNE'],
+  ],
+  FR3: [
+    ['La Gardienne de l’Iroise', 'Long ciré rouge à bandes blanches, bonnet blanc, longue-vue de '
+      + 'laiton à la ceinture et un rouleau de cordage sur l’épaule. Sa lanterne est devenue '
+      + 'grande, et sa lentille ne s’éteint jamais.',
+      'LE PHARE TIENT BON'],
+    ['La Reine des Phares', 'Elle porte une tour de pierre à bandes rouges et blanches en armure, '
+      + 'la lanterne du phare en guise de casque, son faisceau qui tourne au-dessus de la mer. '
+      + 'L’écume se roule à ses pieds — et ses bottes blanches sont toujours là.',
+      'TOUS LES ÉCLATS'],
+  ],
+  FR4: [
+    ['La Peintre du Soleil Levant', 'Longue blouse de peintre marine aux manches bleu ciel, béret '
+      + 'penché et chevalet sanglé dans le dos. Sa palette a grandi, et ses touches de lever de '
+      + 'soleil brillent toutes seules.',
+      'PEIGNEZ LE MATIN'],
+    ['La Reine de l’Aube sur le Port', 'Sa cape est un lever de soleil sur le port, peint à '
+      + 'grands coups de pinceau bleu ciel, marine et orange. Une couronne de pinceaux en '
+      + 'éventail, la palette en bouclier — et de la peinture toujours sur le nez.',
+      'L’AUBE SE LÈVE ICI'],
+  ],
+  FR5: [
+    ['La Mécanicienne de Nuit', 'Combinaison rouge à flancs jaunes et poignets en damier, lampe '
+      + 'frontale sur la casquette et ceinture pleine de clés. Elle ne dort pas de la course, et '
+      + 'sa grande clé luit doucement dans la nuit.',
+      'ON NE DORT PAS'],
+    ['La Reine de l’Endurance', 'Son armure est la carrosserie galbée d’une vieille voiture de '
+      + 'course, rouge à bandes jaunes, deux phares blancs allumés sur les épaules et un aileron '
+      + 'dressé dans son dos. Elle tient jusqu’au drapeau — en baskets à damier.',
+      'VINGT-QUATRE HEURES DEBOUT'],
+  ],
+  FR6: [
+    ['La Trieuse du Carreau', 'Blouse de travail rouge profond aux manches jaunes, long tablier '
+      + 'sombre, capuche matelassée nouée sous le menton et gros gants de cuir. Son panier est '
+      + 'plein d’un charbon qui luit de l’intérieur.',
+      'RIEN NE SE PERD'],
+    ['La Reine du Terril', 'Son armure est faite de plaques de charbon veinées de rouge et d’or, '
+      + 'deux cônes de terril dressés sur ses épaules et une coiffe de chevalement à la roue qui '
+      + 'tourne. La trace de suie est toujours sur son nez.',
+      'LA MONTAGNE NOIRE CHANTE'],
+  ],
+  FR7: [
+    ['La Reine de la Braderie', 'Long manteau rouge matelassé aux poches marine pleines de '
+      + 'trouvailles, chapeau de feutre à plume blanche et panier à roulettes derrière elle. La '
+      + 'cafetière brille et fume doucement.',
+      'TOUT SE CHINE'],
+    ['La Grande Brocanteuse', 'Son manteau rouge est couvert de trésors épinglés — clés, '
+      + 'boutons de laiton, petites horloges, cuillères et jouets de fer-blanc —, une pile de '
+      + 'vieux chapeaux sur la tête et une roue de charrette dans le dos. Elle se souvient de '
+      + 'chacun.',
+      'TOUS LES TRÉSORS'],
+  ],
+  FR8: [
+    ['La Danseuse du Cercle', 'Corsage de velours noir, longue jupe noire à larges bandes brodées '
+      + 'orange, col et haute coiffe de dentelle blanche. Son tablier brodé brille de fils orange, '
+      + 'et la ronde la suit.',
+      'LA RONDE TOURNE'],
+    ['La Reine du Festival Celtique', 'Corsage de velours brodé de spirales orange qui luisent, '
+      + 'et une coiffe de dentelle blanche haute comme une voile. Son grand tablier brille comme '
+      + 'un vitrail — et ses baskets blanches sont toujours là.',
+      'TOUT LE FESTIVAL DANSE'],
+  ],
+  FR9: [
+    ['L’Allumeuse de Lumignons', 'Long manteau de laine blanche à passepoil rouge et bleu, longue '
+      + 'mèche de laiton à la main et une rangée de petits verres allumés en bandoulière. Elle '
+      + 'passe de fenêtre en fenêtre, et la rue s’éclaire derrière elle.',
+      'LA RUE S’ALLUME'],
+    ['La Reine de la Fête des Lumières', 'Sa longue cape blanche est couverte de centaines de '
+      + 'petits lumignons rouges et bleus, comme une ville vue de nuit, et une couronne de '
+      + 'bougies lui monte sur la tête. Le bonnet rouge tricoté est toujours là.',
+      'TOUTE LA VILLE BRILLE'],
+  ],
+  FR10: [
+    ['La Savonnière du Vieux-Port', 'Long tablier blanc sur un chemisier bleu ciel, foulard '
+      + 'blanc et gants de caoutchouc, des piles de cubes de savon ficelés sur le dos. Sa pagaie '
+      + 'a grandi, et elle remue la mousse sans s’arrêter.',
+      'REMUEZ LE CHAUDRON'],
+    ['La Reine du Savon', 'Son armure est faite de grands blocs de savon blanc gravés de bleu '
+      + 'ciel, et un nuage de bulles brillantes lui fait une couronne. Un petit chaudron de '
+      + 'cuivre à la hanche, la pagaie en sceptre, et le bandeau bleu toujours dans les cheveux.',
+      'DES BULLES PLEIN LE CIEL'],
+  ],
+  FR11: [
+    ['La Gardienne du Jardin Exotique', 'Robe de jardinière en lin blanc à ceinture rouge, grand '
+      + 'chapeau blanc et longue pince à épines dans son étui. Son pot rouge porte maintenant un '
+      + 'grand cactus couvert de fleurs rouges.',
+      'LE JARDIN FLEURIT'],
+    ['La Reine des Cactus', 'Son armure est faite de plaques arrondies de cactus, couvertes de '
+      + 'fleurs rouges et blanches qui brillent, avec une couronne de colonnes en fleurs. Le pot '
+      + 'rouge lui sert de bouclier — et les lunettes de soleil sont toujours sur sa tête.',
+      'LES ÉPINES EN FLEURS'],
+  ],
+  FR12: [
+    ['La Reine du Char Fleuri', 'Robe à rayures verticales rouges et noires, grand chapeau '
+      + 'couvert d’œillets rouges et longs gants noirs, un panier d’œillets à la hanche. Les '
+      + 'pétales tourbillonnent autour d’elle, prêts à partir.',
+      'LANCEZ LES ŒILLETS'],
+    ['La Grande Reine de la Bataille de Fleurs', 'Son armure est faite de milliers d’œillets '
+      + 'rouges en rayures et de rubans de velours noir, et sa coiffe est un char fleuri en '
+      + 'cascade. Elle lance des brassées entières — avec toujours des pétales dans les boucles.',
+      'UNE PLUIE DE FLEURS'],
+  ],
+  FR13: [
+    ['La Couvreuse-Zingueuse', 'Combinaison de travail marine aux genoux bleu ciel renforcés, '
+      + 'harnais d’escalade, fer à souder et cisaille à la ceinture, un rouleau de zinc sur '
+      + 'l’épaule. Elle n’a pas le vertige, et son marteau non plus.',
+      'LES TOITS RÉSONNENT'],
+    ['La Reine des Toits de Zinc', 'Son armure est faite de panneaux de toit de zinc gris aux '
+      + 'arêtes bleu ciel qui brillent, une couronne de petites cheminées de terre cuite qui '
+      + 'fument, des lucarnes allumées sur la poitrine. La casquette marine est toujours dessous.',
+      'TOUTE LA VILLE SOUS NOUS'],
+  ],
+  FR14: [
+    ['La Ballerine de l’Opéra', 'Corsage de velours marine, tutu de tulle blanc bordé de rouge, '
+      + 'chaussons rouges aux longs rubans croisés et un fin diadème d’argent. Chaque geste est '
+      + 'répété jusqu’à ce que le miroir dise oui.',
+      'EN PREMIÈRE POSITION'],
+    ['La Danseuse Étoile', 'Un immense tutu blanc qui brille de l’intérieur comme un lustre de '
+      + 'cristal, une coiffe en forme de lustre allumé et une longue cape rouge qui flotte. Sous '
+      + 'tout cela, son petit chignon serré est toujours là.',
+      'TOUTE LA SALLE DEBOUT'],
+  ],
+  FR15: [
+    ['La Charpentière des Pans de Bois', 'Veste de travail rouge à pièces de cuir noir, tablier '
+      + 'noir aux grandes poches, ciseau et équerre de bois à la ceinture, une poutre de chêne '
+      + 'sur l’épaule. Son maillet a grandi, et il tape juste.',
+      'LA CHARPENTE TIENT'],
+    ['La Reine des Maisons Penchées', 'Elle porte une armure à pans de bois, poutres de chêne '
+      + 'croisées et panneaux rouges, de petits étages penchés sur les épaules aux fenêtres '
+      + 'allumées et un toit d’ardoise de travers en guise de casque. Le bandana rouge est '
+      + 'toujours sur sa tête.',
+      'LES VIEILLES MAISONS TREMBLENT'],
+  ],
+  FR16: [
+    ['La Danseuse au Grand Nœud', 'Corsage de velours noir lacé de blanc, longue jupe bleu vif '
+      + 'brodée de blanc et tablier de dentelle. Le nœud est devenu immense et bien noué, ses '
+      + 'ailes de satin brillent, et elle entraîne tout le village.',
+      'TOUT LE VILLAGE DANSE'],
+    ['La Reine du Grand Nœud', 'Le grand nœud de satin bleu s’ouvre derrière sa tête comme deux '
+      + 'ailes bordées de blanc, sur un corsage de velours brodé de fleurs lumineuses. Une '
+      + 'longue cape de dentelle blanche — et ses nattes blondes toujours sous le nœud.',
+      'LES RUBANS AU VENT'],
+  ],
+  FR17: [
+    ['L’Aviatrice de la Ligne Postale', 'Manteau de vol en cuir brun au col de mouton violet, '
+      + 'longue écharpe de soie blanche, culotte de cheval violette et un sac postal en '
+      + 'bandoulière. Elle repart dès que le courrier est chargé.',
+      'LE CIEL EST LIBRE'],
+    ['La Reine du Courrier du Ciel', 'Son armure est le fuselage d’un vieux biplan, toile violette '
+      + 'et mâts blancs, deux ailes courtes dressées sur les épaules et une hélice qui tourne sur '
+      + 'sa poitrine. Des enveloppes volent autour d’elle comme des oiseaux.',
+      'PAR-DESSUS LES MONTAGNES'],
+  ],
+  FR18: [
+    ['La Maîtresse Verrière', 'Long tablier de cuir bleu profond sur une chemise blanche, '
+      + 'lunettes de protection relevées, coupe-verre et fer à souder dans un étui, des baguettes '
+      + 'de plomb sur l’épaule. Son médaillon de verre brille de bleu et de blanc.',
+      'LA LUMIÈRE PASSE'],
+    ['La Reine des Vitraux', 'Son armure est un vitrail de panneaux bleus et blancs sertis de '
+      + 'plomb, qui brille comme une fenêtre d’église au soleil, et sa coiffe est une ogive. Le '
+      + 'médaillon est devenu une rosace sur sa poitrine — et sa coupe courte rousse dépasse '
+      + 'toujours.',
+      'LA ROSACE S’OUVRE'],
+  ],
+  FR19: [
+    ['L’Ardoisier Fendeur', 'Épais gilet de laine noire sur une chemise blanche sans col, '
+      + 'genouillères et tablier de cuir gris de poussière, un large ciseau et un maillet à la '
+      + 'ceinture. Il fend l’ardoise d’un seul geste, nette comme une page.',
+      'FENDEZ LA PIERRE'],
+    ['Le Seigneur de l’Ardoise', 'Son armure est faite d’épaisses plaques d’ardoise bleu-noir '
+      + 'fendues net, aux bords blancs comme des traits de craie, et son casque est un toit '
+      + 'pointu. Il tient la grande ardoise en bouclier — en baskets blanches.',
+      'TOUTE LA CARRIÈRE GRONDE'],
+  ],
+  FR20: [
+    ['Le Flotteur de l’Yonne', 'Blouse bleu roi à rayures blanches, chapeau de feutre à large '
+      + 'bord, bottes de cuir et un rouleau de corde à la ceinture. Debout sur un radeau de '
+      + 'troncs attachés, il mène le bois au fil de la rivière.',
+      'LE BOIS DESCEND'],
+    ['Le Maître du Grand Train de Bois', 'Son armure est faite de troncs liés par des cordes '
+      + 'bleues et blanches, qui brillent aux nœuds, et son casque est une pile de bûches. La '
+      + 'rivière tourbillonne de lumière à ses pieds — et ses cheveux longs sont toujours '
+      + 'attachés.',
+      'TOUT LE TRAIN SUIT'],
+  ],
+  FR21: [
+    ['Le Gabier des Grands Voiliers', 'Tricot rayé rouge et blanc sous une épaisse veste de laine '
+      + 'blanche, couteau de marin au cou, pieds nus et cordages croisés sur la poitrine. Il '
+      + 'chante en haut du mât, et tout l’équipage lui répond.',
+      'HISSEZ HAUT'],
+    ['Le Maître de la Mâture', 'Deux mâts de bois se dressent sur ses épaules, leurs petites '
+      + 'voiles blanches à bandes rouges gonflées de vent, et son casque est une hune avec le '
+      + 'pompon rouge au sommet. Le béret blanc est toujours dessous.',
+      'TOUTES VOILES DEHORS'],
+  ],
+  FR22: [
+    ['Le Docker du Grand Port', 'Veste de travail marine à bandes bleu ciel, casque de chantier '
+      + 'bleu ciel, gros gants de cuir et une élingue de chaîne sur l’épaule. Son crochet a '
+      + 'grandi, et il ne lâche jamais une charge.',
+      'ON DÉCHARGE TOUT'],
+    ['Le Titan des Portiques', 'Son armure est un grand portique de port, poutres d’acier bleu '
+      + 'ciel rivetées de marine, deux bras de grue dressés au-dessus des épaules et des '
+      + 'conteneurs en épaulières. Sa courte barbe grise dépasse toujours du casque.',
+      'LES GRUES SE LÈVENT'],
+  ],
+  FR23: [
+    ['Le Conducteur de la Diligence à Vapeur', 'Long manteau rouge à revers jaunes et boutons de '
+      + 'laiton, gants de conduite, lunettes de laiton sur le chapeau melon et un manomètre à la '
+      + 'ceinture. Il surveille l’aiguille, et la vapeur lui obéit.',
+      'EN VOITURE, LA VAPEUR'],
+    ['Le Maître de la Vapeur Routière', 'Il porte en armure une voiture à vapeur : une chaudière '
+      + 'rouge à bandes jaunes sur la poitrine, une haute cheminée de laiton qui fume derrière '
+      + 'l’épaule et deux grandes roues dans le dos. Le chapeau melon est toujours sur sa tête.',
+      'PLEINE PRESSION'],
+  ],
+  FR24: [
+    ['Le Mineur de Fond', 'Habits de toile bleu-gris à pièces rouge profond, casque de cuir, '
+      + 'foulard rouge et jaune et une pioche sur l’épaule. Sa lampe brille d’un jaune d’or, et '
+      + 'il tient bon tout au fond.',
+      'TOUS AU FOND'],
+    ['Le Géant de la Fosse', 'Son armure de plaques de charbon est fendue de lueurs rouges et '
+      + 'jaune d’or, et son casque est un chevalement de fer à la roue qui tourne. La lampe '
+      + 'brille sur sa poitrine comme un cœur — et la petite gamelle est toujours à sa ceinture.',
+      'LA FOSSE NE LÂCHE RIEN'],
+  ],
+  FR25: [
+    ['Le Porteur de Géant', 'Veste de fanfare rouge et marine à brandebourgs blancs, un harnais '
+      + 'rembourré sur les épaules qui tient une armature d’osier, la longue jupe du géant autour '
+      + 'de lui. À chaque pas de danse, le géant monte un peu plus haut.',
+      'LE GÉANT SE LÈVE'],
+    ['Le Géant du Carnaval', 'Il est devenu un géant lui-même : des épaules d’osier tressé, une '
+      + 'grande tête de bois peinte à son propre visage, le haut chapeau rouge au sommet et un '
+      + 'tambour sur la poitrine. Les baskets rouges sont toujours à ses pieds.',
+      'TOUTE LA RUE DANSE'],
+  ],
+  FR26: [
+    ['Le Sonneur de Bagad', 'Gilet de velours noir brodé d’orange, chemise blanche, large '
+      + 'chapeau noir à rubans orange et culotte noire. Sa cornemuse a grandi, ses bourdons '
+      + 'brillent, et tout le défilé se cale sur lui.',
+      'EN AVANT LE BAGAD'],
+    ['Le Grand Maître du Bagad', 'Sa veste de velours est couverte de spirales brodées orange qui '
+      + 'brillent, et les trois bourdons de la cornemuse géante se dressent sur son épaule comme '
+      + 'des tours. Les rubans orange flottent derrière lui — et sa courte barbe noire est '
+      + 'toujours là.',
+      'TOUT LE FESTIVAL SUIT'],
+  ],
+  FR27: [
+    ['Le Canut de la Croix-Rousse', 'Longue blouse bleue aux poignets blancs, chapeau noir à large '
+      + 'bord, des cartons perforés en bandoulière et des ciseaux à la ceinture. Sa navette a '
+      + 'grandi et laisse derrière elle un fil de soie bleue qui brille.',
+      'LA SOIE SE DÉROULE'],
+    ['Le Maître des Soieries', 'Il porte un grand métier à tisser en armure, poutres de bois '
+      + 'rouge et cartons perforés dressés en crête, des centaines de fils de soie bleus et '
+      + 'blancs qui brillent le long de son corps. Les pantoufles rouges sont toujours à ses '
+      + 'pieds.',
+      'TOUTE LA SOIE AU VENT'],
+  ],
+  FR28: [
+    ['Le Champion de Pétanque', 'Chemise de lin blanc à bretelles bleu ciel, chapeau de paille et '
+      + 'chaussures blanches cirées, une sacoche de boules d’acier à la ceinture. Le cochonnet '
+      + 'brille bleu ciel au creux de sa main : il sait déjà où il va.',
+      'À UN CHEVEU'],
+    ['Le Roi du Carreau', 'Son armure d’acier poli a la forme de grandes boules de pétanque '
+      + 'gravées de bleu ciel, et sa couronne est un anneau de petites boules. Il lève le '
+      + 'cochonnet qui brille comme un petit soleil — et sa moustache blanche est toujours '
+      + 'parfaitement roulée.',
+      'CARREAU !'],
+  ],
+  FR29: [
+    ['Le Chasseur du Grand Hôtel', 'Veste courte rouge à deux rangées de boutons blancs et galons '
+      + 'blancs, gants blancs impeccables et un plateau d’argent en équilibre sur une main. '
+      + 'Chaque sonnette, il y répond à la seconde.',
+      'À VOTRE SERVICE'],
+    ['Le Majordome de la Belle Époque', 'Longue queue-de-pie rouge aux épaulettes en dômes de '
+      + 'grand hôtel, une marquise de verre et de fer dressée derrière sa tête et une pile de '
+      + 'malles dans le dos. Sur son plateau, une sonnette qui brille — et le petit calot est '
+      + 'toujours sur sa tête.',
+      'LE GRAND HÔTEL EST PLEIN'],
+  ],
+  FR30: [
+    ['Le Marchand de Socca', 'Long tablier blanc sur une chemise à rayures verticales rouges et '
+      + 'noires, manches roulées, longue pelle de bois sur l’épaule. Sa grande plaque noire est '
+      + 'couverte de socca dorée, et il relance une fournée dès que la précédente est partie.',
+      'UNE PLAQUE, ENCORE UNE'],
+    ['Le Roi de la Socca', 'Son armure de brique à rayures rouges et noires a la forme d’un '
+      + 'grand four à bois, la gueule rougeoyante sur la poitrine, et son casque est une cheminée '
+      + 'qui fume. La grande plaque de socca lui sert de bouclier — et sa casquette noire est '
+      + 'toujours dessous.',
+      'LE FOUR EST BRÛLANT'],
+  ],
+  FR31: [
+    ['Le Boulanger de Baguettes', 'Veste de boulanger blanche à passepoil marine, tablier marine '
+      + 'fariné, calot blanc et un panier de baguettes dorées dans le dos comme un carquois. Sa '
+      + 'pelle a grandi, et il ne sort le pain que lorsqu’il est prêt.',
+      'LA FOURNÉE EST PRÊTE'],
+    ['Le Grand Maître du Fournil', 'Son armure est un grand four voûté de briques marine et bleu '
+      + 'ciel, la gueule orange sur la poitrine, des dizaines de baguettes en éventail dans son '
+      + 'dos comme des lances. La farine vole autour de lui — et il en a toujours sur le nez.',
+      'TOUTES LES BAGUETTES LEVÉES'],
+  ],
+  FR32: [
+    ['L’Accordéoniste du Bal Musette', 'Gilet marine sur une chemise blanche aux manches roulées, '
+      + 'foulard rouge, pantalon gris à bretelles et casquette penchée. Le soufflet rouge de son '
+      + 'accordéon s’ouvre en grand, et toute la piste tourne en mesure.',
+      'TOUT LE MONDE EN PISTE'],
+    ['Le Roi de la Guinguette', 'Un accordéon géant sanglé sur la poitrine, son soufflet rouge '
+      + 'qui brille comme une lanterne, des guirlandes d’ampoules en cape sur ses épaules et un '
+      + 'haut-de-forme marine. La petite casquette est toujours glissée à sa ceinture.',
+      'LE BAL EST OUVERT'],
+  ],
+  FR33: [
+    ['Le Galettier du Marché', 'Blouse de lin noir aux manches rouges, long tablier rouge, '
+      + 'spatule de bois à la ceinture et un pichet de pâte de sarrasin à la main. Son rouleau a '
+      + 'grandi, et ses galettes couvrent toute la plaque, bord à bord.',
+      'BORD À BORD'],
+    ['Le Seigneur du Billig', 'Son armure de fonte rouge et noire brille aux coutures, une grande '
+      + 'plaque ronde dans son dos comme un bouclier et une couronne de galettes pliées sur la '
+      + 'tête. Les sabots rouges sont toujours à ses pieds.',
+      'TOUT LE MARCHÉ A FAIM'],
+  ],
+  FR34: [
+    ['L’Artisan du Marché de Noël', 'Manteau de laine bleu vif à galons blancs brodés, tablier '
+      + 'blanc, des guirlandes de décorations de bois sur les épaules et une lanterne au bout '
+      + 'd’une perche. Il ouvre une case du calendrier chaque matin.',
+      'UNE CASE PAR JOUR'],
+    ['Le Grand Maître de l’Avent', 'Son armure est un petit chalet de marché de Noël, planches '
+      + 'bleu vif à moulures blanches et neige sur les épaulières en toit, des lanternes et des '
+      + 'étoiles de bois pendues tout autour. Le compte à rebours touche à sa fin.',
+      'C’EST LE GRAND SOIR'],
+  ],
+  FR35: [
+    ['Le Briquetier de la Ville Rose', 'Blouse de travail violette aux manches blanches roulées, '
+      + 'épais tablier de cuir rouge d’argile, truelle à la ceinture et une hotte de briques '
+      + 'roses sur l’épaule. Les briques sortent de son moule par rangées entières.',
+      'LES BRIQUES DÉFILENT'],
+    ['Le Bâtisseur Rose', 'Son armure est faite de rangs de briques roses aux joints blancs qui '
+      + 'brillent, des arches de pont sur les épaules et un casque en clocher de brique aux '
+      + 'fenêtres allumées. Il y a toujours de l’argile dans ses cheveux.',
+      'LA VILLE ROSE SE LÈVE'],
+  ],
+  FR36: [
+    ['Le Bonnetier du Métier Circulaire', 'Gilet tricoté bleu profond sur une chemise blanche, '
+      + 'mètre ruban autour du cou, ceinture de bobines et un petit métier à tricoter circulaire à '
+      + 'la hanche. Ses écharpes sortent à la chaîne et passent de main en main.',
+      'MAILLE APRÈS MAILLE'],
+    ['Le Maître de la Maille', 'Son armure est un gros tricot torsadé bleu et blanc qui brille à '
+      + 'chaque maille, un grand métier circulaire dans le dos d’où monte un long tube tricoté, '
+      + 'et une couronne à pompons. Ses grosses lunettes rondes sont toujours sur son nez.',
+      'TOUT LE STADE EN LAINE'],
+  ],
+  FR37: [
+    ['La Boule de Fort', 'Plus grande et polie à briller, son cerclage de fer gravé qui luit, un '
+      + 'béret noir penché sur le dessus et le petit cochonnet blanc sous le bras. Elle penche, '
+      + 'elle tourne, et elle s’arrête où elle veut.',
+      'SUR LA PISTE COURBE'],
+    ['La Grande Boule de la Société', 'Un grand corps de bois poli, son large cerclage blanc '
+      + 'comme une ceinture de lumière, une piste courbe qui monte derrière elle en arche et une '
+      + 'couronne de petits cochonnets. Les chaussons de feutre sont toujours à ses pieds.',
+      'PILE CONTRE LE PETIT'],
+  ],
+  FR38: [
+    ['L’Escargot Voyageur', 'Plus grand et sûr de lui, un petit sac de voyage sanglé sur la '
+      + 'coquille, un foulard rayé bleu et blanc, un bâton de marche et une lanterne pendue à la '
+      + 'coquille. Il ne va pas vite, mais il ne s’arrête jamais.',
+      'ON ARRIVE TOUJOURS'],
+    ['Le Grand Escargot de la Colline', 'Sa coquille est devenue une petite maison bourguignonne, '
+      + 'son toit en spirale couvert de tuiles vernissées bleu roi et blanc, des fenêtres '
+      + 'allumées et une cheminée qui fume. Le bonnet bleu est toujours entre ses cornes.',
+      'TOUTE LA COLLINE AVANCE'],
+  ],
+  FR39: [
+    ['La Coquille de la Rade', 'Plus grande et fière, ses côtes polies bordées de rouge, un bonnet '
+      + 'de marin blanc sur la valve et des perles le long de la charnière. Elle claque des deux '
+      + 'valves, et la rade lui répond.',
+      'CLAQUEZ LES VALVES'],
+    ['La Grande Coquille des Profondeurs', 'Son immense coquille rouge et blanche s’ouvre derrière '
+      + 'elle comme un éventail de lumière, des colliers de perles tout autour et une couronne de '
+      + 'coquillages. La goutte d’eau de mer est toujours sur sa coquille.',
+      'LA MER SE LÈVE'],
+  ],
+  FR40: [
+    ['Le Conteneur du Grand Port', 'Plus grand et repeint de frais, ses coins renforcés d’acier '
+      + 'marine, une petite casquette de capitaine sur le toit et un crochet de levage. Chargé '
+      + 'jusqu’en haut, il ne plie pas.',
+      'PLEIN À CRAQUER'],
+    ['Le Grand Conteneur des Océans', 'Trois conteneurs bleu ciel et marine soudés en un seul '
+      + 'corps, des lumières blanches le long des arêtes comme un navire de nuit et une petite '
+      + 'grue dressée en crête. Il a fait le tour du monde — et la bosse est toujours sur sa '
+      + 'porte.',
+      'TOUS LES OCÉANS'],
+  ],
+  FR41: [
+    ['Le Pot du Pique-Nique', 'Plus grand et luisant, son couvercle de tissu rouge noué d’un gros '
+      + 'nœud jaune, une serviette à damier sous le menton et un panier de petits pains au bras. '
+      + 'Il fait le tour de la nappe, de main en main.',
+      'À TABLE, LA TRIBUNE'],
+    ['Le Grand Pot du Banquet', 'Un grand pot de grès au vernis chaud, une couronne de tissu rouge '
+      + 'et jaune nouée sur le couvercle, une cape rouge bordée de damier et des lampions tout '
+      + 'autour du col. On le fait passer toute la nuit — et son couvercle penche toujours.',
+      'TOUTE LA NUIT À TABLE'],
+  ],
+  FR42: [
+    ['Le Cheval de la Mine', 'Plus grand et musclé, un harnais de cuir rouge profond aux garnitures '
+      + 'de laiton, une petite calotte de cuir sur le front et une lampe pendue au harnais. Il '
+      + 'tire les berlines dans le noir sans jamais se tromper de galerie.',
+      'TOUTES LES GALERIES'],
+    ['Le Grand Cheval des Galeries', 'Sa robe baie est veinée de lueurs rouges et jaune d’or comme '
+      + 'du feu dans le charbon, des plaques de berline en fer sur les épaules et un casque en '
+      + 'étais de galerie. La liste blanche est toujours sur son front.',
+      'IL RAMÈNE TOUT LE MONDE'],
+  ],
+  FR43: [
+    ['La Gaufre de la Grand-Place', 'Plus grande et dorée, ses losanges bien nets, un nœud '
+      + 'papillon rouge et marine et un napperon blanc en collerette. Sa boîte rouge a grandi, '
+      + 'et le sucre scintille sur ses bords.',
+      'SUCRE SUR LA PLACE'],
+    ['La Grande Gaufre du Beffroi', 'Ses losanges brillent d’une lumière chaude, son armure est '
+      + 'de glaçage rouge et marine à fins traits blancs, et sa couronne est un beffroi de '
+      + 'biscuit. Les quelques grains de sucre sont toujours sur sa tête.',
+      'LE BEFFROI EN SUCRE'],
+  ],
+  FR44: [
+    ['Le Korrigan de la Lande', 'Plus grand et plus hardi, une courte veste de velours noir bordée '
+      + 'de broderies orange, une ceinture de grelots de laiton et une petite lanterne orange au '
+      + 'bout d’un bâton. Ses tours tombent toujours à contretemps.',
+      'LES GRELOTS SONNENT'],
+    ['Le Grand Korrigan des Pierres Levées', 'Son armure de granit gris est gravée de spirales '
+      + 'orange qui brillent, une rangée de petites pierres levées se dresse dans son dos, et son '
+      + 'bonnet orange monte comme une flèche. La touffe blanche dépasse toujours.',
+      'LES PIERRES DANSENT'],
+  ],
+  FR45: [
+    ['Le Fileur de Cocon', 'Debout, le bas du corps enroulé dans un cocon de soie blanche à moitié '
+      + 'filé, des fils rouges, blancs et bleus qui tournent autour de lui et un petit bonnet de '
+      + 'tisserand. Sa bobine a grandi, et elle brille.',
+      'ON FILE ENSEMBLE'],
+    ['Le Grand Papillon de Soie', 'Un grand papillon blanc au corps duveteux, deux grandes '
+      + 'antennes plumeuses en couronne et quatre ailes repliées comme un châle de soierie tissé '
+      + 'de motifs rouges, blancs et bleus. Son petit sourire n’a pas changé.',
+      'LES AILES DE SOIE'],
+  ],
+  FR46: [
+    ['La Cigale des Platanes', 'Plus grande et luisante, un petit chapeau de paille blanc à ruban '
+      + 'bleu ciel, un foulard blanc et une flûte de bois à la main. Son tambourin a grandi, et la '
+      + 'colline répète chacune de ses notes.',
+      'LA COLLINE CHANTE'],
+    ['La Grande Cigale de l’Été', 'Ses immenses ailes transparentes aux nervures bleu ciel '
+      + 's’ouvrent derrière elle comme une cape de lumière, avec une couronne de rayons de '
+      + 'soleil. Son petit chapeau de paille est toujours sous la couronne.',
+      'TOUT L’ÉTÉ RÉSONNE'],
+  ],
+  FR47: [
+    ['La Pieuvre de l’Aquarium', 'Plus grande et sûre d’elle, un petit bonnet de marin blanc '
+      + 'penché, une lampe de plongée en laiton dans un bras et des coquillages dans ses ventouses. '
+      + 'Ses huit bras tapent la mesure en même temps.',
+      'TOUS LES BRAS ENSEMBLE'],
+    ['La Grande Pieuvre des Abysses', 'Une grande pieuvre rouge, ses tentacules déployés aux '
+      + 'ventouses blanches qui brillent, une couronne de coquillages et de perles et un hublot de '
+      + 'laiton sur la poitrine. Les petites taches blanches sont toujours sur sa tête.',
+      'LES ABYSSES GRONDENT'],
+  ],
+  FR48: [
+    ['La Grosse Tête du Corso', 'Plus grande, sa peinture brillante, une collerette de bouffon à '
+      + 'rayures rouges et noires et un petit chapeau à pompons. Son cornet a grandi, et les '
+      + 'confettis partent en pluie.',
+      'LANCEZ LES CONFETTIS'],
+    ['La Reine des Grosses Têtes', 'Une immense tête de papier mâché au grand sourire, une '
+      + 'couronne de fleurs de papier rouges et noires, une cape couverte de confettis qui '
+      + 'brillent et un char de carnaval en plastron. La tache de peinture est toujours sur sa '
+      + 'joue.',
+      'LE CORSO EST À NOUS'],
+  ],
+  FR49: [
+    ['Le Croissant du Comptoir', 'Plus grand et parfaitement doré, ses feuilletages luisants de '
+      + 'beurre, un petit béret marine et une serviette de café sur le bras. Au comptoir, il est '
+      + 'servi à la même heure chaque matin.',
+      'UN CAFÉ, UN CROISSANT'],
+    ['Le Grand Croissant du Matin', 'Ses feuilletages brillent comme la lumière du matin, son '
+      + 'armure est de glaçage marine et bleu ciel, et sa couronne est une tasse de café qui '
+      + 'fume. Sa forme un peu tordue est toujours là.',
+      'TOUTE LA VILLE SE RÉVEILLE'],
+  ],
+  FR50: [
+    ['La Colonne d’Affiches', 'Plus grande, sa peinture marine luisante, couverte d’affiches '
+      + 'rouges et blanches sans texte, un petit haut-de-forme sur son dôme et un seau de colle au '
+      + 'bras. Elle annonce le spectacle à tout le boulevard.',
+      'CE SOIR, GRAND SPECTACLE'],
+    ['La Grande Colonne des Boulevards', 'Couverte d’affiches qui brillent, une couronne de '
+      + 'petites ampoules comme une marquise de théâtre et un rideau de velours rouge en cape. '
+      + 'L’affiche roulée est toujours sous son bras.',
+      'LE RIDEAU SE LÈVE'],
+  ],
+  FR51: [
+    ['La Galette-Saucisse du Kop', 'Plus grande et bien grillée, sa galette pliée comme un long '
+      + 'manteau, la serviette à carreaux nouée en cape, un petit béret noir et un pot de moutarde '
+      + 'à la ceinture. Elle arrive toujours pile pour l’avant-match.',
+      'CHAUDE AVANT LE MATCH'],
+    ['La Grande Galette-Saucisse', 'Sa galette dorée est croustillante et brille sur les bords, '
+      + 'des plaques en serviette à carreaux rouges et noires, une couronne de vapeur et un pot '
+      + 'de moutarde en bouclier. La goutte de moutarde est toujours sur sa tête.',
+      'TOUTE LA TRIBUNE A FAIM'],
+  ],
+  FR52: [
+    ['Le Kougelhopf du Dimanche', 'Plus grand et parfaitement doré, ses cannelures bien nettes, '
+      + 'ses amandes qui brillent, un ruban bleu vif noué à la taille. Le sucre lui tombe dessus '
+      + 'comme de la neige, et il lève encore.',
+      'LE DIMANCHE, ÇA LÈVE'],
+    ['Le Grand Kougelhopf de la Fête', 'Ses cannelures torsadées brillent, une couronne d’amandes '
+      + 'et de cristaux de sucre lui monte sur la tête, et son armure est de faïence bleue peinte '
+      + 'de fleurs blanches. Il penche toujours un peu sur le côté.',
+      'LA FÊTE EST DORÉE'],
+  ],
+  FR53: [
+    ['La Fusée de la Cité de l’Espace', 'Plus grande et en métal brillant, blanche à bandes '
+      + 'violettes, de petits propulseurs sur les flancs, une antenne sur la coiffe et une lueur '
+      + 'blanche sous les ailerons. Le compte à rebours est lancé.',
+      'MOTEURS ALLUMÉS'],
+    ['La Grande Fusée des Étoiles', 'Deux grands propulseurs lui font des épaules massives, son '
+      + 'corps blanc est cerclé de violet lumineux, et une colonne de lumière et de nuages monte '
+      + 'autour d’elle. Sa visière penche toujours un peu.',
+      'DIRECTION LES ÉTOILES'],
+  ],
+  FR54: [
+    ['La Chaussette du Dimanche', 'Plus grande et lavée de frais, ses rayures vives, un bonnet à '
+      + 'pompon blanc et une pelote de laine bleue sous le bras. Elle se regarde dans chaque '
+      + 'vitre, au cas où sa paire serait de l’autre côté.',
+      'LA PAIRE EST LÀ'],
+    ['La Grande Chaussette de la Maille', 'Son armure est un gros tricot torsadé bleu et blanc qui '
+      + 'brille à chaque maille, une couronne de pompons blancs et deux grandes aiguilles croisées '
+      + 'dans le dos. Le petit trou au bout est toujours là.',
+      'TOUTES LES PAIRES ENSEMBLE'],
+  ],
 };

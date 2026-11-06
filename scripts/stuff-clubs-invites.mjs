@@ -112,6 +112,65 @@ export const INVITES_CLUBS = {
   // Zurich : blanc et bleu, la parade et le tram
   'su-casque-audio': `a pair of over-ear DJ headphones in glossy white with royal blue ear cushions and a coiled blue cable, ${NU}`,
   'su-poignee-tram': `a hanging tram strap handle, a white plastic ring on a royal blue leather strap with a chrome clip, ${NU}`,
+
+  /* LE PARCAGE (branché le 6 novembre 2026). Ni dogue, ni poisson, ni lion,
+     ni aigle, ni losange, ni couronne, ni tour, ni fleur de lys, ni nef, ni
+     étoile, ni croix, ni hermine, ni pirate, ni cigogne, ni château, ni coq,
+     et aucune boisson alcoolisée. */
+  // Angers : noir et blanc, les pépinières
+  'fr-sabots': `a pair of black rubber gardening clogs with white soles and a little garden soil on them, ${NU}`,
+  'fr-arrosoir': `a long-spouted black metal watering can with a white rim and one white rose painted on its side, ${NU}`,
+  // Auxerre : bleu roi et blanc, les cerises et l'horloge
+  'fr-panier-cerises': `a small woven wicker basket painted royal blue with a white handle, full of shiny dark red cherries on their stalks, nothing green, ${NU}`,
+  'fr-cle-horloge': `a large old brass winding key for a tower clock with a royal blue enamelled bow and a white cord tied to it, ${NU}`,
+  // Brest : rouge et blanc en bandes, la mer
+  'fr-cire-raye': `an empty unworn sailor's oilskin raincoat with bold horizontal red and white bands, laid flat, nobody wearing it, ${NU}`,
+  'fr-bateau-bouteille': `a small three-masted sailing ship with white sails and a red hull inside a clear glass bottle lying on a wooden cradle, nothing flying from the masts, ${NU}`,
+  // Le Havre : ciel et marine, le port
+  'fr-casquette-docker': `an empty unworn docker's flat cap in sky blue wool with a navy band, nobody wearing it, ${NU}`,
+  'fr-corne-paquebot': `an old polished brass ship's horn of an ocean liner mounted on a navy blue painted iron base, a sky blue cord on its lever, ${NU}`,
+  // Le Mans : rouge vif, jaune soleil, damier
+  'fr-drapeau-damier': `a small pocket chequered racing flag in black and white squares on a short wooden stick, ${NU}`,
+  'fr-casque-pilote': `an empty vintage open-face racing helmet in glossy bright red with one sun yellow stripe, goggles resting on top, no number, ${NU}`,
+  // Lens : rouge profond et or, la mine
+  'fr-lampe-mineur': `an old miner's safety lamp in brass with a deep red painted base and a golden yellow handle, its small flame glowing behind glass, ${NU}`,
+  'fr-briquet': `an old dented tin lunch box of a coal miner, shaped like a rounded rectangle, painted deep red with a golden yellow lid hinge, closed, ${NU}`,
+  // Lille : rouge, marine et blanc, la grand-place
+  'fr-gaufre': `a thin oval filled waffle wrapped in white waxed paper tied with a red and navy ribbon, a dusting of sugar on top, ${NU}`,
+  'fr-cloche-beffroi': `a small bronze bell hanging from a miniature red brick bell tower frame, a navy and white cord on its clapper, ${NU}`,
+  // Lorient : orange et noir, le bagad
+  'fr-bonnet-bagad': `an empty unworn round black felt hat of a Breton pipe band with long orange ribbons hanging from its band, nobody wearing it, ${NU}`,
+  'fr-bombarde': `a Breton bombarde, a short conical wooden double-reed oboe, dark wood with orange and black bands painted near the bell, ${NU}`,
+  // Lyon : blanc, rouge et bleu, les lumières et la soie
+  'fr-lumignon': `a small red glass candle holder with a lit white candle inside, glowing warmly, ${NU}`,
+  'fr-navette': `a polished wooden weaver's shuttle with a spool of thread inside, the thread in red, white and blue strands trailing out, ${NU}`,
+  // Marseille : blanc et bleu ciel, le savon et la pétanque
+  'fr-savon-cube': `a big white cube of soap with sky blue engraved lines and no letters, tied with a sky blue string, ${NU}`,
+  'fr-boules': `three shiny steel leisure petanque balls with engraved sky blue lines and a small white jack ball beside them, ${NU}`,
+  // Monaco : rouge et blanc en aplats, la plage et le grand hôtel
+  'fr-parasol': `a folded beach parasol with plain red and white panels on a wooden pole, ${NU}`,
+  'fr-clochette-hotel': `a polished silver hotel reception desk bell on a round red base, ${NU}`,
+  // Nice : rouge et noir en rayures, le marché et la promenade
+  'fr-cornet-socca': `a paper cone with vertical red and black stripes holding golden crispy slices of chickpea pancake sprinkled with black pepper, ${NU}`,
+  'fr-chaise-bleue': `a folding metal seaside chair painted sky blue, standing open, ${NU}`,
+  // Paris FC : bleu nuit et bleu ciel, les toits et les cafés
+  'fr-chaise-rotin': `a Parisian café chair of woven rattan in night blue and sky blue patterns, ${NU}`,
+  'fr-marteau-zingueur': `a zinc roofer's hammer with a navy painted wooden handle and a polished steel head, a strip of grey zinc beside it, ${NU}`,
+  // Paris Saint-Germain : marine, rouge et blanc, le bal musette
+  'fr-beret': `an empty unworn navy wool beret with a thin red trim around its band, nobody wearing it, ${NU}`,
+  'fr-accordeon': `a small piano accordion with navy blue body, red bellows and white keys, ${NU}`,
+  // Rennes : rouge, empiècements noirs, la galette
+  'fr-galette-saucisse': `a grilled sausage wrapped in a folded buckwheat pancake, standing in a red and black checked paper napkin, a dab of mustard on top, ${NU}`,
+  'fr-billig': `a round cast iron crêpe griddle in black with a red painted rim, a wooden spreader resting on it, ${NU}`,
+  // Strasbourg : bleu ciel vif et blanc, le marché de Noël
+  'fr-bretzel': `a single golden baked pretzel sprinkled with coarse white salt, tied with a bright blue ribbon, ${NU}`,
+  'fr-coeur-pain-epices': `a heart-shaped gingerbread biscuit decorated with bright sky blue and white icing swirls, no letters, hanging from a white ribbon, ${NU}`,
+  // Toulouse : violet et blanc, la brique et l'aviation
+  'fr-brique-rose': `a single pink terracotta brick with a little white mortar on its edges, ${NU}`,
+  'fr-sacoche-postale': `an old leather airmail satchel dyed purple with white stitching and a buckle, closed, no letters, ${NU}`,
+  // Troyes : bleu profond et blanc, la maille et le vitrail
+  'fr-chaussettes': `a pair of hand-knitted socks with deep blue and white stripes, laid side by side, ${NU}`,
+  'fr-eclat-vitrail': `a single shard of deep blue stained glass held in a dark lead strip, light shining through it, ${NU}`,
 };
 
 /* Les pièces vertes ne passent pas sur le vert de studio : le détourage les

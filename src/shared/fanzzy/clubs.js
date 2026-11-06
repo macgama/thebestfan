@@ -79,6 +79,31 @@ const KURVE = [
   783,  // Zurich
 ];
 
+/* Les dix-huit clubs du championnat de France 2026-2027 (LE PARCAGE,
+   `dex-parcage.js`), dans l'ordre des fiches : FR1 à FR18, FR19 à FR36, FR37
+   à FR54. Identifiants API-Football écrits le 6 novembre 2026, à confirmer
+   dans `teams` en production. */
+const PARCAGE = [
+  77,   // Angers
+  108,  // Auxerre
+  106,  // Brest
+  111,  // Le Havre
+  1063, // Le Mans
+  116,  // Lens
+  79,   // Lille
+  97,   // Lorient
+  80,   // Lyon
+  81,   // Marseille
+  91,   // Monaco
+  84,   // Nice
+  114,  // Paris FC
+  85,   // Paris Saint-Germain
+  94,   // Rennes
+  95,   // Strasbourg
+  96,   // Toulouse
+  110,  // Troyes
+];
+
 /**
  * **Le cri du club** (choix de Gaël du 25 octobre 2026 : « les cris
  * d'abord, sons plus tard »). Un Fanzzy lié qui joue un match de son club
@@ -131,10 +156,36 @@ const CRIS_KURVE = [
   'LE TRAM EST PLEIN',
 ];
 
+/* Les cris du PARCAGE (proposés le 5 novembre 2026,
+   `pass2/fr-cris-stuff-legendaires.md`, branchés le 6 novembre avec la
+   série) : un morceau de la ville, jamais un surnom ni ce que dessine
+   l'écusson. Même ordre que `PARCAGE`. */
+const CRIS_PARCAGE = [
+  'LES ARDOISES CHANTENT',
+  'LA VIEILLE TOUR SONNE',
+  'LE PONT SE LÈVE',
+  'LES DOCKS SE RÉVEILLENT',
+  'PLEINS GAZ, LA VILLE !',
+  'LA FOSSE REMONTE',
+  'LE BEFFROI SONNE',
+  'LES VOILES DES INDES',
+  'LES LUMIGNONS S’ALLUMENT',
+  'LE VIEUX-PORT GRONDE',
+  'LA CORNICHE CHANTE',
+  'LES CITRONS SONT MÛRS',
+  'LES TOITS DE ZINC',
+  'LE BAL COMMENCE',
+  'LA GALETTE EST CHAUDE',
+  'LE GRÈS ROSE VIBRE',
+  'LA VILLE ROSE CHANTE',
+  'LA ROSACE S’ILLUMINE',
+];
+
 /** Club → son cri, pour les clubs d'une série de championnat. */
 export const CRI_DU_CLUB = new Map([
   ...TERRACES.map((club, i) => [club, CRIS_TERRACES[i]]),
   ...KURVE.map((club, i) => [club, CRIS_KURVE[i]]).filter(([club]) => club != null),
+  ...PARCAGE.map((club, i) => [club, CRIS_PARCAGE[i]]).filter(([club]) => club != null),
 ]);
 
 /**
@@ -182,12 +233,15 @@ export function avecCriDuClub(perso, teamId) {
 export const SERIES_DE_CLUBS = Object.freeze({
   AN: Object.freeze([...TERRACES]),
   SU: Object.freeze([...KURVE]),
+  FR: Object.freeze([...PARCAGE]),
 });
 
 /** Lignée → club (identifiant API-Football). */
 export const CLUB_DE = new Map([
   ...[0, 20, 40].flatMap((d) => TERRACES.map((club, i) => ['AN'.concat(d + i + 1), club])),
   ...[0, 12, 24].flatMap((d) => KURVE.map((club, i) => ['SU'.concat(d + i + 1), club]))
+    .filter(([, club]) => club != null),
+  ...[0, 18, 36].flatMap((d) => PARCAGE.map((club, i) => ['FR'.concat(d + i + 1), club]))
     .filter(([, club]) => club != null),
 ]);
 
@@ -217,18 +271,24 @@ export function clubDe(fanzzyId) {
  * modèle) : SU37 à SU39 aux équipes nationales suisses (équipe A : 15 chez
  * API-Football), SU40 à SU42 au championnat suisse (207). Fiches :
  * `fanzzy-prompts/SU-legendaires.md`. */
+/* **Les légendaires du PARCAGE** (validées par Gaël le 5 novembre 2026) :
+ * FR55 à FR57 aux équipes de France (équipe A : 2 chez API-Football), FR58 à
+ * FR60 au championnat de France (61). Fiches : `fanzzy-prompts/FR-legendaires.md`. */
 const SELECTIONS = {
   AN: { equipeA: 10, nom: /^England(?: W| U\d{2})?$/i, sql: '^England( W| U[0-9]{2})?$' },
   SU: { equipeA: 15, nom: /^Switzerland(?: W| U\d{2})?$/i, sql: '^Switzerland( W| U[0-9]{2})?$' },
+  FR: { equipeA: 2, nom: /^France(?: W| U\d{2})?$/i, sql: '^France( W| U[0-9]{2})?$' },
 };
 const SELECTION = SELECTIONS.AN;
 const LEGENDES_SELECTION = new Map([
   ['AN61', 'AN'], ['AN62', 'AN'], ['AN63', 'AN'],
   ['SU37', 'SU'], ['SU38', 'SU'], ['SU39', 'SU'],
+  ['FR55', 'FR'], ['FR56', 'FR'], ['FR57', 'FR'],
 ]);
 const LEGENDES_CHAMPIONNAT = new Map([
   ['AN64', 39], ['AN65', 39], ['AN66', 39],
   ['SU40', 207], ['SU41', 207], ['SU42', 207],
+  ['FR58', 61], ['FR59', 61], ['FR60', 61],
 ]);
 
 /** L'une des équipes nationales du pays `pays` (`AN` par défaut : l'Angleterre) ? */

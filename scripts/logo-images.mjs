@@ -122,6 +122,9 @@ export const INVITES = {
   /* DIE KURVE : « debout dans le virage, et la montagne regarde le match ». */
   'serie-SU': 'a cowbell hanging in front of a snowy mountain peak, silver '
     + 'metal and alpine teal enamel',
+  /* LE PARCAGE : « derrière la grille, on chante plus fort que tout le stade ». */
+  'serie-FR': 'a knitted bar scarf tied to the bars of a tall stadium fence, '
+    + 'silver metal and slate blue enamel',
 
   /* ---------------------------------------------------- les six types
 

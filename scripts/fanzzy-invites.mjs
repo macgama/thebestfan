@@ -303,6 +303,14 @@ const SERIE = {
     + 'a knitted bar scarf in the club colours with no text, no crest and no '
     + 'cross, a small enamel pin badge, a warm mountain jacket or knitted '
     + 'jumper, the costume of an alpine trade or local tradition',
+  /* LE PARCAGE : la tribune des visiteurs d'un stade français. Même règle —
+     jamais de maillot, ni coq, ni drapeau : les couleurs du club passent par
+     l'écharpe tricotée et par le costume d'un vieux métier ou d'une fête de
+     la ville (voir `dex-parcage.js`). */
+  FR: 'a French away end behind a tall fence, never a football shirt: '
+    + 'a knitted bar scarf in the club colours with no text and no crest, a '
+    + 'small enamel pin badge, the costume of an old French trade or local '
+    + 'festival tradition',
 };
 
 /** Les séries où le personnage n'a pas de corps humain : rien à tirer. */

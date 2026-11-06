@@ -11,6 +11,7 @@ import { SETS_NEUVES, DEX_NEUVES } from './dex-series-neuves.js';
 import { SET_SAISON, DEX_SAISON } from './dex-saison.js';
 import { SET_TERRACES, DEX_TERRACES } from './dex-terraces.js';
 import { SET_KURVE, DEX_KURVE } from './dex-kurve.js';
+import { SET_PARCAGE, DEX_PARCAGE } from './dex-parcage.js';
 import { AGES } from './dex-ages.js';
 import { agesDe, idDuStade } from './ages.js';
 import { reglage } from '../reglages.js';
@@ -756,7 +757,7 @@ const RATES = table(2);
 /* LES TERRACES viennent après, puis DIE KURVE : leurs suites, elles, passent
    par `AGES`. */
 const PREMIERS = [...DEX, ...DEX_2026, ...DEX_LEGENDES, ...DEX_NEUVES, ...DEX_SAISON,
-  ...DEX_TERRACES, ...DEX_KURVE];
+  ...DEX_TERRACES, ...DEX_KURVE, ...DEX_PARCAGE];
 const PREMIER_PAR_ID = new Map(PREMIERS.map((f) => [f.id, f]));
 
 const SUITES = [];
@@ -801,8 +802,10 @@ const TOUT = [...PREMIERS, ...SUITES];
 /* LES TERRACES ferment la marche, pour la même raison : c'est la plus neuve.
    Elle aussi arrive fermée — aucune saison lancée ne la nomme —, et elle
    s'ouvre en la cochant dans une saison lancée, onglet SAISONS de /admin.
-   Voir `dex-terraces.js`. DIE KURVE suit, fermée elle aussi (`dex-kurve.js`). */
-const TOUS_SETS = [...SETS, ...SETS_2026, ...SETS_NEUVES, SET_SAISON, SET_TERRACES, SET_KURVE];
+   Voir `dex-terraces.js`. DIE KURVE suit, fermée elle aussi (`dex-kurve.js`), puis LE PARCAGE
+   (`dex-parcage.js`, 6 novembre 2026). */
+const TOUS_SETS = [...SETS, ...SETS_2026, ...SETS_NEUVES, SET_SAISON, SET_TERRACES, SET_KURVE,
+  SET_PARCAGE];
 
 // Un identifiant en double ferait taire une carte sans le dire : la seconde
 // écraserait la première dans BY_ID, et elle disparaîtrait des tirages sans

@@ -17,10 +17,11 @@ let failures = 0;
 const check = (l, c) => { console.log(`${c ? '  ok  ' : ' FAIL '} ${l}`); if (!c) failures++; };
 
 console.log('\nLa table des liens');
-/* LES TERRACES (60 lignées, 20 clubs) et DIE KURVE (36 lignées, 12 clubs,
-   identifiants écrits le 1er novembre 2026). */
-check('quatre-vingt-seize lignées, trois par club', CLUB_DE.size === 96
-  && new Set(CLUB_DE.values()).size === 32
+/* LES TERRACES (60 lignées, 20 clubs), DIE KURVE (36 lignées, 12 clubs,
+   identifiants écrits le 1er novembre 2026) et LE PARCAGE (54 lignées, 18
+   clubs, 6 novembre 2026). */
+check('cent cinquante lignées, trois par club', CLUB_DE.size === 150
+  && new Set(CLUB_DE.values()).size === 50
   && [...new Set(CLUB_DE.values())].every((c) =>
     [...CLUB_DE.values()].filter((x) => x === c).length === 3));
 check('SU1, SU13 et SU25 partagent le club de Bâle, SU12 celui de Zurich',
@@ -55,6 +56,13 @@ check('SU37 à SU39 : liées aux sélections suisses, SU40 à SU42 au championna
   && !lieA('AN61', 15) && !lieA('AN61', 1234, null, { nomDuClub: 'Switzerland W' })
   && lieA('SU40', 42, null, { leagueId: 207 }) && !lieA('SU42', 42, null, { leagueId: 39 })
   && estSelection(15, null, 'SU') && !estSelection(15) && clubDe('SU40') === null);
+check('FR55 à FR57 : liées aux équipes de France, FR58 à FR60 au championnat de France',
+  lienEcrit('FR56')?.selection === 2 && lienEcrit('FR59')?.ligue === 61
+  && lieA('FR55', 2) && lieA('FR56', 1234, null, { nomDuClub: 'France W' })
+  && lieA('FR57', 1234, null, { nomDuClub: 'France U21' })
+  && !lieA('FR55', 15) && !lieA('FR55', 1234, null, { nomDuClub: 'Francia' })
+  && lieA('FR60', 42, null, { leagueId: 61 }) && !lieA('FR58', 42, null, { leagueId: 207 })
+  && estSelection(2, null, 'FR') && clubDe('FR55') === null && clubDe('FR1') === clubDe('FR37'));
 check('AN64 à AN66 : liées au championnat, pour tout club qui y joue',
   lienEcrit('AN65')?.ligue === 39
   && lieA('AN64', 42, null, { leagueId: 39 }) && lieA('AN66', 40, null, { leagueId: 39 })
@@ -127,22 +135,28 @@ console.log('\nLes championnats qui ont leurs Fanzzy');
     pl?.code === 'AN' && pl.nom === 'LES TERRACES' && /^#/.test(pl.c1) && /^#/.test(pl.c2));
   check('vingt clubs, trois Fanzzy et un cri chacun',
     pl.clubs.length === 20 && pl.clubs.every((c) => c.fanzzy.length === 3 && c.cri === CRI_DU_CLUB.get(c.club)));
-  check('une compétition sans série n\'en a pas', serieDeLigue(61) === null && serieDeLigue('x') === null);
-  check('le cri de série d\'un club anglais, rien pour un autre', criDeSerie(40) === CRI_DU_CLUB.get(40) && criDeSerie(85) === null);
+  check('une compétition sans série n\'en a pas', serieDeLigue(78) === null && serieDeLigue('x') === null);
+  check('le cri de série d\'un club anglais, rien pour un autre', criDeSerie(40) === CRI_DU_CLUB.get(40) && criDeSerie(212) === null);
 }
 console.log('\nLe cri du club');
-check('trente-deux cris, un par club, quatre mots au plus et sans chiffre',
-  CRI_DU_CLUB.size === 32 && [...CRI_DU_CLUB.values()].every((c) =>
+check('cinquante cris, un par club, quatre mots au plus et sans chiffre',
+  CRI_DU_CLUB.size === 50 && [...CRI_DU_CLUB.values()].every((c) =>
     c.replace(/[,!’']/g, ' ').trim().split(/\s+/).length <= 4 && !/\d/.test(c)));
 check('chaque club de LES TERRACES a le sien', SERIES_DE_CLUBS.AN.every((c) => CRI_DU_CLUB.has(c)));
 check('chaque club de DIE KURVE a le sien, jamais un cri type',
   SERIES_DE_CLUBS.SU.every((c) => CRI_DU_CLUB.has(c) && !CRIS_TYPES.includes(criDuClub(c))));
+check('chaque club du PARCAGE a le sien, jamais un cri type',
+  SERIES_DE_CLUBS.FR.every((c) => CRI_DU_CLUB.has(c) && !CRIS_TYPES.includes(criDuClub(c))));
 check('aucun cri ne sert deux fois', new Set(CRI_DU_CLUB.values()).size === CRI_DU_CLUB.size);
 {
   const { serieDeLigue } = await import('../src/shared/fanzzy/series-ligues.js');
   const su = serieDeLigue(207);
   check('le championnat suisse : douze clubs, trois Fanzzy et un cri chacun',
     su.clubs.length === 12 && su.clubs.every((c) => c.fanzzy.length === 3 && c.cri === CRI_DU_CLUB.get(c.club)));
+  const fr = serieDeLigue(61);
+  check('le championnat de France : LE PARCAGE, dix-huit clubs, trois Fanzzy et un cri chacun',
+    fr?.code === 'FR' && fr.clubs.length === 18
+    && fr.clubs.every((c) => c.fanzzy.length === 3 && c.cri === CRI_DU_CLUB.get(c.club)));
 }
 {
   const lie = lierLeDeck(loadout(['AN1', 'TR32']), CLUB, tauxDuLien());
@@ -153,8 +167,8 @@ check('aucun cri ne sert deux fois', new Set(CRI_DU_CLUB.values()).size === CRI_
     lie.fanzzy[0].cri.gest === BY_ID.get('AN1').cri.gest && lie.fanzzy[0].cri.power === BY_ID.get('AN1').cri.power);
   check('le neutre garde son cri', lie.fanzzy[1].cri.label === BY_ID.get('TR32').cri.label);
   check('un club hors de la table pousse son cri type, toujours le même',
-    avecCriDuClub({ cri: { label: 'X' } }, 85).cri.label === CRIS_TYPES[85 % CRIS_TYPES.length]
-    && criDuClub(85) === criDuClub('85'));
+    avecCriDuClub({ cri: { label: 'X' } }, 212).cri.label === CRIS_TYPES[212 % CRIS_TYPES.length]
+    && criDuClub(212) === criDuClub('212'));
   check('sans club, le cri ne change pas', avecCriDuClub({ cri: { label: 'X' } }, null).cri.label === 'X');
   check('huit cris types, quatre mots au plus et sans chiffre, distincts des cris de série',
     CRIS_TYPES.length === 8 && CRIS_TYPES.every((c) => c.replace(/[,!’']/g, ' ').trim().split(/\s+/).length <= 4 && !/\d/.test(c))
@@ -187,14 +201,14 @@ console.log('\nLe panneau des bonus');
 }
 
 console.log('\nUn Fanzzy neutre lié contre des écharpes, hors base');
-check('lieA lit le club acheté pour un neutre', lieA('TR32', 85, 85) && !lieA('TR32', 91, 85)
-  && !lieA('TR32', 85, null));
+check('lieA lit le club acheté pour un neutre', lieA('TR32', 212, 212) && !lieA('TR32', 218, 212)
+  && !lieA('TR32', 212, null));
 check('le club écrit d\'un Fanzzy de série passe devant un club acheté',
-  lieA('AN1', CLUB, 85) && !lieA('AN1', 85, 85));
+  lieA('AN1', CLUB, 212) && !lieA('AN1', 212, 212));
 {
   const brut = loadout(['TR32', 'TR33']);
-  brut.fanzzy[0].club = 85;
-  const lie = lierLeDeck(brut, 85, tauxDuLien());
+  brut.fanzzy[0].club = 212;
+  const lie = lierLeDeck(brut, 212, tauxDuLien());
   check('lierLeDeck lie le neutre acheté, pas l\'autre', lie.fanzzy[0].lie && !lie.fanzzy[1].lie);
 }
 
@@ -229,11 +243,11 @@ for (const [u, e] of [[U, 'c@ex.fr'], [SANS, 's@ex.fr']]) {
     await raw.query(`INSERT INTO user_fanzzy (user_id,fanzzy_id,copies) VALUES (?,?,1)`, [u, f]);
   }
 }
-await raw.query(`INSERT INTO teams (id,name,logo) VALUES (85,'Sion',NULL),(91,'Bâle',NULL),
+await raw.query(`INSERT INTO teams (id,name,logo) VALUES (212,'Sion',NULL),(218,'Bâle',NULL),
   (${clubDe('AN1')},'Club Témoin','https://exemple.test/logo.png')`);
-await raw.query(`INSERT INTO user_follows (user_id,team_id,is_main) VALUES (?,91,0),(?,85,1)`, [U, U]);
+await raw.query(`INSERT INTO user_follows (user_id,team_id,is_main) VALUES (?,218,0),(?,212,1)`, [U, U]);
 await raw.query(`INSERT INTO leagues (id,name,logo) VALUES (39,'Ligue Témoin','https://exemple.test/ligue.png')`);
-await raw.query(`INSERT INTO team_leagues (team_id,league_id,season) VALUES (91,39,2026)`);
+await raw.query(`INSERT INTO team_leagues (team_id,league_id,season) VALUES (218,39,2026)`);
 await raw.end();
 
 const pool = mysql.createPool({ uri: DB, connectionLimit: 4, ...OPTIONS_BASE });
@@ -265,7 +279,7 @@ check('un Fanzzy qu\'on n\'a pas ne se lie pas', await refus(F.lierAuClub(U, 'TR
 const r = await F.lierAuClub(U, 'TR32B');
 check('lier coûte 120 écharpes', r.spent === 120 && await echarpes(U) === 80);
 check('au club principal, pas au premier suivi', Number((await pool.query(
-  `SELECT club_id FROM user_fanzzy WHERE user_id = ? AND fanzzy_id = 'TR32'`, [U]))[0][0].club_id) === 85);
+  `SELECT club_id FROM user_fanzzy WHERE user_id = ? AND fanzzy_id = 'TR32'`, [U]))[0][0].club_id) === 212);
 check('une seconde fois : refusé, rien de pris',
   await refus(F.lierAuClub(U, 'TR32')) === 'fanzzy.error.deja_lie' && await echarpes(U) === 80);
 check('pas assez d\'écharpes : refusé',
@@ -273,7 +287,7 @@ check('pas assez d\'écharpes : refusé',
 f = await F.fiche(U, 'TR32');
 check('la fiche dit LIÉ À TON CLUB', f.club?.lie === true && f.club.tonClub === true && f.club.achete === true);
 check('et nomme le club acheté', f.club.nom === 'Sion');
-check('un club hors de la table a son cri type', f.club.cri === criDuClub(85) && CRIS_TYPES.includes(f.club.cri));
+check('un club hors de la table a son cri type', f.club.cri === criDuClub(212) && CRIS_TYPES.includes(f.club.cri));
 f = await F.fiche(U, 'AN64');
 check('la fiche d\'une légendaire du championnat nomme la compétition, liée à ton club',
   f.club?.lie === true && f.club.portee === 'championnat' && f.club.tonClub === true
@@ -289,10 +303,10 @@ check('la fiche d\'un AN donne le cri de son club', (await F.fiche(U, 'AN1')).cl
 await pool.query(`INSERT INTO user_decks (user_id,nom,contenu,actif) VALUES (?, 'd', ?, 1)`,
   [U, JSON.stringify({ fanzzy: [{ id: 'TR32' }, { id: 'MS30' }], actions: [] })]);
 const l = await D.loadout(U);
-check('le deck porte le club acheté', l.fanzzy[0].club === 85 && l.fanzzy[1].club === null);
-const lie = lierLeDeck(l, 85, tauxDuLien());
+check('le deck porte le club acheté', l.fanzzy[0].club === 212 && l.fanzzy[1].club === null);
+const lie = lierLeDeck(l, 212, tauxDuLien());
 check('et le duel d\'un match de son club le lie', lie.fanzzy[0].lie && !lie.fanzzy[1].lie);
-check('pas dans un match d\'un autre club', !lierLeDeck(l, 91, tauxDuLien()).fanzzy[0].lie);
+check('pas dans un match d\'un autre club', !lierLeDeck(l, 218, tauxDuLien()).fanzzy[0].lie);
 
 /* La page CLUBS montre les Fanzzy liés à chaque club suivi (demande de Gaël du
    5 novembre 2026) : ceux de la série, les légendaires, et les liens achetés. */
@@ -302,7 +316,7 @@ check('pas dans un match d\'un autre club', !lierLeDeck(l, 91, tauxDuLien()).fan
   check('les Fanzzy liés : celui de série, sous son club',
     par('AN1')?.club === clubDe('AN1') && par('AN1').achete === false && par('AN1').nom);
   check('le neutre lié contre des écharpes, sous le club principal',
-    par('TR32')?.club === 85 && par('TR32').achete === true);
+    par('TR32')?.club === 212 && par('TR32').achete === true);
   check('les légendaires : sélection et championnat',
     par('AN62')?.selection === 10 && par('AN64')?.ligue === 39);
   check('et pas un neutre resté neutre', !par('MS30'));
