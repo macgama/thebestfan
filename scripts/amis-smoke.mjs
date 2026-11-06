@@ -231,6 +231,19 @@ const A = createAmis({ pool, requireAuth: (r, _s, n) => n(), kop });
   check('le nom est là, l’adresse jamais',
     chezBob.recues[0]?.pseudo === 'Ana' && !/@/.test(JSON.stringify(chezBob)));
 
+  /* L'alerte de l'appel (`appel-fete.js`) : qui demande, avec son visage,
+     chez celui qui reçoit seulement. */
+  const alerteBob = await A.alertesDe(BOB);
+  const alerteAna = await A.alertesDe(ANA);
+  check('l’alerte de la demande arrive chez celui qui la reçoit, avec un pseudo',
+    alerteBob.demandes.length === 1 && alerteBob.demandes[0].id === ANA
+    && alerteBob.demandes[0].pseudo === 'Ana' && 'avatar' in alerteBob.demandes[0]
+    || (console.log('        elle dit :', JSON.stringify(alerteBob)), false));
+  check('et pas chez celui qui l’envoie', alerteAna.demandes.length === 0);
+  check('un visage ne se donne qu’entre amis mutuels',
+    (await A.alertesDe(BOB, ANA)).visage === null);
+  check('l’alerte ne dit aucune adresse e-mail', !/@/.test(JSON.stringify(alerteBob)));
+
   check('on ne redemande pas deux fois',
     await refus(() => A.demander(ANA, BOB)) === 'amis.error.deja_demande');
   /* Le destinataire seul répond. Sans cette garde, on accepterait sa propre
@@ -258,6 +271,11 @@ const A = createAmis({ pool, requireAuth: (r, _s, n) => n(), kop });
     `SELECT COUNT(*) n FROM amities WHERE (a = ? OR b = ?) AND (a = ? OR b = ?)`,
     [ANA, ANA, BOB, BOB]);
   check('une amitié ne tient qu’une ligne en base', n === 1);
+  check('acceptée, la demande quitte l’alerte',
+    (await A.alertesDe(BOB)).demandes.length === 0);
+  const visage = (await A.alertesDe(BOB, ANA)).visage;
+  check('entre amis, le visage de l’autre (pour l’invitation en duel)',
+    visage?.pseudo === 'Ana' || (console.log('        visage :', JSON.stringify(visage)), false));
 
   check('un ami n’est plus une suggestion',
     !(await A.suggestions(ANA)).some((g) => g.id === BOB));
@@ -394,6 +412,12 @@ const A = createAmis({ pool, requireAuth: (r, _s, n) => n(), kop });
   check('elle dit quel KOP, quel club, et qui invite',
     inv?.nom === 'Le Virage Nord' && inv?.club === 'Sion' && inv?.parQui === 'Ana'
     || (console.log('        elle dit :', JSON.stringify(inv)), false));
+
+  const alerteKop = (await A.alertesDe(BOB)).kops;
+  check('l’alerte du KOP dit lequel, son club et qui invite',
+    alerteKop.length === 1 && alerteKop[0].kopId === leKop.id && alerteKop[0].nom === 'Le Virage Nord'
+    && alerteKop[0].club === 'Sion' && alerteKop[0].de === 'Ana'
+    || (console.log('        elle dit :', JSON.stringify(alerteKop)), false));
 
   check('on ne répond pas à une invitation qu’on n’a pas',
     await refus(() => A.repondreAuKop(CLA, leKop.id, true)) === 'amis.error.pas_invite');

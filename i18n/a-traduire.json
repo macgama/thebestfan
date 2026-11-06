@@ -1,4 +1,16 @@
 {
+ "REJOINDRE LE DUEL": {
+  "ou": [
+   "public/appel-fete.js",
+   "public/duel-nvn.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
  "--haut": {
   "ou": [
    "public/boosters.html"
@@ -297,17 +309,6 @@
   ]
  },
  "<0>DERBY</0> · un supporter de l’autre tribune, <1>{0}</1>, est en ligne. Crée le duel : il le verra.": {
-  "ou": [
-   "public/duel-nvn.html"
-  ],
-  "langues": [
-   "en",
-   "de",
-   "it",
-   "es"
-  ]
- },
- "REJOINDRE LE DUEL": {
   "ou": [
    "public/duel-nvn.html"
   ],

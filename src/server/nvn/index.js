@@ -2618,7 +2618,9 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
         for (const h of file2) {
           if (!h.invites.has(userId)) continue;
           const clubs = [h.support.fixture.home, h.support.fixture.away];
-          invitations.push({ code: h.code, de: h.nom, format: h.format,
+          /* `deId` : qui invite, pour que l'alerte montre son personnage
+             (`/api/amis/alertes?visage=`, entre amis mutuels seulement). */
+          invitations.push({ code: h.code, de: h.nom, deId: String(h.userId ?? ''), format: h.format,
             fixtureId: Number(h.support.fixture.id),
             club: clubs[h.camp] ?? null, enFaceClub: clubs[h.camp ^ 1] ?? null });
         }

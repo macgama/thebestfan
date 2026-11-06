@@ -781,6 +781,61 @@ export function createAmis({ pool, requireAuth, kop = null, presence = null,
       kop: Number(k?.n ?? 0), ...(plus ?? {}) });
   }));
 
+  /* **L'alerte d'un appel** (`appel-fete.js`, 6 novembre 2026, Gaël : « ce
+     serait bien une alerte pour lui dire qu'il a une demande. La même chose
+     s'il est connecté et qu'un USER lui demande de jouer un duel ou de le
+     rejoindre »). Les dernières demandes d'ami et invitations dans un KOP,
+     **avec un visage** — le pseudo et le personnage de qui appelle —, pour
+     la grande case qui les annonce. Cinq de chaque au plus : l'alerte en
+     montre une, la page des amis montre le reste.
+
+     `?visage=<id>` : le personnage d'un ami **mutuel**, pour l'invitation en
+     duel (le duel ne connaît que son pseudo). Un inconnu ne rend rien. */
+  router.get('/alertes', requireAuth, safe(async (req, res) => {
+    res.set('cache-control', 'no-store');
+    res.json(await alertesDe(req.user.id, req.query?.visage));
+  }));
+
+  async function alertesDe(id, visageDe = '') {
+    const visage = String(visageDe ?? '').slice(0, 64);
+    const [demandes, kops, ami] = await Promise.all([
+      q(`SELECT u.public_id, u.public_id AS userId, u.pseudo, u.status, am.demande_le,
+                w.active_fanzzy, w.active_evo, w.active_etat
+           FROM amities am
+           JOIN users u ON u.public_id = am.par
+           LEFT JOIN user_wallet w ON w.user_id = u.public_id
+          WHERE (am.a = ? OR am.b = ?) AND am.etat = 'demande' AND am.par <> ?
+            AND u.status = 'active'
+          ORDER BY am.demande_le DESC LIMIT 5`, [id, id, id]),
+      q(`SELECT i.kop_id AS kopId, i.le, k.nom, t.name AS club,
+                u.public_id AS userId, u.pseudo, u.status,
+                w.active_fanzzy, w.active_evo, w.active_etat
+           FROM kop_invites i
+           JOIN kops k ON k.id = i.kop_id
+           LEFT JOIN teams t ON t.id = k.team_id
+           LEFT JOIN users u ON u.public_id = i.par
+           LEFT JOIN user_wallet w ON w.user_id = u.public_id
+          WHERE i.user_id = ?
+          ORDER BY i.le DESC LIMIT 5`, [id]).catch(() => []),
+      visage ? q(`SELECT u.public_id AS userId, u.pseudo, u.status,
+                         w.active_fanzzy, w.active_evo, w.active_etat
+                    FROM amities am
+                    JOIN users u ON u.public_id = ?
+                    LEFT JOIN user_wallet w ON w.user_id = u.public_id
+                   WHERE am.etat = 'amis' AND u.status = 'active'
+                     AND ((am.a = ? AND am.b = ?) OR (am.a = ? AND am.b = ?))
+                   LIMIT 1`, [visage, id, visage, visage, id]) : [],
+    ]);
+    await habiller([...demandes, ...kops, ...ami]);
+    return {
+      demandes: demandes.map((l) => ({ id: l.userId, pseudo: l.pseudo,
+        avatar: l.avatar ?? null, depuis: l.demande_le })),
+      kops: kops.map((l) => ({ kopId: l.kopId, nom: l.nom, club: l.club ?? null,
+        de: l.pseudo ?? null, avatar: l.avatar ?? null, depuis: l.le })),
+      visage: ami[0] ? { pseudo: ami[0].pseudo, avatar: ami[0].avatar ?? null } : null,
+    };
+  }
+
   router.get('/suggestions', requireAuth, safe(async (req, res) =>
     res.json({ gens: await suggestions(req.user.id) })));
 
@@ -823,7 +878,7 @@ export function createAmis({ pool, requireAuth, kop = null, presence = null,
     res.json(await repondreAuKop(req.user.id, String(req.body?.kopId ?? ''),
       Boolean(req.body?.ok)))));
 
-  return { router, tableau, suggestions, chercher, demander, repondre, retirer,
+  return { router, tableau, alertesDe, suggestions, chercher, demander, repondre, retirer,
            inviterAuKop, repondreAuKop,
            monInvitation, parrainDe, accepterParrainage };
 }

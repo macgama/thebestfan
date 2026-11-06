@@ -1,5 +1,14 @@
 # À déposer sur Infomaniak
 
+**Alerte quand un ami appelle : demande d'ami, duel, KOP** (branche
+`claude/project-thread-xv6u21`, 6 novembre 2026, demande de Gaël). Code seul,
+sans schéma. Une demande d'ami, une invitation en duel ou dans un KOP s'ouvre
+en grand chez le joueur connecté (case des fêtes, Fanzzy de l'ami, ACCEPTER /
+REJOINDRE / PLUS TARD), une fois par appareil, jamais en duel ni au Virage.
+Nouvelle route `/api/amis/alertes`. Traduit. **Redémarrer**.
+
+---
+
 **Alerte cadeau : seulement ce que le joueur reçoit vraiment** (branche
 `claude/project-thread-x9m6y9`, 6 novembre 2026, remarque de Gaël). Code seul,
 sans schéma. Un retrait d'écharpes se déduit, le plafond de 99 boosters et le
