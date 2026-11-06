@@ -1795,7 +1795,9 @@ titre('la forme du contrat (§ 6.1)');
      « comment tu gagnes des tampons ? »), aux réglages de l'instant. */
   check('carnet : saison, close, tampons, paliers, prochain, gagner (et son trophée)',
     cles(e.carnet) === `close,gagner,paliers,prochain,saison,tampons${trophee ? ',trophee' : ''}`
-    && cles(e.carnet.gagner) === 'defi,difficile,facile,moyenne,sachet'
+    && cles(e.carnet.gagner) === 'defi,difficile,facile,moyenne,sachet,victoire,victoiresJour'
+    && e.carnet.gagner.victoire === reglage('saison.tampons_victoire')
+    && e.carnet.gagner.victoiresJour === reglage('saison.victoires_jour')
     && e.carnet.gagner.facile === reglage('saison.tampons_facile')
     && e.carnet.gagner.difficile === reglage('saison.tampons_difficile')
     && cles(e.carnet.saison) === 'id,nom,numero'

@@ -525,6 +525,9 @@ const RUBRIQUES = [
           + `${reglage('saison.tampons_difficile')} pour la difficile, `
           + `${reglage('saison.tampons_sachet')} de plus pour le sachet des trois missions finies`
           + (reglage('defis.actif') ? `, et ${reglage('defis.tampons')} pour chaque défi de la semaine` : '')
+          + (reglage('saison.tampons_victoire') && reglage('saison.victoires_jour')
+            ? `. Un duel classé gagné en donne ${reglage('saison.tampons_victoire')}, `
+              + `pour ${reglage('saison.victoires_jour')} victoires par jour au plus` : '')
           + '. Ils remplissent le carnet de la saison et font avancer la voie PASS. '
           + 'Le détail est sous le carnet, dans l’onglet SAISON des missions.'],
       ['Comment savoir qu’une mission est réussie ?',
