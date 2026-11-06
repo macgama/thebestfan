@@ -9521,6 +9521,16 @@ html[data-calme~="animations"] .tbf-niv-fond{transition:none}
 .tbf-niv-case .tbf-niv-n{display:block;margin:calc(10px - .11em) 0 -.11em;font-size:clamp(36px,13vw,52px)}
 .tbf-niv-case .tbf-niv-n b{font:inherit;color:inherit;text-shadow:inherit;letter-spacing:inherit}
 .tbf-niv-case .tbf-niv-de{margin-top:8px;font-size:12px}
+/* Un titre de mots et non un chiffre (la mission réussie : son intitulé) :
+   un corps plus petit, sur deux lignes au plus. */
+.tbf-niv-case .tbf-niv-n--petit{font-size:clamp(22px,7vw,30px);line-height:1.1;margin-bottom:0}
+/* Le gain d'une mission : la rangée des petits stickers (tampons, XP…). */
+.tbf-niv-rangee{display:flex;flex-wrap:wrap;justify-content:center;gap:8px}
+/* Le dessin du gain d'un niveau de la voie PASS (le kit de `pass.js`). */
+.tbf-niv-gain{display:block;width:96px;height:96px;object-fit:contain;
+  filter:drop-shadow(0 3px 0 var(--encre))}
+/* Deux boutons (RÉCUPÉRER, puis CONTINUER) : le second suit de plus près. */
+.tbf-niv-case>.tbf-plaque+.tbf-plaque{margin-top:8px}
 
 /* Le butin et ce que le palier ouvre : des stickers en colonne, chacun à sa
    largeur, avec l'air qu'il leur faut autour (cinq pixels). Tout est à la
@@ -12269,3 +12279,28 @@ html[data-calme~="animations"] .beta-annonce .beta-annonce-jauge{transition:opac
 html[data-calme~="animations"] .pass-plaque,
 html[data-calme~="animations"] .pass-spot-jauge{animation:none}
 html[data-calme~="animations"] .pass-spot-lignes li{animation:none;opacity:1;transform:none}
+
+/* ----------------------------------------------- la pastille de niveau
+
+   Les cadeaux du niveau (décision de Gaël du 6 novembre 2026, voir
+   `src/shared/niveau.js`) : la pastille change de matière aux niveaux 10,
+   15, 20, 25 et 30, et porte ses étoiles au-delà du 30. Le serveur pose la
+   matière (`teinte`) et les étoiles ; la page les écrit en attributs sur
+   la pastille, partout où le niveau s'affiche. Le cerne reste celui du
+   sticker : seule la face change, avec un lettrage qui tient dessus. */
+.tbf-sticker[data-teinte=bronze]{--face:#B7743A;--lettre:var(--encre)}
+.tbf-sticker[data-teinte=argent]{--face:var(--gris);--lettre:var(--encre)}
+.tbf-sticker[data-teinte=or]{--face:var(--projo);--lettre:var(--encre)}
+.tbf-sticker[data-teinte=rubis]{--face:var(--face-flare);--lettre:var(--craie)}
+.tbf-sticker[data-teinte=legende]{--face:var(--face-violet);--lettre:var(--projo);
+  box-shadow:0 0 0 2px var(--projo),0 0 0 3.5px var(--encre),2px 2px 0 3.5px rgba(7,9,12,.6)}
+/* Les étoiles, en petit sticker d'or collé au-dessus de la pastille. */
+.tbf-sticker--rond[data-etoiles]{overflow:visible}
+.tbf-sticker--rond[data-etoiles]::after{
+  content:"★" attr(data-etoiles);
+  position:absolute;left:50%;top:-11px;translate:-50% 0;rotate:-6deg;
+  padding:1px 3px;border-radius:4px;
+  background:var(--projo);color:var(--encre);
+  box-shadow:0 0 0 1.5px var(--encre);
+  font:700 9px/1 var(--banner);letter-spacing:0;white-space:nowrap;
+}

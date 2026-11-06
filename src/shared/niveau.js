@@ -163,3 +163,123 @@ export const palier = (niveau) => PALIERS.find((p) => p.niveau === niveau) ?? nu
  */
 export const paliersEntre = (avant, apres) =>
   PALIERS.filter((p) => p.niveau > avant && p.niveau <= apres);
+
+
+/* ===================================================== les cadeaux du niveau
+
+   Décision de Gaël du 6 novembre 2026 (« Récompenses à chaque palier ») :
+   passé le niveau 9, la plupart des montées n'apportaient que des écharpes,
+   et une fois au 30 l'XP ne servait plus à rien. Chaque niveau offre
+   désormais quelque chose **qui se voit**, et rien qui pèse sur la corde :
+
+   — un **titre de tribune** par niveau, du 1 au 30, montré sous le pseudo ;
+   — une **pastille qui change de matière** aux niveaux 10, 15, 20, 25 et 30
+     (bronze, argent, or, rubis, légende), partout où le niveau s'affiche,
+     chez soi comme dans les listes des autres ;
+   — au-delà du 30, une **étoile** tous les `XP_ETOILE` d'XP, sans plafond.
+
+   Tout se déduit de l'XP : aucune colonne, aucun schéma. Un joueur qui a
+   déjà monté reçoit donc d'un coup tout ce que ses niveaux lui ouvrent. */
+
+/** Les titres de tribune, du niveau 1 au niveau 30, dans l'ordre. */
+export const GRADES = Object.freeze([
+  'Nouveau venu',
+  'Supporter du dimanche',
+  'Habitué de la buvette',
+  'Porte-écharpe',
+  'Chanteur de tribune',
+  'Agitateur de drapeau',
+  'Abonné du virage',
+  'Roi du clapping',
+  'Tambour du kop',
+  'Faiseur de tifos',
+  'Voix du virage',
+  'Fidèle des déplacements',
+  'Porte-drapeau',
+  'Gardien des chants',
+  'Pilier de tribune',
+  'Mémoire du club',
+  'Maître de la ola',
+  'Chef de rangée',
+  'Cœur du kop',
+  'Capo',
+  'Âme du virage',
+  'Vétéran des tribunes',
+  'Bâtisseur de tifos géants',
+  'Chef d’orchestre du kop',
+  'Sage des gradins',
+  'Monument du stade',
+  'Héros de la tribune',
+  'Gardien du temple',
+  'Mythe des gradins',
+  'Légende vivante',
+]);
+
+/** Le titre de tribune d'un niveau. */
+export function gradePour(niveau) {
+  const n = Math.max(1, Math.min(NIVEAU_MAX, Math.floor(Number(niveau)) || 1));
+  return GRADES[n - 1];
+}
+
+/** Les matières de la pastille, et le niveau où chacune arrive. */
+export const TEINTES = Object.freeze([
+  Object.freeze({ niveau: 10, teinte: 'bronze', nom: 'BRONZE' }),
+  Object.freeze({ niveau: 15, teinte: 'argent', nom: 'ARGENT' }),
+  Object.freeze({ niveau: 20, teinte: 'or', nom: 'OR' }),
+  Object.freeze({ niveau: 25, teinte: 'rubis', nom: 'RUBIS' }),
+  Object.freeze({ niveau: 30, teinte: 'legende', nom: 'LÉGENDE' }),
+]);
+
+/** La matière de la pastille à ce niveau, ou `null` (la craie de départ). */
+export function teintePour(niveau) {
+  const n = Number(niveau) || 0;
+  let t = null;
+  for (const x of TEINTES) if (x.niveau <= n) t = x.teinte;
+  return t;
+}
+
+/** L'XP d'une étoile, au-delà du dernier niveau. */
+export const XP_ETOILE = 2000;
+
+/** Les étoiles gagnées au-delà du dernier niveau (0 avant lui). */
+export function etoilesPour(xp) {
+  const reste = (Number(xp) || 0) - seuil(NIVEAU_MAX);
+  return reste >= 0 ? Math.floor(reste / XP_ETOILE) : 0;
+}
+
+/**
+ * Ce que le niveau fait voir : le titre, la matière de la pastille, les
+ * étoiles, et la marche vers la prochaine étoile au dernier niveau.
+ */
+export function distinctions(xp) {
+  const x = Math.max(0, Number(xp) || 0);
+  const niveau = niveauPour(x);
+  const etoiles = etoilesPour(x);
+  const out = { grade: gradePour(niveau), teinte: teintePour(niveau), etoiles };
+  if (niveau >= NIVEAU_MAX) {
+    const dans = x - seuil(NIVEAU_MAX) - etoiles * XP_ETOILE;
+    out.versEtoile = { dans, pour: XP_ETOILE, part: dans / XP_ETOILE };
+  }
+  return out;
+}
+
+/** Ce qu'un niveau précis apporte de visible, pour la fête et le chemin. */
+export function cadeauDuNiveau(niveau) {
+  const t = TEINTES.find((x) => x.niveau === niveau);
+  return { niveau, grade: gradePour(niveau), teinte: t ? t.teinte : null,
+    teinteNom: t ? t.nom : null };
+}
+
+/**
+ * Ce que les listes publiques montrent du niveau d'un joueur : le chiffre,
+ * et seulement s'il y en a, la matière de la pastille et les étoiles.
+ */
+export function pastillePour(xp) {
+  const niveau = niveauPour(Math.max(0, Number(xp) || 0));
+  const out = { niveau };
+  const teinte = teintePour(niveau);
+  if (teinte) out.teinte = teinte;
+  const etoiles = etoilesPour(xp);
+  if (etoiles > 0) out.etoiles = etoiles;
+  return out;
+}

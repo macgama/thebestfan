@@ -596,7 +596,7 @@ function avatar(g) {
     || window.FZART?.adresse?.(g.fanzzy, 'buste');
   const initiale = esc((String(g.pseudo ?? '').trim().charAt(0) || '?').toUpperCase());
   const niv = Number.isInteger(g.niveau)
-    ? `<b class="tbf-sticker tbf-sticker--rond tbf-buste-niv">${g.niveau}</b>` : '';
+    ? `<b class="tbf-sticker tbf-sticker--rond tbf-buste-niv"${g.teinte ? ` data-teinte="${esc(g.teinte)}"` : ''}${Number(g.etoiles) > 0 ? ` data-etoiles="${Number(g.etoiles)}"` : ''}>${g.niveau}</b>` : '';
   return buste
     ? `<span class="tbf-buste pastille-nom" aria-hidden="true" data-initiale="${initiale}"><img
          src="${esc(buste)}" alt="" decoding="async">${niv}</span>`

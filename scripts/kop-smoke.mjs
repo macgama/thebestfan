@@ -1002,7 +1002,9 @@ console.log('\n— les visages des membres —');
     || (console.log('        il porte :', JSON.stringify(par.get(U[1]))), false));
   check('le niveau s’arrête au maximum', par.get(U[2])?.niveau === 30);
 
-  const CLES = new Set(['id', 'pseudo', 'verse', 'depuis', 'createur', 'avatar', 'niveau']);
+  // `teinte` et `etoiles` : les cadeaux du niveau (6 novembre 2026), absents s'il n'y en a pas.
+  const CLES = new Set(['id', 'pseudo', 'verse', 'depuis', 'createur', 'avatar', 'niveau',
+    'teinte', 'etoiles']);
   const vu = await Kv.etat(kop.id, U[4]);
   const enTrop = vu.membres.flatMap((m) => Object.keys(m).filter((c) => !CLES.has(c)));
   check('un non-membre lit la tribune sans aucun champ de plus',

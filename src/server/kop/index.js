@@ -731,6 +731,8 @@ export function createKop({ pool, requireAuth, io = null,
         const h = carte?.get(m.user_id);
         if (h && 'avatar' in h) ligne.avatar = h.avatar;
         if (Number.isInteger(h?.niveau)) ligne.niveau = h.niveau;
+        if (h?.teinte) ligne.teinte = h.teinte;
+        if (h?.etoiles) ligne.etoiles = h.etoiles;
         return ligne;
       }),
       vote: vote[0] ? {

@@ -145,6 +145,7 @@ La barre et le tiroir lisent cette clé (même joueur, moins de 60 s) et n'ont
 | `paliers` | tableau | ce que les niveaux franchis ouvrent (forme de `PALIERS` de `shared/niveau.js` : `{ niveau, slots? , deckFanzzy? }`) ; vide sans montée |
 | `ecarpes` | entier ≥ 0 | écharpes versées par les paliers franchis (**orthographe du code, sans h**) |
 | `depart` | objet | la jauge **avant** le gain, pour l'animer : `{ xp, niveau, dans, pour, part, max }` |
+| `vu` | objet | les cadeaux du niveau (6 novembre 2026), ce qui se voit : `{ grade, teinte, etoiles, etoilesAvant, versEtoile?, cadeaux }` — le titre de tribune, la matière de la pastille (`null`, `bronze`, `argent`, `or`, `rubis`, `legende`), les étoiles au-delà du niveau 30 (avant et après le gain), la marche vers la suivante au dernier niveau, et `cadeaux` : un `{ niveau, grade, teinte, teinteNom }` par niveau franchi. Absent de l'objet vide. |
 
 L'anneau s'anime de `depart.part` vers `part`. S'il y a montée, il fait le tour
 jusqu'à 1, puis repart de 0 vers `part`, et `niveau-fete.js` prend la main.

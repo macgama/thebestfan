@@ -518,6 +518,21 @@ const RUBRIQUES = [
           + `${reglage('saison.tampons_difficile')} pour une difficile. Chaque palier `
           + 'du carnet rapporte des écharpes ou des boosters, et qui a bien rempli le '
           + 'sien reçoit des boosters au lancement de la saison suivante.'],
+      ['Comment gagner des tampons ?',
+        () => 'Les tampons viennent des missions, quand tu les récupères : '
+          + `${reglage('saison.tampons_facile')} pour la mission facile du jour, `
+          + `${reglage('saison.tampons_moyenne')} pour la moyenne, `
+          + `${reglage('saison.tampons_difficile')} pour la difficile, `
+          + `${reglage('saison.tampons_sachet')} de plus pour le sachet des trois missions finies`
+          + (reglage('defis.actif') ? `, et ${reglage('defis.tampons')} pour chaque défi de la semaine` : '')
+          + '. Ils remplissent le carnet de la saison et font avancer la voie PASS. '
+          + 'Le détail est sous le carnet, dans l’onglet SAISON des missions.'],
+      ['Comment savoir qu’une mission est réussie ?',
+        'Le jeu te le dit : au retour sur l’accueil ou dans les missions, une alerte '
+          + '« MISSION RÉUSSIE ! » montre ce qu’elle rapporte, avec RÉCUPÉRER. Sur '
+          + 'l’accueil, la carte MISSIONS en haut à gauche compte celles du jour, et son '
+          + 'sticker or dit combien sont à récupérer. Un niveau gagné dans la voie PASS '
+          + 'a la même alerte.'],
       ['C’est quoi, les défis de la semaine ?',
         () => 'Chaque lundi, trois défis tirés parmi ce que tu possèdes : jouer des duels '
           + 'avec un Fanzzy d’une de tes séries, chanter au Grand Virage en portant une de '
@@ -598,8 +613,20 @@ const RUBRIQUES = [
     questions: [
       ['À quoi sert mon niveau ?',
         () => 'À ouvrir des droits, jamais à taper plus fort : une place de deck de '
-          + 'plus, un emplacement de club de plus. Le niveau ne donne aucune '
-          + 'puissance — c’est une règle du jeu, écrite et tenue.'],
+          + 'plus, un emplacement de club de plus. Chaque niveau te donne aussi un '
+          + 'titre de tribune, affiché sous ton pseudo, et des écharpes. Le niveau ne '
+          + 'donne aucune puissance — c’est une règle du jeu, écrite et tenue.'],
+      ['Ma pastille de niveau change de couleur ?',
+        () => 'Oui : bronze au niveau 10, argent au 15, or au 20, rubis au 25 et '
+          + 'légende au 30. Tout le monde la voit, au classement, chez tes amis et '
+          + 'dans ton KOP.'],
+      ['Que se passe-t-il après le niveau 30 ?',
+        () => 'Le niveau 30 est le dernier. Ensuite, tu gagnes une étoile tous les 2 000 XP, '
+          + 'sans fin : elle s’affiche au-dessus de ta pastille.'],
+      ['Mon niveau revient-il à 1 à chaque saison ?',
+        () => 'Non. Ton niveau, ton XP et ton titre se gardent d’une saison à l’autre. '
+          + 'Ce qui repart de zéro à chaque saison, c’est le classement, les divisions '
+          + 'et le carnet de tampons.'],
       ['C’est quoi, le PASS de saison ?',
         () => `Un achat unique, 7,99 € ou ${reglage('pass.prix_echarpes')} écharpes, `
           + 'valable jusqu’à la fin de la saison. Il ne se renouvelle jamais tout seul. '

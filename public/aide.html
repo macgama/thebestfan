@@ -140,6 +140,23 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
     var(--e2,var(--flare)) 8px 15px,var(--encre) 15px 16px);
 }
 
+/* ================================================ comment gagner des tampons
+
+   Sous le carnet (demande de Gaël, 6 novembre 2026 : « comment tu gagnes
+   des tampons ? ») : d'où viennent les tampons, une ligne par source, et
+   combien chacune en donne, aux réglages du serveur (`carnet.gagner`).
+   Le rond étoilé du tampon à gauche, le compte en sticker à droite. */
+.gagner{margin-top:12px;padding-left:8px;padding-right:8px}
+.gagner>.haut,.gagner>.pied{padding:0 8px}
+.gagner ul{list-style:none;margin:10px 0 0;padding:0 8px;display:grid;gap:7px}
+.gagner li{display:flex;align-items:center;gap:9px;font-size:13px;line-height:1.3}
+.gagner li>svg{flex:none;width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;
+  stroke-linecap:round;stroke-linejoin:round;opacity:.8}
+.gagner li>span{flex:1;min-width:0}
+.gagner li>.tbf-sticker{flex:none}
+.gagner .pied small{flex:1;font-size:11.5px;line-height:1.45;opacity:.92}
+.gagner .pied .tbf-plaque{flex:none}
+
 /* ============================================================ la voie PASS
 
    Sous le carnet, pour tout le monde : la seconde ligne, en or, celle du
@@ -1010,6 +1027,42 @@ html[data-calme~="animations"] .pas.neuf{animation:none;outline:2px solid var(--
       </div>`;
   }
 
+  /* ============================================ comment gagner des tampons
+
+     Ce que rapporte chaque source, tel que le serveur le sert
+     (`carnet.gagner`, aux réglages de l'instant). **Le serveur compte,
+     l'écran nomme** (R7) : sans ces chiffres (un serveur d'avant), les
+     lignes se disent sans montant. Une source à zéro ne s'écrit pas : elle
+     ne donne rien. */
+  function gagnerHTML(c) {
+    const g = c?.gagner && typeof c.gagner === 'object' ? c.gagner : null;
+    const n = (k) => (g ? entier(g[k]) : null);
+    const montant = (k, chacun = false) => {
+      const x = n(k);
+      if (x === null) return '';
+      return `<b class="tbf-sticker" data-ton="or">+${x}${chacun ? ' CHACUN' : ''}</b>`;
+    };
+    const lignes = [
+      ['facile', 'Une mission facile du jour', 'cible', false],
+      ['moyenne', 'Une mission moyenne du jour', 'cible', false],
+      ['difficile', 'Une mission difficile du jour', 'cible', false],
+      ['sachet', 'Les trois missions du jour finies (le sachet)', 'dos', false],
+      ['defi', 'Les défis de la semaine', 'duel', true],
+    ].filter(([k]) => n(k) !== 0);
+    if (!lignes.length) return '';
+    const parJour = g ? ['facile', 'moyenne', 'difficile', 'sachet'].reduce((t, k) => t + n(k), 0) : 0;
+    const parSemaine = g ? 3 * n('defi') : 0;
+    const total = parJour && parSemaine
+      ? `Jusqu’à ${parJour} tampons par jour, et ${parSemaine} de plus chaque semaine avec les défis.`
+      : parJour ? `Jusqu’à ${parJour} tampons par jour.` : '';
+    return `<div class="tbf-ticket entete gagner" id="gagnerTampons">
+        <div class="haut"><span class="quoi">Comment gagner des tampons</span></div>
+        <ul>${lignes.map(([k, texte, dessin, chacun]) => `<li>${embleme(dessin)}<span>${esc(texte)}</span>${montant(k, chacun)}</li>`).join('')}</ul>
+        <div class="pied"><small>${esc(total)} Récupère la mission pour avoir ses tampons.</small>${
+          aJour() ? '<button type="button" class="tbf-plaque" data-ton="or" data-aller="jour">MES MISSIONS</button>' : ''}</div>
+      </div>`;
+  }
+
   /* ====================================================== le trophée du carnet
 
      Le Fanzzy CARNET PLEIN de la saison (`dex-carnet-plein.js`, demande de
@@ -1153,7 +1206,7 @@ html[data-calme~="animations"] .pas.neuf{animation:none;outline:2px solid var(--
         : attendent ? '1 CADEAU PASS T’ATTEND' : '';
     const phrase = membre
       ? (niveau >= voie.length ? 'Toute la voie est à toi. Que du visuel, et tout reste à toi pour toujours.'
-        : 'Elle avance avec les tampons du carnet. Que du visuel, et tout reste à toi pour toujours.')
+        : 'Elle avance avec les tampons du carnet : chaque mission récupérée la fait avancer. Que du visuel, et tout reste à toi pour toujours.')
       : apercu
         ? `La voie du PASS ${numero} avance avec le carnet de la saison ${numero}. Que du visuel, jamais de puissance.`
         : 'Tout ce que tes tampons ont déjà atteint est à toi dès l’achat. Que du visuel, jamais de puissance.';
@@ -1210,6 +1263,7 @@ html[data-calme~="animations"] .pas.neuf{animation:none;outline:2px solid var(--
       out.push(`<h2 class="tbf-cousu">${nomSaison(s) || 'LA SAISON'}${quand ? `<i>${esc(quand)}</i>` : ''}</h2>
         ${prets.length ? `<div class="tbf-missions">${prets.map((p) => ticketPalier(p, s)).join('')}</div>` : ''}
         ${carnetHTML(c, s, tampons)}
+        ${gagnerHTML(c)}
         ${tropheeHTML(c, tampons)}
         ${voiePassHTML(c, s)}`);
     }
@@ -1434,6 +1488,16 @@ html[data-calme~="animations"] .pas.neuf{animation:none;outline:2px solid var(--
     if (onglet === 'faq' && !laFaq) chargerFaq();
   });
 
+  /* Une ancre changée sans recharger (« VOIR MA VOIE » d'une fête, un lien
+     de la page vers elle-même) : l'onglet qu'elle nomme, s'il existe. */
+  addEventListener('hashchange', () => {
+    const voulu = location.hash.slice(1);
+    if (voulu === onglet || !disponibles().includes(voulu)) return;
+    onglet = voulu;
+    rendre();
+    if (onglet === 'faq' && !laFaq) chargerFaq();
+  });
+
   async function chargerFaq() {
     try {
       const d = await fetch('/api/aide/faq').then((r) => r.json());
@@ -1506,6 +1570,7 @@ html[data-calme~="animations"] .pas.neuf{animation:none;outline:2px solid var(--
     appliquerDefis(d);
     if (onglet === 'jour' || onglet === 'saison') rendre();
     else rendreRail();
+    void feterMissions();
   }
 
   /* La fin du jour, décomptée sur l'horloge de la page et non sur celle du
@@ -1698,9 +1763,8 @@ html[data-calme~="animations"] .pas.neuf{animation:none;outline:2px solid var(--
     } catch { return { statut: 0, j: null }; }
   }
 
-  /* Le Fanzzy du carnet plein (`trophee.js`) : sa fête plein écran, chargée
-     seulement ce jour-là (`pass-fete.js`, comme le fait le menu). */
-  async function feterTrophees(liste) {
+  /* Les fêtes du PASS (`pass-fete.js`), chargées seulement le jour où il en faut une. */
+  async function passFete() {
     if (!window.TBF_PASS_FETE) {
       await new Promise((ok) => {
         const sc = document.createElement('script');
@@ -1710,6 +1774,59 @@ html[data-calme~="animations"] .pas.neuf{animation:none;outline:2px solid var(--
         document.head.appendChild(sc);
       });
     }
+    return window.TBF_PASS_FETE ?? null;
+  }
+
+  /* **Un niveau de la voie PASS gagné à l'instant** (demande de Gaël, 6
+     novembre 2026) : des tampons viennent d'être versés, la voie a pu
+     monter. On relit le PASS (pas la réponse gardée : elle date d'avant) et
+     `verifierNiveau` fête le niveau neuf, une fois — le tiroir ne le refête
+     pas à la page suivante (même mémoire). */
+  async function verifierVoie() {
+    try {
+      const a = await fetch('/api/abonnement', { credentials: 'same-origin' })
+        .then((r) => (r.ok ? r.json() : null)).catch(() => null);
+      if (!a || a.error) return;
+      ABO = a;
+      window.TBF_ABO = Promise.resolve(a);
+      if (onglet === 'saison') rendre();
+      const F = await passFete();
+      /* VOIR MA VOIE mène à `/aide#saison` : la page même, par son ancre
+         (voir `hashchange`, plus bas). */
+      await F?.verifierNiveau?.(a);
+    } catch { /* pas de fête, rien d'autre ne change */ }
+  }
+
+  /* **La mission réussie** (demande de Gaël, 6 novembre 2026 : « une alerte
+     comme pour un changement de niveau ») : les missions et défis finis
+     depuis la dernière visite, fêtés une fois (`niveau-fete.js`,
+     `missions`). RÉCUPÉRER ouvre DU JOUR et touche le premier RÉCUPÉRER. */
+  async function feterMissions() {
+    if (!window.TBF_NIVEAU) {
+      await new Promise((ok) => {
+        if (document.readyState === 'complete') ok();
+        else addEventListener('load', ok, { once: true });
+      });
+    }
+    const choix = await window.TBF_NIVEAU?.missions?.(Q, { defis: D, qui: qui ?? undefined })
+      .catch(() => null);
+    if (choix !== 'recuperer') return;
+    if (onglet !== 'jour' && disponibles().includes('jour')) {
+      onglet = 'jour';
+      try { history.replaceState(null, '', '#jour'); } catch { /* tant pis */ }
+      rendre();
+    }
+    const b = document.querySelector('#vue button[data-geste="mission"]:not([disabled]),'
+      + '#vue button[data-geste="defi"]:not([disabled])');
+    if (!b) return;
+    b.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    b.click();
+  }
+
+  /* Le Fanzzy du carnet plein (`trophee.js`) : sa fête plein écran, chargée
+     seulement ce jour-là (`pass-fete.js`, comme le fait le menu). */
+  async function feterTrophees(liste) {
+    await passFete();
     for (const t of liste) {
       const choix = await window.TBF_PASS_FETE?.trophee?.(t);
       if (choix === 'collection') { location.href = '/collection'; return; }
@@ -1766,6 +1883,7 @@ html[data-calme~="animations"] .pas.neuf{animation:none;outline:2px solid var(--
       window.dispatchEvent(new CustomEvent('tbf:bourse', { detail: { wallet: j.wallet, niveau: j.niveau } }));
       if (j.niveau?.monte === true) window.TBF_NIVEAU?.feter?.(j.niveau);
       if (Array.isArray(j.trophees) && j.trophees.length) await feterTrophees(j.trophees);
+      if (entier(j.gain?.tampons) > 0 || entier(j.gain?.voie) > 0) await verifierVoie();
       return;
     }
 
@@ -1816,6 +1934,15 @@ html[data-calme~="animations"] .pas.neuf{animation:none;outline:2px solid var(--
   }
 
   $('vue').addEventListener('click', (e) => {
+    /* « MES MISSIONS », sous le carnet : l'onglet DU JOUR, comme le rail. */
+    const aller = e.target.closest('button[data-aller]');
+    if (aller && disponibles().includes(aller.dataset.aller)) {
+      onglet = aller.dataset.aller;
+      try { history.replaceState(null, '', `#${onglet}`); } catch { /* tant pis */ }
+      rendre();
+      scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
     const b = e.target.closest('button[data-geste]');
     if (!b || b.disabled) return;
     if (b.dataset.geste === 'relance') relancer(b);
@@ -1942,6 +2069,7 @@ html[data-calme~="animations"] .pas.neuf{animation:none;outline:2px solid var(--
     chargerFaq();
 
     if (parcours && parcours.faites === parcours.total && !parcours.paye) finir();
+    else void feterMissions();
   })();
 })();
 </script>
