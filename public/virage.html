@@ -271,7 +271,12 @@ html[data-calme~="animations"] .fzs>.pass-aura i{display:none}
 /* **Le Fanzzy en héros**, comme au duel (Gaël, 5 novembre 2026, maquette A) :
    près de la moitié de l'écran entre la case — un peu resserrée — et la
    feuille, pieds posés sur son bord. */
-#bilan>.tbf-bilan-fz{height:min(48vh,420px);margin:-30px auto -40px}
+#bilan>.bilan-fz-boite{position:relative;height:min(48vh,420px);margin:-30px auto -40px;width:min(420px,100%);
+  z-index:1;pointer-events:none}
+#bilan>.bilan-fz-boite>.tbf-bilan-fz{height:100%;margin:0 auto}
+/* Le personnage, et non son cadre, à la taille de son âge (`TBF_ETATS.caler`,
+   6 novembre 2026), pieds au bas de la boîte. */
+#bilan>.bilan-fz-boite>.tbf-bilan-fz[data-cale]{position:absolute;margin:0}
 #bilan>.bilan-case .tbf-vignette{scale:.86}
 .bilan-case .tbf-vignette small{display:block;margin-top:7px;font-family:var(--banner);font-size:14px;
   font-weight:600;letter-spacing:.12em;color:var(--craie);font-variant-numeric:tabular-nums}
@@ -2586,7 +2591,7 @@ function montrerBilan(b, { ou = '/' } = {}) {
       <div class="bilan-case" hidden>
         <div class="tbf-vignette"><b class="tbf-vignette-mot"></b><small></small></div>
       </div>
-      <img class="tbf-bilan-fz" alt="" hidden>
+      <div class="bilan-fz-boite" hidden><img class="tbf-bilan-fz" alt="" hidden></div>
       <div class="tbf-ticket tbf-bilan-page">
         <header class="tbf-bilan-tete">
           <h2 class="tbf-bilan-titre" id="bilanTitre">BILAN DE TRIBUNE</h2>
@@ -2659,7 +2664,9 @@ function montrerBilan(b, { ou = '/' } = {}) {
   }
   const src = fin ? poseDuBilan(issue === 'nul' || !issue ? 'neutre' : issue) : null;
   fz.hidden = !src;
+  fz.parentElement.hidden = !src;
   if (src) { if (fz.getAttribute('src') !== src) fz.src = src; } else fz.removeAttribute('src');
+  if (src) window.TBF_ETATS?.caler?.(fz, { part: { 1: 0.74, 2: 0.82, 3: 0.9 }, sol: '40px' });
 
   const page = bilanEl.querySelector('.tbf-bilan-page');
   const f = S?.fixture;

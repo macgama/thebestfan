@@ -77,6 +77,15 @@ async function mesurerPieds(dossierAge, skins) {
 export async function agreger(dossier = SORTIE_DEFAUT) {
   const entrees = await readdir(dossier, { withFileTypes: true });
   const fanzzy = {};
+  /* La mesure d'avant, pour un âge dont le repos n'est pas sur ce disque.
+     Les images sont hors git : agréger dans un clone qui ne les a pas (le
+     cloud) effaçait la mesure de 818 âges sur 958, et la fiche retombait sur
+     le cadre entier — un Fanzzy à la moitié de sa carte, au même âge d'un
+     Fanzzy à l'autre (Gaël, 6 novembre 2026). Sans image, on garde donc ce
+     qui avait été mesuré là où elles sont. */
+  let avant = {};
+  try { avant = JSON.parse(await readFile(path.join(dossier, 'index.json'), 'utf8')).fanzzy ?? {}; }
+  catch { avant = {}; }
 
   for (const e of entrees.filter((d) => d.isDirectory()).sort((a, b) => a.name.localeCompare(b.name))) {
     let m;
@@ -93,7 +102,9 @@ export async function agreger(dossier = SORTIE_DEFAUT) {
           ...(s.repli ? { repli: s.repli } : {}),
           ...(s.cligne === true ? { cligne: true } : {}) };
       }
-      const pieds = await mesurerPieds(path.join(dossier, e.name, evo), contenu.skins ?? {});
+      const ancien = avant[m.id ?? e.name]?.evolutions?.[evo]?.pieds;
+      const pieds = await mesurerPieds(path.join(dossier, e.name, evo), contenu.skins ?? {})
+        ?? (Array.isArray(ancien) ? [...ancien] : null);
       /* Ce qu'il tient au-dessus de sa tête — une canne, une bannière, un
          parapluie — compte dans la hauteur du dessin, pas dans celle du
          personnage : `AGES` donne alors la hauteur de son corps, et c'est

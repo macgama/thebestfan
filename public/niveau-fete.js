@@ -398,10 +398,22 @@
     if (perso) {
       perso.style.opacity = '0';
       const montrer = () => {
+        /* À la taille de son âge, comme partout (`TBF_ETATS.caler`) : la
+           scène ne montre que le haut du corps, les pieds sont sous le bord
+           (6 novembre 2026). */
+        window.TBF_ETATS?.caler?.(perso, { part: { 1: 1.15, 2: 1.25, 3: 1.35 }, sol: '-40%' });
+        if (perso.dataset.cale) {
+          /* Le fondu du bas suit le bord de la scène, plus le haut de l'image
+             (celle-ci est maintenant plus grande que la scène). */
+          const d = perso.getBoundingClientRect().bottom - scene.getBoundingClientRect().bottom;
+          const fondu = `linear-gradient(0deg,transparent ${Math.max(0, d).toFixed(0)}px,#000 ${(Math.max(0, d) + 48).toFixed(0)}px)`;
+          perso.style.maskImage = fondu;
+          perso.style.webkitMaskImage = fondu;
+        }
         perso.style.opacity = '';
         if (doux()) return;
         try {
-          perso.animate([{ translate: '0 46px', opacity: 0 }, { translate: '0 0', opacity: 1 }],
+          perso.animate([{ transform: 'translateY(46px)', opacity: 0 }, { transform: 'none', opacity: 1 }],
             { duration: 460, easing: 'cubic-bezier(.2,1.25,.35,1)' });
         } catch { /* sans animations de script : il est là, c'est l'essentiel */ }
       };

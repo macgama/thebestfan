@@ -12,6 +12,26 @@ ligne : « Redémarrer ».
 
 ---
 
+**Duel privé et page du duel refaite** (branche `claude/project-thread-md55t8`,
+6 novembre 2026, demande de Gaël). Code seul, sans schéma. Deux onglets
+MATCHS DU JOUR (filtre MES ÉQUIPES, recherche) et EN ATTENTE DE JOUEURS
+(filtres format et MES ÉQUIPES) ; dans la case du match : l'équipe, le format,
+la case DUEL PRIVÉ, puis CRÉER LE DUEL (ou REJOINDRE LE DUEL). Un duel privé
+n'apparaît dans aucune liste : seuls le lien et les invitations y mènent ; le
+vestiaire le ferme ou le rouvre. « Peu importe le format » est retiré. Après
+la mise en ligne : « Redémarrer ».
+
+---
+
+**Fanzzy à la taille de leur âge, partout** (branche `claude/project-thread-1jgro8`,
+6 novembre 2026, demande de Gaël). Code et `index.json` seuls, sans schéma ni
+image. La mesure qui donne à chaque Fanzzy la taille de son âge avait été effacée
+du catalogue des images pour 818 âges sur 958 : la fiche montrait un Fanzzy à la
+moitié de sa carte, de taille variable. Mesure restaurée et protégée. Pas besoin
+de « Redémarrer » (pages et catalogue servis tels quels), mais sans risque.
+
+---
+
 **Traductions à jour et images des autres clones** (branche
 `claude/project-thread-ojr7rb`, 6 novembre 2026, demande de Gaël). Code et
 textes seuls, sans schéma. Les 199 textes encore en français (page du PASS,
