@@ -88,7 +88,7 @@
    "es"
   ]
  },
- "Deviens testeur de l’appli Android": {
+ "deviens testeur": {
   "ou": [
    "public/beta-android.js"
   ],
@@ -99,7 +99,7 @@
    "es"
   ]
  },
- "L’appli Android est en test, bientôt sur Google Play": {
+ "bientôt sur Google Play": {
   "ou": [
    "public/beta-android.js"
   ],
@@ -110,7 +110,7 @@
    "es"
   ]
  },
- "DEVIENS TESTEUR": {
+ "<0>Appli Android</0> · deviens testeur": {
   "ou": [
    "public/beta-android.js"
   ],
@@ -121,18 +121,7 @@
    "es"
   ]
  },
- "BIENTÔT SUR GOOGLE PLAY": {
-  "ou": [
-   "public/beta-android.js"
-  ],
-  "langues": [
-   "en",
-   "de",
-   "it",
-   "es"
-  ]
- },
- "APPLI ANDROID": {
+ "<0>Appli Android</0> · bientôt sur Google Play": {
   "ou": [
    "public/beta-android.js"
   ],

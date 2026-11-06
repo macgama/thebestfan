@@ -1,5 +1,14 @@
 # À déposer sur Infomaniak
 
+**Accueil : l'annonce de l'appli Android devient discrète** (branche
+`claude/project-thread-00ar7w`, 6 novembre 2026, demande de Gaël). Code seul,
+sans schéma. La plaque rouge « APPLI ANDROID » est remplacée par un petit
+bandeau sombre en haut de la scène : il reste 7 secondes puis s'efface, se
+ferme d'un ×, et ne revient pas avant 3 jours (30 jours si on l'a fermé,
+7 jours après une visite de /beta). Rien à redémarrer.
+
+---
+
 **Page CLUBS plus vivante** (branche `claude/project-thread-sualru`, 5 novembre
 2026, demande de Gaël). Code seul, sans schéma. « Es-tu sûr ? » avant de suivre
 un nouveau club ; le nom du club ouvre la page de son championnat ; chaque match
