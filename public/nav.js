@@ -1482,6 +1482,15 @@
        en face, l'invitation d'un ami. Chargé ici une fois pour toutes les
        pages plutôt qu'écrit dans chacune ; il se tait de lui-même sur
        l'écran du duel. */
+    /* **Le cadeau de l'administration** (`cadeau-fete.js`), pour qui a un
+       compte : chargé ici pour toutes les pages, comme le rappel du duel ;
+       il se tait de lui-même là où l'on joue. */
+    if (user && !document.querySelector('script[src="/cadeau-fete.js"]')) {
+      const cadeau = document.createElement('script');
+      cadeau.src = '/cadeau-fete.js';
+      cadeau.defer = true;
+      document.head.append(cadeau);
+    }
     if (user && !document.querySelector('script[src="/duel-rappel.js"]')) {
       const rappel = document.createElement('script');
       rappel.src = '/duel-rappel.js';
