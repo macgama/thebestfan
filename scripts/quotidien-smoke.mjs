@@ -1791,8 +1791,15 @@ titre('la forme du contrat (§ 6.1)');
   /* `trophee` : le Fanzzy du carnet plein de la saison (6 novembre 2026),
      absent d'une saison qui n'en a pas. */
   const trophee = e.carnet.trophee === undefined ? '' : 'trophee,';
-  check('carnet : saison, close, tampons, paliers, prochain (et son trophée)',
-    cles(e.carnet) === `close,paliers,prochain,saison,tampons${trophee ? ',trophee' : ''}`
+  /* `gagner` : ce que rapporte chaque source de tampons (6 novembre 2026,
+     « comment tu gagnes des tampons ? »), aux réglages de l'instant. */
+  check('carnet : saison, close, tampons, paliers, prochain, gagner (et son trophée)',
+    cles(e.carnet) === `close,gagner,paliers,prochain,saison,tampons${trophee ? ',trophee' : ''}`
+    && cles(e.carnet.gagner) === 'defi,difficile,facile,moyenne,sachet,victoire,victoiresJour'
+    && e.carnet.gagner.victoire === reglage('saison.tampons_victoire')
+    && e.carnet.gagner.victoiresJour === reglage('saison.victoires_jour')
+    && e.carnet.gagner.facile === reglage('saison.tampons_facile')
+    && e.carnet.gagner.difficile === reglage('saison.tampons_difficile')
     && cles(e.carnet.saison) === 'id,nom,numero'
     && (!trophee || cles(e.carnet.trophee) === 'actif,fanzzy,gagnants,gagne,nom')
     && e.carnet.paliers.every((p) => gainOk(p.gain) && ['a_venir', 'pret', 'reclame'].includes(p.etat)));

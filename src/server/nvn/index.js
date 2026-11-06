@@ -22,6 +22,8 @@ import { clubSoutenu, clubParmi, campDe } from '../football/suivis.js';
 import { principauxDe } from '../football/principal.js';
 import { lierLeDeck, tauxDuLien } from '../../shared/fanzzy/clubs.js';
 import { assurerBourse } from '../bourse.js';
+import { verser } from '../recompenses.js';
+import { saisonEnCours } from '../fanzzy/saisons.js';
 import { compterDuJour } from '../quotidien/compteurs.js';
 
 /**
@@ -1497,6 +1499,31 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
     };
   }
 
+  /** Verse le tampon d'une victoire classée ; rend le nombre versé (0 sinon). */
+  async function tamponDeVictoire(userId, duelId) {
+    const n = reglage('saison.tampons_victoire');
+    if (!n || reglage('saison.carnet_actif') !== true || !duelId) return 0;
+    let s = null;
+    try { s = saisonEnCours(); } catch { return 0; }
+    if (!s || s.finie === true) return 0;
+    try {
+      const r = await verser(pool, {
+        userId, source: 'victoire', cle: String(duelId), saisonId: Number(s.id),
+        gain: { tampons: n },
+        verifier: async (conn) => {
+          const [[j]] = await conn.execute(
+            `SELECT COUNT(*) AS n FROM recompenses
+              WHERE user_id = ? AND source = 'victoire' AND verse_a >= CURDATE()`, [userId]);
+          return Number(j?.n ?? 0) >= reglage('saison.victoires_jour') ? 'quota' : true;
+        },
+      });
+      return r.verse ? n : 0;
+    } catch (e) {
+      console.error('[nvn] tampon de victoire', e.message);
+      return 0;
+    }
+  }
+
   async function recompenser(salle) {
     const d = salle.duel;
     const verse = new Map();
@@ -1588,6 +1615,17 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
              absent, c’est « rien n’a été versé ». `montee` reste à côté, tel
              quel, pour `niveau-fete.js`. */
           if (Number(m?.gain) > 0) verse.get(userId).niveau = m;
+        }
+
+        /* **Un tampon du carnet par duel classé gagné** (choix de Gaël, 6
+           novembre 2026 : « Oui, 1 par victoire, max 3/jour »). Au grand
+           livre, une fois par duel (la clé est le duel), pour la saison en
+           cours si sa fenêtre est ouverte ; au plus `saison.victoires_jour`
+           par jour de la base, recomptés sous le verrou du joueur. Un refus
+           ne gêne rien : la victoire est déjà payée en écharpes et en XP. */
+        if (gagne && !aFuit && d.mode === 'classe') {
+          const t = await tamponDeVictoire(userId, d.id);
+          if (t) verse.get(userId).tampons = t;
         }
 
         /* La part du club, versée au pot du KOP.

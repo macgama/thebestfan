@@ -340,7 +340,7 @@ export function createAbonnement({ pool, requireAuth }) {
     try {
       const [r] = await q(
         `SELECT COALESCE(SUM(tampons), 0) AS n FROM recompenses
-          WHERE user_id = ? AND source IN ('mission', 'sachet', 'hebdo') AND saison_id = ?`,
+          WHERE user_id = ? AND source IN ('mission', 'sachet', 'hebdo', 'victoire') AND saison_id = ?`,
         [userId, saisonId]);
       return Number(r?.n ?? 0);
     } catch (e) {

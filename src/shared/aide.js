@@ -518,6 +518,24 @@ const RUBRIQUES = [
           + `${reglage('saison.tampons_difficile')} pour une difficile. Chaque palier `
           + 'du carnet rapporte des écharpes ou des boosters, et qui a bien rempli le '
           + 'sien reçoit des boosters au lancement de la saison suivante.'],
+      ['Comment gagner des tampons ?',
+        () => 'Les tampons viennent des missions, quand tu les récupères : '
+          + `${reglage('saison.tampons_facile')} pour la mission facile du jour, `
+          + `${reglage('saison.tampons_moyenne')} pour la moyenne, `
+          + `${reglage('saison.tampons_difficile')} pour la difficile, `
+          + `${reglage('saison.tampons_sachet')} de plus pour le sachet des trois missions finies`
+          + (reglage('defis.actif') ? `, et ${reglage('defis.tampons')} pour chaque défi de la semaine` : '')
+          + (reglage('saison.tampons_victoire') && reglage('saison.victoires_jour')
+            ? `. Un duel classé gagné en donne ${reglage('saison.tampons_victoire')}, `
+              + `pour ${reglage('saison.victoires_jour')} victoires par jour au plus` : '')
+          + '. Ils remplissent le carnet de la saison et font avancer la voie PASS. '
+          + 'Le détail est sous le carnet, dans l’onglet SAISON des missions.'],
+      ['Comment savoir qu’une mission est réussie ?',
+        'Le jeu te le dit : au retour sur l’accueil ou dans les missions, une alerte '
+          + '« MISSION RÉUSSIE ! » montre ce qu’elle rapporte, avec RÉCUPÉRER. Sur '
+          + 'l’accueil, la carte MISSIONS en haut à gauche compte celles du jour, et son '
+          + 'sticker or dit combien sont à récupérer. Un niveau gagné dans la voie PASS '
+          + 'a la même alerte.'],
       ['C’est quoi, les défis de la semaine ?',
         () => 'Chaque lundi, trois défis tirés parmi ce que tu possèdes : jouer des duels '
           + 'avec un Fanzzy d’une de tes séries, chanter au Grand Virage en portant une de '
@@ -561,6 +579,12 @@ const RUBRIQUES = [
           + 'deck et ses cartes-souvenirs, et tu peux lui faire signe, lui offrir un '
           + 'cadeau, relever le défi de la semaine avec lui, échanger un double ou '
           + 'emprunter un de ses Fanzzy.'],
+      ['Qui sont les Fanzzy debout en haut de la page Amis ?',
+        'C’est ta tribune : les Fanzzy de tes amis, debout. Ceux qui jouent en ce '
+          + 'moment (au Virage, en duel, en ligne) sont devant, dans le projecteur ; les '
+          + 'autres attendent dans l’ombre. Touche un Fanzzy pour ouvrir sa fiche. '
+          + 'Là, la case GESTES ouvre la roue des gestes autour de lui, et sous un '
+          + 'geste reçu, RÉPONDRE t’y amène directement.'],
       ['Pourquoi ne peut-on pas s’écrire ?',
         'Pour que personne ne reçoive un message blessant ou mal intentionné. On se '
           + 'fait signe avec un geste choisi dans une liste (« BRAVO ! », « UN DUEL ? », '

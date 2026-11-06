@@ -145,7 +145,8 @@ const attendre = (ms) => new Promise((r) => setTimeout(r, ms));
   });
   await attendre(1200);
   const r = await p.evaluate(() => {
-    const t = document.querySelector('.fiche-tete');
+    // La tête de la fiche est devenue sa scène (la tribune des amis, 6 novembre 2026).
+    const t = document.querySelector('.scene-ami');
     return {
       fond: t?.hasAttribute('data-pass-fond') ?? false,
       cadre: Boolean(t?.querySelector('.pass-cadre-buste')),
@@ -253,9 +254,14 @@ for (const [nom, vu, attendu] of [['niveau gagné', '5', true], ['déjà vu', '6
   });
   await p.goto(`http://127.0.0.1:${port}/comment-jouer`, { waitUntil: 'networkidle2' });
   await attendre(1200);
-  const t = await p.evaluate(() => document.querySelector('#pfVoile .pf-titre')?.textContent ?? '');
+  /* La fête de la voie est la case de la montée de niveau depuis le 6
+     novembre 2026 (`niveau-fete.js`, `voie`), sa scène d'avant en repli. */
+  const t = await p.evaluate(() => (document.querySelector('.tbf-niv-case .tbf-niv-n')?.textContent
+    ?? document.querySelector('#pfVoile .pf-titre')?.textContent ?? '').replace(/\s+/g, ' ').trim());
   if (attendu) {
-    ok(t === 'Niveau 6', `voie : la fête du niveau 6 (${nom})`);
+    ok(/^niveau 6$/i.test(t), `voie : la fête du niveau 6 (${nom})`);
+    const sur = await p.evaluate(() => document.querySelector('.tbf-niv-case .tbf-sticker')?.textContent ?? '');
+    ok(sur.includes('VOIE PASS 1'), `voie : la case dit « VOIE PASS 1 » (${nom})`);
     if (CAPT) await p.screenshot({ path: `${CAPT}/niveau.png` });
   } else ok(!t, `voie : pas de fête (${nom})`);
   await p.close();
