@@ -1,5 +1,18 @@
 # À déposer sur Infomaniak
 
+**LE PARCAGE branché dans le jeu** (branche `claude/project-thread-vuon42`,
+6 novembre 2026, « Tu peux brancher la série dans l'application »). Code seul,
+sans schéma. La série du championnat de France (code FR) entre au catalogue :
+54 Fanzzy à trois âges (FR1 à FR54) et 6 légendaires (FR55 à FR60, liées aux
+équipes de France et au championnat), le cri de chacun des 18 clubs, 36 pièces
+de club, la série sur la page du championnat de France. Elle arrive **fermée** :
+rien ne sort tant qu'une saison lancée ne la coche pas dans /admin (PASS 2).
+Les images arrivent par un envoi séparé depuis le PC. Identifiants API-Football
+des clubs à vérifier dans `teams` (Le Mans surtout). Après la mise en ligne :
+« Redémarrer ».
+
+---
+
 **Page CLUBS plus vivante** (branche `claude/project-thread-sualru`, 5 novembre
 2026, demande de Gaël). Code seul, sans schéma. « Es-tu sûr ? » avant de suivre
 un nouveau club ; le nom du club ouvre la page de son championnat ; chaque match

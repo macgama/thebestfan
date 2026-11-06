@@ -775,6 +775,143 @@ export const STUFF = [
     texte: 'Tu tiens jusqu’au terminus. Il faut du temps pour lâcher.',
     mods: { holdBonus: 1.28, mashTime: 400 } },
 
+  /* --------------------------------------------- LE PARCAGE, les pièces de club
+
+     Les mêmes règles, pour les dix-huit clubs du championnat de France
+     (proposées le 5 novembre 2026, `pass2/fr-cris-stuff-legendaires.md`,
+     branchées avec la série le 6 novembre). Les couleurs ou la ville, jamais
+     ce que dessinent les écussons : ni dogue, ni poisson, ni lion, ni aigle,
+     ni losange, ni couronne, ni tour, ni fleur de lys, ni nef, ni étoile, ni
+     croix, ni hermine, ni pirate, ni cigogne, ni château, ni coq ; et aucune
+     boisson alcoolisée. */
+
+  // Angers
+  { id: 'fr-sabots', nom: 'Sabots de pépiniériste', rar: 'commune', club: 77, publie: false,
+    texte: 'On tient debout toute la journée. On frappe mal avec des sabots.',
+    mods: { holdBonus: 1.18, mashBonus: 0.9 } },
+  { id: 'fr-arrosoir', nom: 'Arrosoir noir à la rose blanche', rar: 'rare', club: 77, publie: false,
+    texte: 'Une goutte au bon endroit, et tout fleurit. Il faut le remplir souvent.',
+    mods: { perfectBonus: 1.28, breathBonus: 0.86 } },
+  // Auxerre
+  { id: 'fr-panier-cerises', nom: 'Panier de cerises bleu roi', rar: 'commune', club: 108, publie: false,
+    texte: 'Une poignée de cerises et la voix revient. Les mains pleines, on pousse moins.',
+    mods: { breathBonus: 1.18, mashBonus: 0.9 } },
+  { id: 'fr-cle-horloge', nom: 'Clé de l’horloge de la tour', rar: 'rare', club: 108, publie: false,
+    texte: 'Une fois remontée, la mesure ne bouge plus. Les contres n’y changent rien, les tiens non plus.',
+    mods: { tempoWindow: 1.28, parryBonus: 0.86 } },
+  // Brest
+  { id: 'fr-cire-raye', nom: 'Ciré rayé rouge et blanc', rar: 'commune', club: 106, publie: false,
+    texte: 'Les paquets de mer glissent dessus. On y bouge moins bien les bras.',
+    mods: { parryResist: 1.2, mashBonus: 0.88 } },
+  { id: 'fr-bateau-bouteille', nom: 'Bateau en bouteille', rar: 'rare', club: 106, publie: false,
+    texte: 'Il faut des doigts de fée pour le faire entrer. Pas question de taper.',
+    mods: { perfectBonus: 1.28, mashTime: 400 } },
+  // Le Havre
+  { id: 'fr-casquette-docker', nom: 'Casquette de docker ciel et marine', rar: 'commune', club: 111, publie: false,
+    texte: 'On décharge à grands coups. La mesure, on verra plus tard.',
+    mods: { mashBonus: 1.18, tempoWindow: 0.9 } },
+  { id: 'fr-corne-paquebot', nom: 'Corne du paquebot', rar: 'rare', club: 111, publie: false,
+    texte: 'Quand elle sonne, tout le port se tait. Il faut attendre qu’elle ait fini.',
+    mods: { parryBonus: 1.3, tempoInterval: 70 } },
+  // Le Mans
+  { id: 'fr-drapeau-damier', nom: 'Drapeau à damier de poche', rar: 'commune', club: 1063, publie: false,
+    texte: 'Il donne le départ pile à l’heure. Agité trop longtemps, il essouffle.',
+    mods: { tempoWindow: 1.18, breathBonus: 0.9 } },
+  { id: 'fr-casque-pilote', nom: 'Casque de pilote rouge et jaune', rar: 'rare', club: 1063, publie: false,
+    texte: 'Pied au plancher, tout pousse. On ne récupère rien en route.',
+    mods: { mashBonus: 1.28, refundBonus: 0.84 } },
+  // Lens
+  { id: 'fr-lampe-mineur', nom: 'Lampe de mineur rouge et or', rar: 'commune', club: 116, publie: false,
+    texte: 'Elle tient bon au fond du noir. Elle pèse au bout du bras.',
+    mods: { parryResist: 1.2, mashBonus: 0.88 } },
+  { id: 'fr-briquet', nom: 'Briquet du mineur', rar: 'rare', club: 116, publie: false,
+    texte: 'La boîte du casse-croûte : de quoi repartir à chaque pause. Le ventre plein, on pousse moins.',
+    mods: { refundBonus: 1.28, mashBonus: 0.86 } },
+  // Lille
+  { id: 'fr-gaufre', nom: 'Gaufre fourrée dans son papier', rar: 'commune', club: 79, publie: false,
+    texte: 'Une bouchée et le souffle revient. Les doigts collent, le geste fin s’en ressent.',
+    mods: { breathBonus: 1.18, perfectBonus: 0.9 } },
+  { id: 'fr-cloche-beffroi', nom: 'Cloche du beffroi miniature', rar: 'rare', club: 79, publie: false,
+    texte: 'Chaque coup répond aux leurs, plus fort. Elle ne laisse pas tenir une note.',
+    mods: { parryBonus: 1.3, holdBonus: 0.84 } },
+  // Lorient
+  { id: 'fr-bonnet-bagad', nom: 'Bonnet de bagad orange et noir', rar: 'commune', club: 97, publie: false,
+    texte: 'Sous le bonnet, on suit le bagad sans un pas de travers. On pousse un peu moins.',
+    mods: { tempoWindow: 1.18, mashBonus: 0.9 } },
+  { id: 'fr-bombarde', nom: 'Bombarde', rar: 'rare', club: 97, publie: false,
+    texte: 'Le refrain monte d’un coup. Elle prend tout le souffle.',
+    mods: { tempoInterval: -60, breathBonus: 0.86 } },
+  // Lyon
+  { id: 'fr-lumignon', nom: 'Lumignon dans son verre', rar: 'commune', club: 80, publie: false,
+    texte: 'Une petite flamme pour le geste juste. On ne tape pas près d’une bougie.',
+    mods: { perfectBonus: 1.18, mashBonus: 0.9 } },
+  { id: 'fr-navette', nom: 'Navette de canut tricolore', rar: 'rare', club: 80, publie: false,
+    texte: 'Le rythme passe et repasse, serré et juste. Les notes tenues filent moins loin.',
+    mods: { tempoWindow: 1.28, holdBonus: 0.86 } },
+  // Marseille
+  { id: 'fr-savon-cube', nom: 'Savon cube blanc et ciel', rar: 'commune', club: 81, publie: false,
+    texte: 'Tout glisse dessus, même les contres. Il mousse et il essouffle.',
+    mods: { parryResist: 1.2, breathBonus: 0.88 } },
+  { id: 'fr-boules', nom: 'Boules de pétanque de loisir', rar: 'rare', club: 81, publie: false,
+    texte: 'Un tir au fer, et tout recule. Le geste fin, ce sera pour la prochaine mène.',
+    mods: { mashBonus: 1.28, perfectBonus: 0.86 } },
+  // Monaco
+  { id: 'fr-parasol', nom: 'Parasol rayé rouge et blanc', rar: 'commune', club: 91, publie: false,
+    texte: 'À l’ombre, on reprend son souffle. Le refrain monte moins vite.',
+    mods: { breathBonus: 1.18, tempoInterval: 60 } },
+  { id: 'fr-clochette-hotel', nom: 'Clochette du grand hôtel', rar: 'rare', club: 91, publie: false,
+    texte: 'Un coup de clochette, et l’on vous répond. Mais on ne la secoue pas vite.',
+    mods: { parryBonus: 1.28, mashTime: 400 } },
+  // Nice
+  { id: 'fr-cornet-socca', nom: 'Cornet de socca', rar: 'commune', club: 84, publie: false,
+    texte: 'Brûlant, il donne envie de taper. On ne le tient pas longtemps.',
+    mods: { mashBonus: 1.18, holdBonus: 0.9 } },
+  { id: 'fr-chaise-bleue', nom: 'Chaise bleue pliante de la promenade', rar: 'rare', club: 84, publie: false,
+    texte: 'On s’y pose, et tout ce qu’on a donné revient. Assis, on pousse moins.',
+    mods: { refundBonus: 1.28, mashBonus: 0.86 } },
+  // Paris FC
+  { id: 'fr-chaise-rotin', nom: 'Chaise de café en rotin bleu nuit', rar: 'commune', club: 114, publie: false,
+    texte: 'Au café, on garde la mesure. On y pousse un peu moins.',
+    mods: { tempoWindow: 1.18, mashBonus: 0.9 } },
+  { id: 'fr-marteau-zingueur', nom: 'Marteau de zingueur', rar: 'rare', club: 114, publie: false,
+    texte: 'Chaque coup résonne sur tout le toit. Pour la mesure, on repassera.',
+    mods: { mashBonus: 1.28, tempoWindow: 0.86 } },
+  // Paris Saint-Germain
+  { id: 'fr-beret', nom: 'Béret marine à liseré rouge', rar: 'commune', club: 85, publie: false,
+    texte: 'Bien enfoncé, il ne bouge sous aucun coup. Il ne frappe pas non plus.',
+    mods: { parryResist: 1.2, mashBonus: 0.88 } },
+  { id: 'fr-accordeon', nom: 'Accordéon de bal musette', rar: 'rare', club: 85, publie: false,
+    texte: 'La valse emporte tout le monde, de plus en plus vite. Le geste fin se perd dans le soufflet.',
+    mods: { tempoInterval: -60, perfectBonus: 0.86 } },
+  // Rennes
+  { id: 'fr-galette-saucisse', nom: 'Galette-saucisse dans sa serviette', rar: 'commune', club: 94, publie: false,
+    texte: 'Avant le match, elle redonne du souffle. La bouche pleine, le rythme flotte.',
+    mods: { breathBonus: 1.18, tempoWindow: 0.9 } },
+  { id: 'fr-billig', nom: 'Billig rouge et noir', rar: 'rare', club: 94, publie: false,
+    texte: 'Les notes tenues s’étalent jusqu’au bord. Il chauffe lentement.',
+    mods: { holdBonus: 1.28, tempoInterval: 70 } },
+  // Strasbourg
+  { id: 'fr-bretzel', nom: 'Bretzel de poche', rar: 'commune', club: 95, publie: false,
+    texte: 'On tape plus fort avec un bretzel en main. Le sel donne soif.',
+    mods: { mashBonus: 1.18, breathBonus: 0.9 } },
+  { id: 'fr-coeur-pain-epices', nom: 'Cœur en pain d’épices bleu ciel', rar: 'rare', club: 95, publie: false,
+    texte: 'Le refrain monte tout seul. Il se casse au premier choc.',
+    mods: { tempoInterval: -60, parryResist: 0.86 } },
+  // Toulouse
+  { id: 'fr-brique-rose', nom: 'Brique rose', rar: 'commune', club: 96, publie: false,
+    texte: 'Solide comme un mur. Lourde à pousser.',
+    mods: { parryResist: 1.2, mashBonus: 0.88 } },
+  { id: 'fr-sacoche-postale', nom: 'Sacoche de la ligne postale violette', rar: 'rare', club: 96, publie: false,
+    texte: 'Chaque lettre arrive à la bonne adresse. Le courrier prend son temps.',
+    mods: { perfectBonus: 1.28, tempoInterval: 70 } },
+  // Troyes
+  { id: 'fr-chaussettes', nom: 'Chaussettes tricotées bleu et blanc', rar: 'commune', club: 110, publie: false,
+    texte: 'Bien au chaud, on tient debout longtemps. En chaussettes, on frappe mal.',
+    mods: { holdBonus: 1.18, mashBonus: 0.9 } },
+  { id: 'fr-eclat-vitrail', nom: 'Éclat de vitrail bleu', rar: 'rare', club: 110, publie: false,
+    texte: 'La lumière juste passe au travers. On ne tape pas sur du verre.',
+    mods: { perfectBonus: 1.3, mashTime: 450 } },
+
   /* ----------------------------------------------------- la centième
 
      Hors série : elle ne s'ouvre avec aucune saison, mais quand on le

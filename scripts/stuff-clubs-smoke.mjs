@@ -68,6 +68,14 @@ check('chaque sujet dit l’objet nu, sans écusson ni texte', deClub.every((s) 
   check('ni ours, étoile, aigle, clé, insecte ni drapeau dans le sujet d’une pièce SU',
     deClub.filter((s) => s.id.startsWith('su-')).every((s) =>
       !INTERDITS_SU.test(INVITES_CLUBS[s.id].replace(/no cross and no star anywhere/, ''))));
+  /* LE PARCAGE : les villes et clubs français, et ce que dessinent leurs
+     écussons (6 novembre 2026). */
+  const FRANCAIS = /angers|auxerre|brest|havre|\ble mans\b|\blens\b|lille|lorient|lyon|marseille|monaco|\bnice\b|paris|rennes|strasbourg|toulouse|troyes|dogue|merlu|\blion\b|aigle|losange|couronne|\btour eiffel|\blys\b|\bnef\b|[ée]toile|croix|hermine|pirate|cigogne|ch[âa]teau|\bcoq\b|\bvin\b|pastis|casino/i;
+  check('ni ville ni club français, ni ce que dessinent leurs écussons dans une pièce FR',
+    deClub.filter((s) => s.id.startsWith('fr-')).every((s) => !FRANCAIS.test(s.nom) && !FRANCAIS.test(s.texte)));
+  const INTERDITS_FR = /\bdog\b|\bfish|\blion|eagle|diamond|crown|eiffel|fleur|\bstar\b|\bcross|ermine|pirate|skull|stork|castle|rooster|\bflag\b(?! in black)|wine|casino/i;
+  check('ni dogue, poisson, lion, aigle, couronne, étoile ni croix dans le sujet d’une pièce FR',
+    deClub.filter((s) => s.id.startsWith('fr-')).every((s) => !INTERDITS_FR.test(INVITES_CLUBS[s.id])));
   check('les pièces vertes se dessinent sur magenta, et elles seules',
     [...FOND_MAGENTA].every((id) => STUFF_BY_ID.get(id)?.club === 1011)
     && deClub.filter((s) => s.club === 1011).every((s) => FOND_MAGENTA.has(s.id)));

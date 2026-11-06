@@ -15,12 +15,14 @@
 import { CLUB_DE, CRI_DU_CLUB } from './clubs.js';
 import { SET_TERRACES } from './dex-terraces.js';
 import { SET_KURVE } from './dex-kurve.js';
+import { SET_PARCAGE } from './dex-parcage.js';
 
 /* Compétition (identifiant API-Football) → série. 39 : la Premier League ;
-   207 : le championnat suisse. */
+   207 : le championnat suisse ; 61 : le championnat de France. */
 const SERIES = new Map([
   [39, SET_TERRACES],
   [207, SET_KURVE],
+  [61, SET_PARCAGE],
 ]);
 
 /** Les Fanzzy d'une série, regroupés par club, dans l'ordre des fiches. */

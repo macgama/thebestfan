@@ -1504,10 +1504,11 @@ console.log('\n— la BASE du menu PASS —');
        cochant tout), elle est « posée ici ». */
     const { tenuePar: laTenue } = await import('../src/server/fanzzy/tenues.js');
     const spatiale = laTenue('spatiale')?.publie ? 'ici' : 'a_dessiner';
+    /* LE PARCAGE est branché depuis le 6 novembre 2026 : il n'est plus « à créer ». */
     check('le menu PASS montre le programme de la BASE et des quatre PASS',
       prog.map((x) => x.numero).join() === '0,1,2,3,4'
       && p2?.tenue.id === 'apocalyptique' && p2?.serie.id === 'MT'
-      && p2?.championnat.nom === 'Le Parcage' && p2?.championnat.etat === 'a_creer'
+      && p2?.championnat.nom === 'Le Parcage' && p2?.championnat.etat !== 'a_creer'
       && p4?.championnat.nom === 'Les Stehplätze'
       && prog.find((x) => x.numero === 3)?.tenue.etat === spatiale
       || montre('programme', prog));
