@@ -3620,24 +3620,40 @@ function rendreApports(moi) {
      le panneau, qui nomme chacun. */
   ligne.setAttribute('aria-label', ['Ce que tu portes',
     plus ? `${plus} bonus` : '', moins ? `${moins} malus` : ''].filter(Boolean).join(' — '));
-  if (!panneau.hidden) panneau.innerHTML = M.panneauHTML(apports, moi?.mods);
+  if (!panneau.hidden) panneau.innerHTML = contenuApports(moi);
 }
 
+/* La tête et sa croix (`mods.js`), puis le détail : la même tête qu'au Virage. */
+function contenuApports(moi) {
+  const M = window.TBF_MODS;
+  return (M.teteHTML?.() ?? '') + M.panneauHTML(moi?.apports ?? [], moi?.mods);
+}
+function fermerApports() {
+  $('apportsP').hidden = true;
+  $('apportsL').setAttribute('aria-expanded', 'false');
+}
 $('apportsL').onclick = () => {
   const panneau = $('apportsP'), ligne = $('apportsL');
   const moi = S.vue?.moi;
   const ouvre = panneau.hidden;
-  if (ouvre) panneau.innerHTML = window.TBF_MODS.panneauHTML(moi?.apports ?? [], moi?.mods);
+  if (ouvre) panneau.innerHTML = contenuApports(moi);
   panneau.hidden = !ouvre;
   ligne.setAttribute('aria-expanded', String(ouvre));
 };
+/* Sa croix le referme : un toucher ailleurs le fait déjà, mais un panneau
+   qui flotte se ferme aussi d'un geste qu'on voit. */
+$('apportsP').addEventListener('click', (e) => {
+  if (e.target.closest('[data-fermer-apports]')) fermerApports();
+});
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && !$('apportsP').hidden) fermerApports();
+});
 /* Le panneau se referme d'un toucher ailleurs : posé hors de la colonne,
    au-dessus de la main, il ne doit pas rester sur les cartes qu'on vise. */
 document.addEventListener('pointerdown', (e) => {
   const panneau = $('apportsP');
   if (panneau.hidden || e.target.closest('#apportsP, #apportsL')) return;
-  panneau.hidden = true;
-  $('apportsL').setAttribute('aria-expanded', 'false');
+  fermerApports();
 });
 
 /* ----------------------------------------------- des nœuds qui durent

@@ -314,7 +314,10 @@ html[data-calme~="animations"] .fzs>.pass-aura i{display:none}
 .feuille .tete #feuilleScore{font-size:12px;font-variant-numeric:tabular-nums}
 .feuille .tete .x{width:44px;height:44px;border-radius:9px;border:1px solid rgba(242,238,228,.16);
   background:rgba(0,0,0,.3);color:inherit;font-size:17px;cursor:pointer;flex:none}
-.feuille .corps{flex:1;min-height:0;overflow-y:auto;padding:0 15px 18px}
+.feuille .corps{flex:1;min-height:0;overflow-y:auto;padding:0 15px 18px;
+  /* Le fil défile au doigt, et le geste s'arrête à la feuille : il ne
+     descend pas au jeu dessous (Gaël, 6 novembre 2026). */
+  overscroll-behavior:contain;touch-action:pan-y;-webkit-overflow-scrolling:touch}
 .ev{display:flex;align-items:center;gap:10px;padding:9px 4px;border-top:1px solid rgba(242,238,228,.07)}
 .ev .min{font-family:var(--banner);font-size:13px;width:38px;flex:none}
 .ev .ic{width:20px;text-align:center;flex:none}
@@ -1205,7 +1208,8 @@ function contenuApports() {
     ? `<p class="ecartees"><b>${ecartees}</b> carte${ecartees > 1 ? 's' : ''} de ton deck ne se joue${ecartees > 1 ? 'nt' : ''}
        qu’en duel — elle${ecartees > 1 ? 's visent' : ' vise'} quelqu’un en face, et ici il n’y a personne à viser.
        <a href="/deck" data-quitter-virage>Changer mon deck</a></p>` : '';
-  return (M?.resume(apports).texte ? M.panneauHTML(apports, S?.you?.mods) : '') + deck
+  return (M?.teteHTML?.() ?? '')
+    + (M?.resume(apports).texte ? M.panneauHTML(apports, S?.you?.mods) : '') + deck
     + legendeHTML();
 }
 
@@ -1253,6 +1257,17 @@ function ouvrirApports(oui) {
   ligne.setAttribute('aria-expanded', String(oui));
 }
 $('apportsL').onclick = () => ouvrirApports($('apportsP').hidden);
+/* **Le panneau se referme**, de sa croix ou d'un toucher ailleurs. Posé en
+   bas de l'écran, il recouvre le « i » qui l'a ouvert sur un téléphone :
+   sans ces deux sorties, le cadre des bonus restait sur le jeu jusqu'à la
+   fin du match (Gaël, 6 novembre 2026). C'est la règle du duel. */
+$('apportsP').addEventListener('click', (e) => {
+  if (e.target.closest('[data-fermer-apports]')) ouvrirApports(false);
+});
+document.addEventListener('pointerdown', (e) => {
+  if ($('apportsP').hidden || e.target.closest('#apportsP, #apportsL')) return;
+  ouvrirApports(false);
+});
 
 /* ------------------------------------------------------------- le fil
 

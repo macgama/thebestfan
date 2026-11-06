@@ -314,6 +314,21 @@
     return blocs.join('') + cumul;
   }
 
+  /**
+   * La tête du panneau : son nom, et **une croix pour le refermer**.
+   *
+   * Le panneau flotte en bas de l'écran, et sur un téléphone il recouvre le
+   * « i » qui l'a ouvert : au Virage, plus rien ne le refermait (Gaël, le
+   * 6 novembre 2026 — le cadre des bonus et malus restait collé sur le jeu).
+   * Toute fenêtre qu'on ouvre se referme d'un geste visible ; la tête reste
+   * collée en haut quand le panneau défile, pour que la croix ne parte pas
+   * avec. Le bouton porte `data-fermer-apports` : chaque page l'écoute.
+   */
+  function teteHTML() {
+    return `<div class="tbf-ap-tete"><b>Ce que tu portes</b>
+      <button type="button" class="tbf-ap-x" data-fermer-apports aria-label="Fermer">×</button></div>`;
+  }
+
   window.TBF_MODS = { FACTEURS, ICONES, NOMS, SENS, SOURCES,
-    detail, lignes, paires, panneauHTML, phrase, resume, sensDe, valeur, esc, pc, nb };
+    detail, lignes, paires, panneauHTML, phrase, resume, sensDe, teteHTML, valeur, esc, pc, nb };
 })();
