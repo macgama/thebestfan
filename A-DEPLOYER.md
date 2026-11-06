@@ -1,5 +1,15 @@
 # À déposer sur Infomaniak
 
+**Missions et tampons mis en avant** (branche `claude/project-thread-8ynk3z`,
+6 novembre 2026, demande de Gaël). Code seul, sans schéma : une carte MISSIONS
+en haut à gauche de l'accueil (faites sur le total, ce qui est à récupérer),
+une alerte « MISSION RÉUSSIE ! » et une alerte de niveau de la voie PASS dans
+la même case que le changement de niveau, et l'encadré « Comment gagner des
+tampons » sous le carnet (onglet SAISON). Traduit, QUESTIONS et /comment-jouer
+à jour. Après la mise en ligne : « Redémarrer ».
+
+---
+
 **Le niveau offre un cadeau visible à chaque palier** (branche
 `claude/project-thread-r8x75z`, 6 novembre 2026, choix de Gaël « Récompenses à
 chaque palier »). Code seul, sans schéma : un titre de tribune par niveau

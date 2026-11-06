@@ -518,6 +518,21 @@ const RUBRIQUES = [
           + `${reglage('saison.tampons_difficile')} pour une difficile. Chaque palier `
           + 'du carnet rapporte des écharpes ou des boosters, et qui a bien rempli le '
           + 'sien reçoit des boosters au lancement de la saison suivante.'],
+      ['Comment gagner des tampons ?',
+        () => 'Les tampons viennent des missions, quand tu les récupères : '
+          + `${reglage('saison.tampons_facile')} pour la mission facile du jour, `
+          + `${reglage('saison.tampons_moyenne')} pour la moyenne, `
+          + `${reglage('saison.tampons_difficile')} pour la difficile, `
+          + `${reglage('saison.tampons_sachet')} de plus pour le sachet des trois missions finies`
+          + (reglage('defis.actif') ? `, et ${reglage('defis.tampons')} pour chaque défi de la semaine` : '')
+          + '. Ils remplissent le carnet de la saison et font avancer la voie PASS. '
+          + 'Le détail est sous le carnet, dans l’onglet SAISON des missions.'],
+      ['Comment savoir qu’une mission est réussie ?',
+        'Le jeu te le dit : au retour sur l’accueil ou dans les missions, une alerte '
+          + '« MISSION RÉUSSIE ! » montre ce qu’elle rapporte, avec RÉCUPÉRER. Sur '
+          + 'l’accueil, la carte MISSIONS en haut à gauche compte celles du jour, et son '
+          + 'sticker or dit combien sont à récupérer. Un niveau gagné dans la voie PASS '
+          + 'a la même alerte.'],
       ['C’est quoi, les défis de la semaine ?',
         () => 'Chaque lundi, trois défis tirés parmi ce que tu possèdes : jouer des duels '
           + 'avec un Fanzzy d’une de tes séries, chanter au Grand Virage en portant une de '
