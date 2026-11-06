@@ -357,10 +357,19 @@
    *   boîte, ou `null` si l'âge n'est pas mesuré : la page garde alors la
    *   taille de l'âge appliquée au cadre entier.
    */
-  function taille(id, evo, cible) {
+  function taille(id, evo, cible, img) {
     const e = Math.min(3, Math.max(1, Number(evo) || 1));
-    const p = index?.fanzzy?.[id]?.evolutions?.[`e${e}`]?.pieds;
-    if (!Array.isArray(p) || !(p[0] > 0)) return null;
+    let p = index?.fanzzy?.[id]?.evolutions?.[`e${e}`]?.pieds;
+    /* Pas de mesure (catalogue pas encore arrivé, ou agrégé sans les images :
+       le 6 novembre 2026, 818 âges l'avaient perdue et chaque Fanzzy
+       retombait à la moitié de sa carte) : l'image affichée, une fois
+       décodée, se mesure elle-même. Ce qui dépasse au-dessus de la tête
+       compte alors dans sa taille, mais il reste à celle de son âge. */
+    if (!Array.isArray(p) || !(p[0] > 0)) {
+      const m = img?.naturalWidth > 0 ? pieds(img) : null;
+      p = m && m.haut > 0 ? [m.haut, m.sous, m.decal] : null;
+    }
+    if (!p) return null;
     // `cible` : la part de la boîte que prend le personnage, si la page en
     // veut une autre que celle de l'accueil (la carte le veut plus grand).
     const h = (cible ?? TAILLE_AGE[e]) / p[0];
@@ -473,7 +482,7 @@
       const opt = img.tbfCale ?? {};
       const e = ETAT_RE.exec(img.currentSrc || img.src || '');
       const part = typeof opt.part === 'number' ? opt.part : opt.part?.[e?.[2]];
-      const t = e ? taille(e[1], e[2], part) : null;
+      const t = e ? taille(e[1], e[2], part, img) : null;
       const m = t && img.naturalWidth > 0 ? pieds(img) : null;
       if (!m) {
         if (img.dataset.cale) { for (const k of CALE) img.style.removeProperty(k); delete img.dataset.cale; }

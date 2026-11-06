@@ -41,6 +41,21 @@ async function bas(fichier) {
   return null;
 }
 
+console.log('\n— chaque âge a sa mesure dans index.json');
+/* Sans `pieds`, le jeu ne sait pas quelle part de son cadre le personnage
+   occupe, et le pose au cadre entier : la moitié de sa carte, une taille
+   différente d'un Fanzzy à l'autre. Une agrégation faite sans les images
+   (le cloud) les avait effacés (6 novembre 2026). */
+const sansMesure = [];
+for (const [id, f] of Object.entries(index)) {
+  for (const [evo, v] of Object.entries(f.evolutions ?? {})) {
+    const repos = Object.values(v.skins ?? {}).some((s) => s.etats?.includes('neutre'));
+    if (repos && !(Array.isArray(v.pieds) && v.pieds[0] > 0)) sansMesure.push(`${id}/${evo}`);
+  }
+}
+check(`chaque âge dessiné est mesuré${sansMesure.length ? ` — ${sansMesure.length} sans : ${sansMesure.slice(0, 8).join(', ')}` : ''}`,
+  sansMesure.length === 0);
+
 console.log('\n— les âges corrigés sont dans index.json');
 let absents = 0;
 for (const [id, ages] of Object.entries(AGES)) {

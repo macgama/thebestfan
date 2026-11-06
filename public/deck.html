@@ -565,6 +565,9 @@ h2{margin:20px 16px 9px}
 .choix .face img{width:100%;height:100%;object-fit:contain;object-position:50% 100%;
   filter:drop-shadow(0 3px 4px rgba(0,0,0,.6))}
 .choix.pris .face{opacity:.4;filter:grayscale(1)}
+/* Calé comme partout (`TBF_ETATS.caler`) : le personnage, et non son cadre,
+   prend la taille de son âge, pieds au sol de la plaque (6 novembre 2026). */
+.face img[data-cale]{position:absolute;object-fit:fill}
 .choix .tag{white-space:nowrap}
 /* Ce qui est déjà pris s'éteint par son dessin, et l'étiquette dit pourquoi
    — « DÉJÀ PRIS », « TOUS PORTÉS ». La ligne entière à 35 % rendait
@@ -904,6 +907,12 @@ function toast(t) {
 
 /* ------------------------------------------------------------------ état */
 
+
+/** Le Fanzzy à la taille de son âge dans sa plaque (`TBF_ETATS.caler`). */
+function caleDeck(html) {
+  return html ? html.replace('<img ', '<img onload="window.TBF_ETATS?.caler?.(this,{part:{1:0.8,2:0.88,3:0.96}})" ') : html;
+}
+
 const S = {
   deck: { nom: 'Mon deck', fanzzy: [], actions: [] },
   possede: { fanzzy: [], stuff: [], stuffCopies: {}, actions: [] },
@@ -1185,7 +1194,7 @@ function tribuneHTML() {
 
        `illustration` rend `null` pour les Fanzzy pas encore illustrés : on
        retombe alors sur la pastille de type, exactement comme avant. */
-    const buste = window.FZART?.illustration?.(f, 'plein') ?? null;
+    const buste = caleDeck(window.FZART?.illustration?.(f, 'plein') ?? null);
     const tete = buste
       ? `<div class="face r-${f.rar ?? 'commune'}">${buste}
           <span class="type"><svg viewBox="0 0 24 24" fill="none" stroke="#0B0E13"
@@ -1431,7 +1440,7 @@ function panneauFanzzy(index) {
   const lignes = dispo.map((f) => {
     const t = S.types[f.type] ?? { nom: f.type, c: '#8257DA', ico: '' };
     const pris = dedans.has(f.id) && S.deck.fanzzy[index]?.id !== f.id;
-    const dessin = window.FZART?.illustration?.(f, 'plein') ?? null;
+    const dessin = caleDeck(window.FZART?.illustration?.(f, 'plein') ?? null);
     return `<div class="choix pan ${pris ? 'pris' : ''}" ${pris ? '' : `data-prendre-fanzzy="${index}:${f.id}"`}>
       ${dessin ? `<div class="face r-${f.rar ?? 'commune'}">${dessin}</div>`
         : `<div class="pip" style="--tc:${t.c};width:46px;height:46px;border-radius:9px">

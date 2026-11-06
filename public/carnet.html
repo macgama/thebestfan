@@ -278,7 +278,7 @@ function dessinFanzzy(f) {
   const style = t ? ` style="height:${t.hauteur};bottom:${t.bas};translate:${t.decale} 0"` : '';
   /* Puis, l'image chargée, ses pieds mesurés sur elle (`caler`, comme à
      l'accueil) : la largeur de l'image, ses semelles au sol. */
-  const cale = t ? ` onload="window.TBF_ETATS?.caler?.(this,{part:${PART_AGE[evo]}})"` : '';
+  const cale = exact ? ` onload="window.TBF_ETATS?.caler?.(this,{part:${PART_AGE[evo]}})"` : '';
   return `<img class="fz" data-age="${evo}" src="${esc(src)}" alt=""${style}${cale} loading="lazy" decoding="async"
     onerror="this.onerror=null;this.src=window.TBF_ETATS?.secours?.(this.src,true)||''">`;
 }
