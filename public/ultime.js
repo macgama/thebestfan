@@ -2180,6 +2180,10 @@
     'SU42-e1-apocalyptique': 'SU42-e1-apocalyptique.5bf76f4a.webp',
     'SU42-e1-halloween': 'SU42-e1-halloween.8d555c98.webp',
     'SU42-e1-prehistorique': 'SU42-e1-prehistorique.ffa02e34.webp',
+    'TB1-e1': 'TB1-e1.a16f1249.webp',
+    'TB1-e1-apocalyptique': 'TB1-e1-apocalyptique.f7b6f1ce.webp',
+    'TB1-e1-halloween': 'TB1-e1-halloween.0eae0f23.webp',
+    'TB1-e1-prehistorique': 'TB1-e1-prehistorique.bf6c4a82.webp',
     'VP1-e1': 'VP1-e1.fb27d91b.webp',
     'VP1-e2': 'VP1-e2.63678202.webp',
     'VP1-e3': 'VP1-e3.25f6640b.webp',
@@ -3399,6 +3403,10 @@
     'SU41-e1-prehistorique': 'SU41-e1-prehistorique.1b882985.mp4',
     'SU42-e1': 'SU42-e1.828a1199.mp4',
     'SU42-e1-prehistorique': 'SU42-e1-prehistorique.45ab60d8.mp4',
+    'TB1-e1': 'TB1-e1.daa0e3d3.mp4',
+    'TB1-e1-apocalyptique': 'TB1-e1-apocalyptique.365a86e3.mp4',
+    'TB1-e1-halloween': 'TB1-e1-halloween.5661f813.mp4',
+    'TB1-e1-prehistorique': 'TB1-e1-prehistorique.af9e1718.mp4',
   };
   /* CLIPS: fin */
 
@@ -3510,6 +3518,12 @@
 
   function jouer({ src = '', cri = '', nom = '', couleur = '#F5C33B', grande = false, eux = false } = {}, fond, video = null) {
     poserStyle();
+    /* Le cri est posé lettre à lettre : la traduction automatique de la page
+       ne le reconnaît plus une fois découpé. On le traduit donc ici, avant
+       (le catalogue donne le cri en français ; une chaîne déjà traduite
+       ressort telle quelle). */
+    const tr = (s) => window.TBF_LANGUE?.t?.(s) ?? s;
+    cri = tr(cri); nom = tr(nom);
     // Deux coups fatals à la suite : le second remplace le premier.
     enCours?.couper?.();
     const calme = doux();
