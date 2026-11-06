@@ -1,5 +1,14 @@
 # À déposer sur Infomaniak
 
+**Fanzzy à la taille de leur âge, partout** (branche `claude/project-thread-1jgro8`,
+6 novembre 2026, demande de Gaël). Code et `index.json` seuls, sans schéma ni
+image. La mesure qui donne à chaque Fanzzy la taille de son âge avait été effacée
+du catalogue des images pour 818 âges sur 958 : la fiche montrait un Fanzzy à la
+moitié de sa carte, de taille variable. Mesure restaurée et protégée. Pas besoin
+de « Redémarrer » (pages et catalogue servis tels quels), mais sans risque.
+
+---
+
 **LE PARCAGE branché dans le jeu** (branche `claude/project-thread-vuon42`,
 6 novembre 2026, « Tu peux brancher la série dans l'application »). Code seul,
 sans schéma. La série du championnat de France (code FR) entre au catalogue :
