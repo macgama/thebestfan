@@ -246,13 +246,14 @@ check('et il rapporte de l’XP', (await xpEnBase()) === avantXp + XP.pack);
 check('l’ouverture annonce la progression', r.json.niveau?.xp === avantXp + XP.pack);
 /* Le contrat le dit enrichi (`CONTRATS.md`, § 1) : la jauge d'avant et le gain
    voyagent avec le butin, pour que l'anneau s'anime sans relire `/api/niveau`.
-   Les douze champs, ni plus ni moins : un champ de trop serait une promesse
+   Les treize champs (`vu` porte les cadeaux du niveau depuis le 6 novembre
+   2026), ni plus ni moins : un champ de trop serait une promesse
    que personne n'a écrite. */
 {
   const n = r.json.niveau ?? {};
-  check('et la réponse du booster porte les douze champs de la jauge',
+  check('et la réponse du booster porte les treize champs de la jauge',
     Object.keys(n).sort().join(',')
-      === 'avant,dans,depart,ecarpes,gain,max,monte,niveau,paliers,part,pour,xp'
+      === 'avant,dans,depart,ecarpes,gain,max,monte,niveau,paliers,part,pour,vu,xp'
     || (console.log('        champs :', Object.keys(n).sort().join(',')), false));
   check('dont le gain du booster et la jauge d’avant',
     n.gain === XP.pack && n.depart?.xp === avantXp && n.depart?.niveau === 1
@@ -415,6 +416,9 @@ function egal(a, b) {
   const kb = Object.keys(b).sort();
   return ka.join(',') === kb.join(',') && ka.every((k) => egal(a[k], b[k]));
 }
+/* `vu` (les cadeaux du niveau, 6 novembre 2026) se vérifie à part, à la fin :
+   les jauges écrites à la main ci-dessous restent celles du contrat. */
+const sansVu = (o) => { const { vu: _vu, ...reste } = o ?? {}; return reste; };
 const dire = (quoi, v) => (console.log(`        ${quoi} :`, JSON.stringify(v)), false);
 
 const leve = async (f) => { try { await f(); return null; } catch (e) { return e; } };
@@ -432,7 +436,7 @@ console.log('\n— la jauge dans le résultat —');
   // Au milieu d'un niveau : ni montée, ni palier, ni écharpe.
   await poser(310);
   const r = await niveau.gagner(V, 20);
-  check('au milieu du niveau 4, +20 : la jauge avance de 10 à 30 sur 180', egal(r, {
+  check('au milieu du niveau 4, +20 : la jauge avance de 10 à 30 sur 180', egal(sansVu(r), {
     xp: 330, gain: 20, niveau: 4, dans: 30, pour: 180, part: 30 / 180, max: false,
     avant: 4, monte: false, paliers: [], ecarpes: 0,
     depart: { xp: 310, niveau: 4, dans: 10, pour: 180, part: 10 / 180, max: false },
@@ -445,7 +449,7 @@ console.log('\n— la jauge dans le résultat —');
      palier 5 ouvre le troisième rang de tribune. */
   await poser(470);
   const r = await niveau.gagner(V, 20);
-  check('l’exemple du contrat : 470 + 20 monte au niveau 5', egal(r, {
+  check('l’exemple du contrat : 470 + 20 monte au niveau 5', egal(sansVu(r), {
     xp: 490, gain: 20, niveau: 5, dans: 10, pour: 220, part: 10 / 220, max: false,
     avant: 4, monte: true, paliers: [{ niveau: 5, deckFanzzy: 3 }], ecarpes: 50,
     depart: { xp: 470, niveau: 4, dans: 170, pour: 180, part: 170 / 180, max: false },
@@ -456,13 +460,13 @@ console.log('\n— la jauge dans le résultat —');
   // Le dernier palier : la jauge pleine plutôt qu'une division par zéro.
   await poser(17970);
   const r = await niveau.gagner(V, 20);
-  check('à 10 du niveau 30, +20 : jauge pleine et `max`', egal(r, {
+  check('à 10 du niveau 30, +20 : jauge pleine et `max`', egal(sansVu(r), {
     xp: 17990, gain: 20, niveau: 30, dans: 0, pour: 0, part: 1, max: true,
     avant: 29, monte: true, paliers: [{ niveau: 30, slots: 8 }], ecarpes: 300,
     depart: { xp: 17970, niveau: 29, dans: 1170, pour: 1180, part: 1170 / 1180, max: false },
   }) || dire('rendu', r));
   const encore = await niveau.gagner(V, 20);
-  check('au niveau 30, l’XP compte encore et la jauge reste pleine', egal(encore, {
+  check('au niveau 30, l’XP compte encore et la jauge reste pleine', egal(sansVu(encore), {
     xp: 18010, gain: 20, niveau: 30, dans: 0, pour: 0, part: 1, max: true,
     avant: 30, monte: false, paliers: [], ecarpes: 0,
     depart: { xp: 17990, niveau: 30, dans: 0, pour: 0, part: 1, max: true },
@@ -590,7 +594,7 @@ console.log('\n— la porte du grand livre —');
   const vuDAilleurs = await lire();
   await conn.rollback();
   conn.release();
-  check('gagnerDans calcule la montée comme gagner', egal(r, {
+  check('gagnerDans calcule la montée comme gagner', egal(sansVu(r), {
     xp: 70, gain: 20, niveau: 2, dans: 10, pour: 100, part: 10 / 100, max: false,
     avant: 1, monte: true, paliers: [], ecarpes: 20,
     depart: { xp: 50, niveau: 1, dans: 50, pour: 60, part: 50 / 60, max: false },
@@ -717,6 +721,45 @@ console.log('\n— la colonne d’XP absente —');
   const [[col]] = await pool.query(`SELECT COUNT(*) AS n FROM information_schema.columns
     WHERE table_schema = DATABASE() AND table_name = 'user_wallet' AND column_name = 'xp'`);
   check('et sql/niveau.sql remet la colonne', Number(col.n) === 1);
+}
+
+{
+  console.log('\n— les cadeaux du niveau : titre, pastille, étoiles (Gaël, 6 novembre 2026)');
+  const N = await import('../src/shared/niveau.js');
+  check('un titre de tribune par niveau, du 1 au 30, tous différents',
+    N.GRADES.length === NIVEAU_MAX && new Set(N.GRADES).size === NIVEAU_MAX);
+  check('la pastille : craie avant 10, bronze 10, argent 15, or 20, rubis 25, légende 30',
+    N.teintePour(9) === null && N.teintePour(10) === 'bronze' && N.teintePour(14) === 'bronze'
+    && N.teintePour(15) === 'argent' && N.teintePour(20) === 'or' && N.teintePour(25) === 'rubis'
+    && N.teintePour(30) === 'legende');
+  check('aucune étoile avant le dernier niveau',
+    N.etoilesPour(seuil(NIVEAU_MAX) - 1) === 0 && N.etoilesPour(seuil(NIVEAU_MAX)) === 0);
+  check('une étoile tous les XP_ETOILE au-delà',
+    N.etoilesPour(seuil(NIVEAU_MAX) + N.XP_ETOILE) === 1
+    && N.etoilesPour(seuil(NIVEAU_MAX) + 3 * N.XP_ETOILE + 5) === 3);
+  const d = N.distinctions(seuil(NIVEAU_MAX) + N.XP_ETOILE + 500);
+  check('au dernier niveau, la marche vers la prochaine étoile',
+    d.versEtoile?.dans === 500 && d.versEtoile?.pour === N.XP_ETOILE || dire('d', d));
+  check('les listes publiques : niveau seul en craie, matière et étoiles quand il y en a',
+    egal(N.pastillePour(0), { niveau: 1 })
+    && egal(N.pastillePour(seuil(NIVEAU_MAX) + N.XP_ETOILE), { niveau: 30, teinte: 'legende', etoiles: 1 }));
+
+  const poserU = (xp) => pool.query('UPDATE user_wallet SET xp = ? WHERE user_id = ?', [xp, U]);
+  await poserU(seuil(9) + 5);
+  const lu = (await call('/api/niveau')).json;
+  check('/api/niveau sert le titre et la matière',
+    lu.grade === N.gradePour(9) && lu.teinte === null && lu.etoiles === 0 || dire('lu', lu));
+  check('et le cadeau de chaque niveau, du 1 au dernier',
+    lu.cadeaux?.length === NIVEAU_MAX && lu.cadeaux[9].teinte === 'bronze'
+    && lu.cadeaux[9].teinteNom === 'BRONZE');
+  const m = await niveau.gagner(U, seuil(10) - seuil(9));
+  check('la montée au 10 annonce le titre et la pastille de bronze',
+    m.niveau === 10 && m.vu?.teinte === 'bronze' && m.vu?.cadeaux?.length === 1
+    && m.vu.cadeaux[0].grade === N.gradePour(10) && m.vu.cadeaux[0].teinte === 'bronze' || dire('m', m));
+  await poserU(seuil(NIVEAU_MAX) + N.XP_ETOILE - 10);
+  const e = await niveau.gagner(U, 20);
+  check('au-delà du 30, une étoile gagnée se voit dans la réponse',
+    e.monte === false && e.vu?.etoiles === 1 && e.vu?.etoilesAvant === 0 || dire('e', e));
 }
 
 console.log(`\n${failures ? `${failures} échec(s)` : 'tout est vert'}`);

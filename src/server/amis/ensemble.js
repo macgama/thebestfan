@@ -1,6 +1,6 @@
 import express from 'express';
 import { reglage } from '../../shared/reglages.js';
-import { niveauPour } from '../../shared/niveau.js';
+import { pastillePour } from '../../shared/niveau.js';
 import { GESTE_PAR_ID, GESTE_PAUSE_MS, gesteEnvoyable } from '../../shared/amis-ensemble.js';
 import { verser } from '../recompenses.js';
 import { avatarsDe } from '../fanzzy/avatar.js';
@@ -181,7 +181,7 @@ export function createEnsemble({ pool, requireAuth }) {
     return {
       ami: {
         id: autreId, pseudo: qui.pseudo, avatar,
-        ...(Number.isFinite(xp) && xp >= 0 ? { niveau: niveauPour(xp) } : {}),
+        ...(Number.isFinite(xp) && xp >= 0 ? pastillePour(xp) : {}),
         clubs: clubs.map((c) => c.name).filter(Boolean),
       },
       collection: {

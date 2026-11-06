@@ -3516,6 +3516,11 @@ function poserNiveau(niv) {
   const p = $('nivPastille');
   p.textContent = niv.niveau;
   p.hidden = false;
+  // Les cadeaux du niveau : la matière de la pastille et les étoiles.
+  const teinte = niv.teinte ?? niv.vu?.teinte;
+  const etoiles = Number(niv.etoiles ?? niv.vu?.etoiles) || 0;
+  if (teinte) p.dataset.teinte = teinte; else delete p.dataset.teinte;
+  if (etoiles > 0) p.dataset.etoiles = String(etoiles); else delete p.dataset.etoiles;
   p.title = niv.max
     ? `Niveau ${niv.niveau}, le dernier`
     : `Niveau ${niv.niveau} · ${niv.dans}/${niv.pour} XP`;

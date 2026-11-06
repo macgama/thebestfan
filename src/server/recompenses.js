@@ -422,6 +422,10 @@ function agregerNiveau(acc, n) {
     gain: (acc.gain ?? 0) + (n.gain ?? 0),
     ecarpes: (acc.ecarpes ?? 0) + (n.ecarpes ?? 0),
     paliers: [...acc.paliers, ...(n.paliers ?? [])],
+    /* Les cadeaux visibles de tous les niveaux franchis, et les étoiles
+       d'avant le premier versement. */
+    ...(n.vu ? { vu: { ...n.vu, etoilesAvant: acc.vu?.etoilesAvant ?? n.vu.etoilesAvant,
+      cadeaux: [...(acc.vu?.cadeaux ?? []), ...(n.vu.cadeaux ?? [])] } } : {}),
     avant: acc.avant,
     depart: acc.depart,
     monte: n.niveau > acc.avant,
