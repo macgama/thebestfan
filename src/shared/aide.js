@@ -275,6 +275,12 @@ const RUBRIQUES = [
           + 'TheBestFan, orange, blanc et noir, rejoint la collection, dans sa série à lui. '
           + 'Ni l’un ni l’autre ne sort d’un booster : ils s’offrent, et ils ne font pas '
           + 'pousser plus fort qu’une autre légendaire.'],
+      ['L’équipe TheBestFan m’a fait un cadeau : comment je le sais ?',
+        () => 'Quand l’équipe TheBestFan t’offre quelque chose (des écharpes, des boosters, un '
+          + 'Fanzzy, une tenue, le PASS, le badge Fondateur…), un paquet cadeau s’ouvre à ta '
+          + 'prochaine visite, ou dans la minute si tu joues déjà, et te montre tout ce que tu as '
+          + 'reçu. C’est déjà rangé dans ton compte : rien à réclamer. Le paquet ne s’ouvre '
+          + 'jamais en plein duel ni au Virage, il t’attend à l’écran suivant.'],
       ['Que gagne-t-on en remplissant tout le carnet de la saison ?',
         () => 'Un Fanzzy légendaire de la série CARNET PLEIN, un par saison : le Gardien du Feu '
           + '(PASS 1), le Ferrailleur (PASS 2), le Capitaine Comète (PASS 3) et le Fantôme du '

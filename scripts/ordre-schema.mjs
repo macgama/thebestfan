@@ -138,4 +138,8 @@ export const ORDRE = ['auth', 'football', 'minutes', 'couleurs', 'duel', 'souven
   'defis',
   /* Les distinctions (6 novembre 2026), dont le badge Fondateur : une table
      neuve, sans clé étrangère. Rien n'en dépend : le dernier rang. */
-  'distinctions'];
+  'distinctions',
+  /* Le dernier cadeau de l'administration vu par le joueur (6 novembre
+     2026) : une colonne sur `user_wallet` (souvenirs.sql). Rien n'en
+     dépend : le dernier rang. */
+  'cadeaux'];
