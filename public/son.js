@@ -1163,13 +1163,13 @@
        majeur qui se pose sur la tribune qui applaudit. */
     cadeau: { famille: 'moment', duree: 2.3,
       jouer: (c, s, t) => {
-        [0, 0.2, 0.4].forEach((d) => bruit(c, s, t, { duree: 0.14, freq: 420, filtre: 'lowpass', q: 0.9, vol: 0.16, delai: d }));
-        ton(c, s, t, { freq: 180, vers: 1400, duree: 0.12, type: 'triangle', vol: 0.09, delai: 0.62 });
-        bruit(c, s, t, { duree: 0.12, freq: 3600, q: 0.8, vol: 0.09, delai: 0.62 });
+        [0, 0.2, 0.4].forEach((d) => bruit(c, s, t, { duree: 0.14, freq: 420, filtre: 'lowpass', q: 0.9, vol: 0.248, delai: d }));
+        ton(c, s, t, { freq: 180, vers: 1400, duree: 0.12, type: 'triangle', vol: 0.139, delai: 0.62 });
+        bruit(c, s, t, { duree: 0.12, freq: 3600, q: 0.8, vol: 0.139, delai: 0.62 });
         [1047, 1319, 1568, 2093, 2637].forEach((f, i) =>
-          ton(c, s, t, { freq: f, duree: 0.24, type: 'sine', vol: 0.06, delai: 0.72 + i * 0.07 }));
-        [523, 659, 784, 1047].forEach((f) => ton(c, s, t, { freq: f, duree: 1.2, type: 'sine', vol: 0.06, delai: 1.08 }));
-        bruit(c, s, t, { duree: 1.1, freq: 1300, q: 0.6, vol: 0.06, delai: 1.1 });
+          ton(c, s, t, { freq: f, duree: 0.24, type: 'sine', vol: 0.093, delai: 0.72 + i * 0.07 }));
+        [523, 659, 784, 1047].forEach((f) => ton(c, s, t, { freq: f, duree: 1.2, type: 'sine', vol: 0.093, delai: 1.08 }));
+        bruit(c, s, t, { duree: 1.1, freq: 1300, q: 0.6, vol: 0.093, delai: 1.1 });
       } },
     /* **La fin d'un duel** (4 novembre 2026, « plus festif, plus triste,
        plus gaming »), au bilan, calée sur ses lettres qui tombent une à
