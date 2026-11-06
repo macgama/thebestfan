@@ -798,7 +798,13 @@ export function createDecks({ pool, requireAuth, niveau = null,
   }
 
   /** Les matchs proposables : aujourd'hui d'abord, puis les jours suivants. */
-  async function matchsProposables(userId, { tousLesClubs = false } = {}) {
+  async function matchsProposables(userId, { tousLesClubs = false, duJour = false } = {}) {
+    /* **Les matchs du jour** (6 novembre 2026, Gaël : l'onglet MATCHS DU
+       JOUR de la page du duel) : tous les clubs, aujourd'hui seulement — et
+       s'il n'y en a aucun, le prochain jour de match. La liste peut alors
+       être longue un samedi : la coupe est plus haute. */
+    if (duJour) tousLesClubs = true;
+    const plafond = duJour ? 200 : 60;
     const filtre = tousLesClubs ? '' :
       `AND (f.home_id IN (SELECT team_id FROM user_follows WHERE user_id = ?)
          OR f.away_id IN (SELECT team_id FROM user_follows WHERE user_id = ?))`;
@@ -828,7 +834,7 @@ export function createDecks({ pool, requireAuth, niveau = null,
           AND f.kickoff_at < (UTC_TIMESTAMP() + INTERVAL 8 DAY)
           ${filtre}
         ORDER BY aujourdhui DESC, f.kickoff_at
-        LIMIT 60`, args);
+        LIMIT ${plafond}`, args);
 
     /* Triés — le club principal d'abord — parce que c'est cet ordre qui
        départage un derby, et que `clubParmi` compte dessus. */
@@ -935,12 +941,24 @@ export function createDecks({ pool, requireAuth, niveau = null,
       || ((a.tier ?? 3) - (b.tier ?? 3))
       || (new Date(a.kickoff_at) - new Date(b.kickoff_at)));
 
-    const visibles = tousLesClubs ? liste : liste.filter((f) => f.mien);
+    let visibles = tousLesClubs ? liste : liste.filter((f) => f.mien);
+    if (duJour) {
+      const duJourSeul = visibles.filter((f) => f.aujourdhui);
+      /* Rien aujourd'hui (une trêve) : le prochain jour où l'on joue, à
+         l'heure de Zurich, celle de la journée du football. */
+      if (duJourSeul.length) visibles = duJourSeul;
+      else {
+        const jourDe = (f) => new Date(f.kickoff_at).toLocaleDateString('sv-SE',
+          { timeZone: 'Europe/Zurich' });
+        const premier = visibles.map(jourDe).sort()[0];
+        visibles = visibles.filter((f) => jourDe(f) === premier);
+      }
+    }
 
     /* Soixante, comme avant : la requête s'arrêtait là, et la journée pourrait
        en ajouter trois cents un samedi soir. Ce qui se joue est en tête, donc
        ce qui tombe est ce qu'on n'allait pas choisir de toute façon. */
-    const retenus = visibles.slice(0, 60);
+    const retenus = visibles.slice(0, plafond);
 
     /* **Les couleurs des deux clubs**, comme les sert la liste du Virage :
        l'affiche du match choisi porte une écharpe à leurs deux couleurs, et
@@ -1201,7 +1219,7 @@ export function createDecks({ pool, requireAuth, niveau = null,
 
   router.get('/matchs', requireAuth, safe(async (req, res) =>
     res.json({ matchs: await matchsProposables(req.user.id,
-      { tousLesClubs: req.query.tous === '1' }) })));
+      { tousLesClubs: req.query.tous === '1', duJour: req.query.jour === '1' }) })));
 
   /** Un match, tel que l'entrée en file le décidera — et ce qui y est en jeu
       (`enJeu`, comme sur la liste, CONTRATS.md § 17), calculé sur le mode
