@@ -3,7 +3,7 @@
  *
  * ## Pourquoi elle ne vient pas de `package.json`
  *
- * `package.json` porte une version de paquet — `0.3.0` — qui sert à npm et à
+ * `package.json` porte une version de paquet — `1.0.0` — qui sert à npm et à
  * personne d'autre. Elle ne dit rien à quelqu'un qui joue : ni où en est le
  * jeu, ni ce qu'il peut en attendre. Le numéro d'ici est une **promesse faite
  * au joueur**, et c'est une décision de produit, pas de dépendances.
@@ -34,26 +34,27 @@ export const CANAL = 'beta';
 /**
  * Le numéro, et sa règle.
  *
- * Il monte d'un cran à **chaque mise en ligne**, tout seul : 0.0200, 0.0201,
- * 0.0202… Le serveur compte ses livraisons au démarrage
- * (`src/server/livraisons.js`) et pose le compte ici. Gaël l'a demandé le
- * 27 octobre 2026 : le numéro restait à 0.0200, écrit à la main, et un joueur
- * ne voyait pas que le jeu bougeait — alors qu'il bouge presque chaque jour.
+ * Il monte d'un cran à **chaque mise en ligne**, tout seul. Le serveur compte
+ * ses livraisons au démarrage (`src/server/livraisons.js`) et pose le compte
+ * ici. Gaël l'a demandé le 27 octobre 2026 (0.0200, 0.0201…), puis, le
+ * 6 novembre 2026, le passage à la **1.0.0** pour la période de test :
+ * 1.0.0, puis 1.0.01, 1.0.02, 1.0.03… — même numéro de départ que l'appli
+ * Android (`android/twa-manifest.json`, `appVersionName`).
  *
- * Les quatre décimales sont volontaires : elles disent « on livre souvent »
- * mieux qu'une phrase. `BASE` est le point de départ ; on la monte à la main
- * le jour où la bêta se ferme (1.0000), le compte repart de là.
+ * Le compte de la 1.0 repart de zéro (sa propre clé dans `reglages`) : la
+ * mise en ligne qui apporte ce code est la 1.0.0, la suivante la 1.0.01.
+ * Au-delà de 99, on écrit 1.0.100 : rien ne casse.
  */
-export const BASE = 200;
+export const BASE = '1.0';
 
-/* Le nombre de mises en ligne depuis `BASE`. Zéro tant que le serveur ne l'a
-   pas lu — sans base, en développement, il le reste. */
+/* Le nombre de mises en ligne depuis la 1.0.0, elle comprise. Zéro tant que
+   le serveur ne l'a pas lu — sans base, en développement, il le reste. */
 let livraisons = 0;
 
-/** Le numéro pour `n` livraisons : 0 → « 0.0200 », 7 → « 0.0207 ». */
+/** Le numéro pour `n` livraisons : 0 ou 1 → « 1.0.0 », 2 → « 1.0.01 », 13 → « 1.0.12 ». */
 export function numeroPour(n) {
-  const cran = BASE + Math.max(0, Math.trunc(Number(n) || 0));
-  return `${Math.floor(cran / 10000)}.${String(cran % 10000).padStart(4, '0')}`;
+  const cran = Math.max(0, Math.trunc(Number(n) || 0) - 1);
+  return cran ? `${BASE}.${String(cran).padStart(2, '0')}` : `${BASE}.0`;
 }
 
 /** Pose le compte des livraisons. Appelé une fois, au démarrage du serveur. */
@@ -61,12 +62,12 @@ export function poserLivraisons(n) {
   livraisons = Math.max(0, Math.trunc(Number(n) || 0));
 }
 
-/** Le numéro d'aujourd'hui, « 0.0207 ». */
+/** Le numéro d'aujourd'hui, « 1.0.07 ». */
 export function numero() {
   return numeroPour(livraisons);
 }
 
-/** Ce qui s'affiche, tel quel : « version bêta — 0.0207 ». */
+/** Ce qui s'affiche, tel quel : « version bêta — 1.0.07 ». */
 export function etiquette() {
   return `version ${CANAL === 'beta' ? 'bêta' : CANAL} — ${numero()}`;
 }

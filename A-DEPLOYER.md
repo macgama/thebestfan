@@ -1,5 +1,13 @@
 # À déposer sur Infomaniak
 
+**La version passe en 1.0.0** (branche `claude/project-thread-g4lm03`,
+6 novembre 2026, demande de Gaël). Code seul, sans schéma : le menu et la
+console du serveur disent « version : 1.0.0 » à la mise en ligne qui apporte
+ce code, puis 1.0.01, 1.0.02… à chaque mise en ligne suivante (un simple
+redémarrage ne compte pas). `package.json` passe aussi en 1.0.0. **Redémarrer**.
+
+---
+
 **Plus d'autre Fanzzy affiché en revenant sur l'accueil** (branche
 `claude/project-thread-uohu13`, 6 novembre 2026, signalé par Gaël). Code seul,
 sans schéma : l'accueil ne repeint plus un ancien Fanzzy retenu (changé
