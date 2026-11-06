@@ -1,0 +1,52 @@
+{
+  "id": "FR35",
+  "rev": 2,
+  "evolutions": {
+    "e1": {
+      "skins": {
+        "base": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "sha": "46f0bd17d4f3",
+          "cligne": true
+        }
+      }
+    },
+    "e2": {
+      "skins": {
+        "base": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "sha": "cc332091a9ba"
+        }
+      }
+    },
+    "e3": {
+      "skins": {
+        "base": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "sha": "72a5b7c6b1cd"
+        }
+      }
+    }
+  }
+}

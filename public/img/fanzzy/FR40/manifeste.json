@@ -1,0 +1,52 @@
+{
+  "id": "FR40",
+  "rev": 3,
+  "evolutions": {
+    "e1": {
+      "skins": {
+        "base": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "sha": "b6cbdefaa71b"
+        }
+      }
+    },
+    "e2": {
+      "skins": {
+        "base": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "sha": "37db4717d36e"
+        }
+      }
+    },
+    "e3": {
+      "skins": {
+        "base": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "sha": "3098d0fc194e",
+          "cligne": true
+        }
+      }
+    }
+  }
+}
