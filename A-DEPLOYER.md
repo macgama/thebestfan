@@ -1,5 +1,15 @@
 # À déposer sur Infomaniak
 
+**Missions et tampons mis en avant** (branche `claude/project-thread-8ynk3z`,
+6 novembre 2026, demande de Gaël). Code seul, sans schéma : une carte MISSIONS
+en haut à gauche de l'accueil (faites sur le total, ce qui est à récupérer),
+une alerte « MISSION RÉUSSIE ! » et une alerte de niveau de la voie PASS dans
+la même case que le changement de niveau, et l'encadré « Comment gagner des
+tampons » sous le carnet (onglet SAISON). Traduit, QUESTIONS et /comment-jouer
+à jour. Après la mise en ligne : « Redémarrer ».
+
+---
+
 **Le son de l'Ultimate suit la série et la tenue** (branche
 `claude/project-thread-7wl6vu`, 6 novembre 2026, demande de Gaël). Code seul,
 sans schéma ni fichier son : la tenue change la montée et le choc
