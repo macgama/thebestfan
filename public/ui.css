@@ -9568,6 +9568,33 @@ html[data-calme~="animations"] .tbf-niv-fond{transition:none}
 .tbf-niv-scene--perso .tbf-niv-cocarde{position:absolute;z-index:2;left:calc(50% + 30px);
   bottom:8px;width:52px;height:52px}
 
+/* **Le cadeau de l'administration** (`cadeau-fete.js`, 6 novembre 2026) :
+   sa scène remplace la cocarde dans la case commune. Un paquet au trait qui
+   tombe, tremble et saute (les entrées sont jouées par le script, pas sans
+   mouvement), l'éclair blanc de son ouverture, et le Fanzzy offert qui en
+   sort, coupé à la taille comme celui de la montée de niveau. */
+.tbf-niv-scene:has(.tbf-cadeau-scene){height:150px}
+.tbf-cadeau-scene{position:absolute;inset:0;display:block}
+.tbf-cadeau-paquet{position:absolute;left:50%;bottom:4px;width:104px;height:104px;margin-left:-52px;
+  z-index:2;overflow:visible;transform-origin:50% 90%;filter:drop-shadow(0 3px 0 var(--encre,#111))}
+.tbf-cadeau-couvercle{transform-box:fill-box;transform-origin:50% 100%}
+.tbf-cadeau-ouvert .tbf-cadeau-couvercle{opacity:0}
+.tbf-cadeau-scene--perso .tbf-cadeau-paquet{left:calc(50% + 50px);width:84px;height:84px;margin-left:-42px}
+.tbf-cadeau-eclat{position:absolute;left:50%;top:58%;width:90px;height:90px;margin:-45px 0 0 -45px;
+  border-radius:50%;background:radial-gradient(circle,#fff 0,rgba(255,240,190,.85) 35%,transparent 70%);
+  opacity:0;pointer-events:none;z-index:1}
+.tbf-cadeau-perso{position:absolute;z-index:1;left:0;right:0;top:-6px;margin:0 auto;width:auto;height:300px;
+  max-width:none;pointer-events:none;
+  -webkit-mask-image:linear-gradient(180deg,#000 112px,transparent 156px);
+  mask-image:linear-gradient(180deg,#000 112px,transparent 156px)}
+/* Un cadeau et sa précision (« pour Le Choriste », la rareté) : en colonne. */
+.tbf-cadeau-ligne{display:flex;flex-direction:column;align-items:center}
+.tbf-cadeau-ligne small{display:block;margin-top:7px;font-size:12px}
+.tbf-cadeau-ligne .tbf-cadeau-rar{margin-top:6px;font-size:11px;rotate:2deg}
+.tbf-niv-butin .tbf-sticker svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;
+  stroke-linejoin:round;vertical-align:-2px;margin-right:5px}
+.tbf-niv-butin .tbf-sticker .tbf-distinction svg{width:16px;height:18px;stroke:none}
+
 
 /* ==================================================== les pièces du lot 6
 

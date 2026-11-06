@@ -10,6 +10,16 @@ nécessaire.
 
 ---
 
+**L'alerte « cadeau reçu »** (branche `claude/project-thread-x9m6y9`,
+6 novembre 2026, demande de Gaël). Quand l'admin offre quelque chose depuis
+/admin › JOUEURS (écharpes, boosters, Fanzzy, tenue, Ultimate, pièce, PASS,
+abonnement, cadeau Fondateur), un paquet cadeau s'ouvre chez le joueur à sa
+prochaine visite, ou dans la minute s'il est en ligne. **Schéma :
+`sql/cadeaux.sql`** (une colonne `user_wallet.cadeau_vu`, acceptée par Gaël),
+appliqué par la mise en ligne. **Redémarrer** (nouvelle route `/api/cadeaux`).
+
+---
+
 **Les Fanzzy légendaires plus grands que l'âge 3, partout** (branche
 `claude/project-thread-nj31ko`, 6 novembre 2026, demande de Gaël). Pages et
 index.json seuls, sans schéma ni image : un légendaire n'a qu'un âge et
