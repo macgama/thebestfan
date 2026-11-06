@@ -775,6 +775,9 @@ html[data-calme~="animations"] .missions-carte[data-pret]{animation:none}
   transition:opacity .24s ease;
   filter:drop-shadow(0 0 22px rgba(245,195,59,.26)) drop-shadow(0 14px 26px rgba(0,0,0,.55))}
 .pose.on{opacity:1}
+/* Le calque qui attend son premier dessin ne montre rien, pas même son texte
+   de remplacement : la scène reste neutre jusqu'au bon Fanzzy. */
+.pose:not([src]){visibility:hidden}
 /* **La lueur de l'âge** (7 octobre 2026, accord de Gaël) : aucune au premier
    âge, un halo bleu de rare au deuxième, un halo violet d'épique, plus large,
    au troisième, aux couleurs de rareté de la carte. Collée au contour du
@@ -4438,7 +4441,12 @@ async function montrerAge(evo) {
   rejouer('change');
   window.FX?.son?.('tic');
   nommer(equipe);
-  retenir(equipe);
+  /* **Pas de `retenir` ici** (Gaël, 6 novembre 2026 : « un autre Fanzzy
+     est affiché 1-2 secondes, et ensuite mon Fanzzy apparaît »). Feuilleter
+     les âges n'est pas choisir : le serveur rendra l'âge validé au prochain
+     retour sur l'accueil. Retenir l'âge feuilleté repeignait donc, au retour,
+     un âge que le joueur n'avait pas gardé — puis la réponse le remplaçait
+     par le sien. Seul `validerAge` écrit l'âge dans le souvenir. */
 }
 
 /**
@@ -4503,8 +4511,31 @@ $('ageValider')?.addEventListener('click', validerAge);
    Il s'annule dès qu'on sait. */
 let filet = null;
 
+/* **Le souvenir confronté à la barre des autres écrans.** Le joueur a pu
+   changer de titulaire, de tenue ou d'âge ailleurs (le deck, la fiche) :
+   ces écrans relisent le portefeuille et le retiennent dans l'onglet
+   (`tbf-hud`, nav.js), mais le souvenir de l'accueil, lui, datait de la
+   dernière visite. On repeignait donc l'ancien Fanzzy une à deux secondes,
+   puis le serveur le remplaçait par le bon. Si la barre dit autre chose que
+   le souvenir, le souvenir est périmé : on attend la réponse, sur une scène
+   vide plutôt que sur quelqu'un d'autre. Pas de barre retenue : on ne sait
+   rien de plus, le souvenir vaut. */
+function souvenirAJour(vu) {
+  if (!vu) return null;
+  let hud = null;
+  try { hud = JSON.parse(sessionStorage.getItem(CLE_HUD) || 'null'); } catch { return vu; }
+  if (!hud || !('avatar' in hud)) return vu;
+  const av = hud.avatar;
+  const meme = vu.aucun ? !av
+    : Boolean(av) && av.id === vu.id && (Number(av.evo) || 1) === (vu.evo ?? 1)
+      && String(av.skin || 'base') === (vu.skin ?? 'base');
+  if (meme) return vu;
+  try { localStorage.removeItem(MEMOIRE); } catch { /* stockage fermé */ }
+  return null;
+}
+
 {
-  const vu = souvenir();
+  const vu = souvenirAJour(souvenir());
   if (vu?.id) {
     /* L'adresse du plein-pied est **recalculée**, jamais retenue : elle porte
        l'extension que ce navigateur-ci sait lire, et un souvenir écrit sur un
@@ -4536,7 +4567,11 @@ let filet = null;
     H.sansFanzzy = true;
     poserAvatar();
   } else {
-    filet = setTimeout(() => { filet = null; pose('neutre'); }, 1500);
+    /* Le supporter générique n'arrive plus au bout d'une seconde et demie :
+       pour le joueur, c'était « un autre Fanzzy », remplacé ensuite par le
+       sien. La scène reste vide le temps de la réponse ; le supporter ne
+       vient que si le serveur ne répond vraiment pas, ou dit « aucun ». */
+    filet = setTimeout(() => { filet = null; if (!equipe) pose('neutre'); }, 8000);
   }
 }
 
@@ -6393,7 +6428,12 @@ async function feterMissionsHub() {
       nommer(null);          // le supporter générique n'a pas de nom à donner
       await pose(reposChoisi(), 0, true);
     }
-  } catch { /* collection non montée : l'accueil reste utilisable sans */ }
+  } catch {
+    /* Collection non montée : l'accueil reste utilisable sans. Le filet ne
+       pose plus le supporter tout de suite ; s'il n'y a personne à l'écran,
+       c'est le moment. */
+    if (!equipe && filet) { clearTimeout(filet); filet = null; pose('neutre'); }
+  }
 
   /* Toucher FANZZY, ou la bulle qui mène au classeur : tout ce que la
      pastille comptait est vu. Dans le repli, la mémoire de l'appareil ; avec

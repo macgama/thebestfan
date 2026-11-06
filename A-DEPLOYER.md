@@ -1,5 +1,15 @@
 # À déposer sur Infomaniak
 
+**Plus d'autre Fanzzy affiché en revenant sur l'accueil** (branche
+`claude/project-thread-uohu13`, 6 novembre 2026, signalé par Gaël). Code seul,
+sans schéma : l'accueil ne repeint plus un ancien Fanzzy retenu (changé
+entre-temps au deck, sur la fiche ou en feuilletant les âges), et le supporter
+générique ne vient plus boucher l'attente au bout d'une seconde et demie ; la
+scène reste vide jusqu'au bon Fanzzy. Fichiers statiques : aucun redémarrage
+nécessaire.
+
+---
+
 **La page Amis devient « La tribune des amis »** (PR #377, 6 novembre 2026,
 choix de Gaël parmi 4 maquettes). Code seul, sans schéma : les Fanzzy des amis
 debout dans une tribune (ceux qui jouent éclairés), RÉPONDRE / MERCI ! sous les
