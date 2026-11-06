@@ -1,5 +1,15 @@
 # À déposer sur Infomaniak
 
+**L'administration sur toute la largeur de l'écran** (branche
+`claude/project-thread-cgkjy6`, 6 novembre 2026, demande de Gaël). Page
+/admin seule, sans schéma : plus de plafond à 1 100 px, le tableau JOUEURS ›
+COMPTES écrit chaque colonne sur une ligne et range ses gestes en trois
+familles (côte à côte sur un grand écran). Les réglages gardent leur largeur
+de lecture. Aucun redémarrage nécessaire (fichier statique), mais il ne gêne
+pas.
+
+---
+
 **Le son de l'Ultimate suit la série et la tenue** (branche
 `claude/project-thread-7wl6vu`, 6 novembre 2026, demande de Gaël). Code seul,
 sans schéma ni fichier son : la tenue change la montée et le choc
