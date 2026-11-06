@@ -1,4 +1,15 @@
 {
+ "--haut": {
+  "ou": [
+   "public/boosters.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
  "<0>Créer un duel</0> : dans MATCHS DU JOUR (filtre MES ÉQUIPES et recherche), touche un match, choisis ton équipe, puis ton format, et CRÉER LE DUEL.": {
   "ou": [
    "public/comment-jouer.html"
