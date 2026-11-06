@@ -475,7 +475,7 @@ html[data-calme~="animations"] .spin{animation-duration:3s}
 
    - en haut, ce qu'il possède en pastilles (`#stats`, les mêmes liens) ;
    - à gauche et à droite, les tuiles de couleur de l'accueil (`.tbf-case`) :
-     chacune ouvre sa rubrique en tiroir par le bas (`.vt-tiroir`) ;
+     chacune ouvre sa rubrique en tiroir par le bas (`.vt-volet`) ;
    - dans le coin, le niveau dans son anneau d'XP (`.vt-niv`) ;
    - sous ses pieds, le pseudo et le club : la carte d'avant, en bandeau ;
    - tout en bas, le bonus du jour en coffre.
@@ -577,20 +577,20 @@ html[data-calme~="animations"] .vt-coffre[data-pret]>.vt-cadeau{animation:none}
 
 /* ---- les tiroirs */
 .vt-voile{position:fixed;inset:0;z-index:60;background:rgba(4,6,10,.62)}
-.vt-voile[hidden],.vt-tiroir[hidden]{display:none}
-.vt-tiroir{position:fixed;z-index:61;left:50%;bottom:0;translate:-50% 0;
+.vt-voile[hidden],.vt-volet[hidden]{display:none}
+.vt-volet{position:fixed;z-index:61;left:50%;bottom:0;translate:-50% 0;
   width:min(100%,var(--colonne,480px));max-height:min(86dvh,calc(var(--h-ecran,100dvh) - 40px));
   display:flex;flex-direction:column;background:#11161C;border-radius:18px 18px 0 0;
   box-shadow:0 -2px 0 var(--vt-ton,var(--parpaing)),0 -18px 40px rgba(0,0,0,.6);
   animation:vt-monte .26s cubic-bezier(.2,.9,.3,1)}
 @keyframes vt-monte{from{translate:-50% 40px;opacity:0}}
-@media (prefers-reduced-motion:reduce){.vt-tiroir{animation:none}}
-html[data-calme~="animations"] .vt-tiroir{animation:none}
-.vt-tiroir[data-tiroir=clubs]{--vt-ton:var(--face-bleu)}
-.vt-tiroir[data-tiroir=saison]{--vt-ton:var(--projo)}
-.vt-tiroir[data-tiroir=parcours]{--vt-ton:var(--face-violet)}
-.vt-tiroir[data-tiroir=niveau]{--vt-ton:var(--face-vert)}
-.vt-tiroir[data-tiroir=equipement]{--vt-ton:var(--face-flare)}
+@media (prefers-reduced-motion:reduce){.vt-volet{animation:none}}
+html[data-calme~="animations"] .vt-volet{animation:none}
+.vt-volet[data-tiroir=clubs]{--vt-ton:var(--face-bleu)}
+.vt-volet[data-tiroir=saison]{--vt-ton:var(--projo)}
+.vt-volet[data-tiroir=parcours]{--vt-ton:var(--face-violet)}
+.vt-volet[data-tiroir=niveau]{--vt-ton:var(--face-vert)}
+.vt-volet[data-tiroir=equipement]{--vt-ton:var(--face-flare)}
 .vt-tete{flex:none;position:relative;height:42px}
 .vt-poignee{position:absolute;left:50%;top:10px;translate:-50% 0;width:44px;height:5px;border-radius:3px;
   background:rgba(242,238,228,.3)}
@@ -698,7 +698,7 @@ html.vt-ouvert{overflow:hidden}
        Ce sont les rubriques d'avant, avec leurs identifiants. -->
   <div class="vt-voile" id="vtVoile" hidden></div>
 
-  <section class="vt-tiroir" id="tiroir-clubs" data-tiroir="clubs" role="dialog" aria-modal="true" aria-label="Mes clubs" hidden>
+  <section class="vt-volet" id="tiroir-clubs" data-tiroir="clubs" role="dialog" aria-modal="true" aria-label="Mes clubs" hidden>
     <div class="vt-tete"><span class="vt-poignee" aria-hidden="true"></span>
       <button type="button" class="vt-fermer" aria-label="Fermer">✕</button></div>
     <div class="vt-corps">
@@ -710,7 +710,7 @@ html.vt-ouvert{overflow:hidden}
     </div>
   </section>
 
-  <section class="vt-tiroir" id="tiroir-niveau" data-tiroir="niveau" role="dialog" aria-modal="true" aria-label="Mon niveau" hidden>
+  <section class="vt-volet" id="tiroir-niveau" data-tiroir="niveau" role="dialog" aria-modal="true" aria-label="Mon niveau" hidden>
     <div class="vt-tete"><span class="vt-poignee" aria-hidden="true"></span>
       <button type="button" class="vt-fermer" aria-label="Fermer">✕</button></div>
     <div class="vt-corps">
@@ -719,7 +719,7 @@ html.vt-ouvert{overflow:hidden}
     </div>
   </section>
 
-  <section class="vt-tiroir" id="tiroir-saison" data-tiroir="saison" role="dialog" aria-modal="true" aria-label="Ma saison" hidden>
+  <section class="vt-volet" id="tiroir-saison" data-tiroir="saison" role="dialog" aria-modal="true" aria-label="Ma saison" hidden>
     <div class="vt-tete"><span class="vt-poignee" aria-hidden="true"></span>
       <button type="button" class="vt-fermer" aria-label="Fermer">✕</button></div>
     <div class="vt-corps">
@@ -735,7 +735,7 @@ html.vt-ouvert{overflow:hidden}
     </div>
   </section>
 
-  <section class="vt-tiroir" id="tiroir-parcours" data-tiroir="parcours" role="dialog" aria-modal="true" aria-label="Mon parcours" hidden>
+  <section class="vt-volet" id="tiroir-parcours" data-tiroir="parcours" role="dialog" aria-modal="true" aria-label="Mon parcours" hidden>
     <div class="vt-tete"><span class="vt-poignee" aria-hidden="true"></span>
       <button type="button" class="vt-fermer" aria-label="Fermer">✕</button></div>
     <div class="vt-corps">
@@ -745,7 +745,7 @@ html.vt-ouvert{overflow:hidden}
     </div>
   </section>
 
-  <section class="vt-tiroir" id="tiroir-equipement" data-tiroir="equipement" role="dialog" aria-modal="true" aria-label="Mon équipement" hidden>
+  <section class="vt-volet" id="tiroir-equipement" data-tiroir="equipement" role="dialog" aria-modal="true" aria-label="Mon équipement" hidden>
     <div class="vt-tete"><span class="vt-poignee" aria-hidden="true"></span>
       <button type="button" class="vt-fermer" aria-label="Fermer">✕</button></div>
     <div class="vt-corps">
@@ -762,7 +762,7 @@ html.vt-ouvert{overflow:hidden}
     </div>
   </section>
 
-  <section class="vt-tiroir" id="tiroir-reglages" data-tiroir="reglages" role="dialog" aria-modal="true" aria-label="Réglages" hidden>
+  <section class="vt-volet" id="tiroir-reglages" data-tiroir="reglages" role="dialog" aria-modal="true" aria-label="Réglages" hidden>
     <div class="vt-tete"><span class="vt-poignee" aria-hidden="true"></span>
       <button type="button" class="vt-fermer" aria-label="Fermer">✕</button></div>
     <div class="vt-corps">
@@ -2437,7 +2437,7 @@ function fermerTiroir({ historique = true } = {}) {
   tiroirDepuis = null;
 }
 document.addEventListener('click', (e) => {
-  const tuile = e.target.closest('[data-tiroir]:not(.vt-tiroir)');
+  const tuile = e.target.closest('[data-tiroir]:not(.vt-volet)');
   if (tuile) { ouvrirTiroir(tuile.dataset.tiroir); return; }
   if (e.target.closest('.vt-fermer') || e.target.id === 'vtVoile') fermerTiroir();
 });

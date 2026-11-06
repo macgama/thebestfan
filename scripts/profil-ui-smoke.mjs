@@ -160,7 +160,7 @@ const ouvrir = async (nom) => {
   await page.evaluate((n) => document.querySelector(`.vt-rail [data-tiroir="${n}"]`).click(), nom);
   return jusqua(async () => page.evaluate((n) => !document.getElementById(`tiroir-${n}`).hidden, nom));
 };
-const fermer = () => page.evaluate(() => document.querySelector('.vt-tiroir:not([hidden]) .vt-fermer')?.click());
+const fermer = () => page.evaluate(() => document.querySelector('.vt-volet:not([hidden]) .vt-fermer')?.click());
 {
   const v = await page.evaluate(() => {
     const carte = document.getElementById('carte').getBoundingClientRect();
@@ -169,7 +169,7 @@ const fermer = () => page.evaluate(() => document.querySelector('.vt-tiroir:not(
       pastilles: [...document.querySelectorAll('#stats .vt-res')].map((a) => a.getAttribute('href')),
       echarpes: document.querySelector('#stats [data-solde="echarpes"]')?.textContent.trim(),
       hauteur: carte.height, ecran: innerHeight,
-      fermes: [...document.querySelectorAll('.vt-tiroir')].every((t) => t.hidden),
+      fermes: [...document.querySelectorAll('.vt-volet')].every((t) => t.hidden),
     };
   });
   check('six tuiles, chacune vers sa rubrique',
