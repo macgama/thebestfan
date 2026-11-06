@@ -1,6 +1,6 @@
 {
   "id": "TB1",
-  "rev": 2,
+  "rev": 6,
   "evolutions": {
     "e1": {
       "skins": {
@@ -13,7 +13,8 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "14680d804958"
+          "sha": "14680d804958",
+          "cligne": true
         },
         "apocalyptique": {
           "etats": [
@@ -25,7 +26,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "f6e8b733e07c"
+          "sha": "f6e8b733e07c",
+          "cligne": true
         },
         "halloween": {
           "etats": [
@@ -37,7 +39,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "7a5c7f394a4c"
+          "sha": "7a5c7f394a4c",
+          "cligne": true
         },
         "prehistorique": {
           "etats": [
@@ -49,7 +52,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "5873c4a690ad"
+          "sha": "5873c4a690ad",
+          "cligne": true
         }
       }
     }
