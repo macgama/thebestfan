@@ -54,6 +54,10 @@ export const CADRAGES = {
   // le conteneur d'âge 3 porte une grue au-dessus de sa tête.
   FR39: { y: 0.48, c: 0.52 }, FR39B: { y: 0.5, c: 0.52 }, FR39C: { y: 0.55, c: 0.52 },
   FR40C: { y: 0.3, c: 0.46 },
+  // Le croissant sous son cornet, la fusée derrière son hublot, le bus sous ses drapeaux.
+  FR49: { y: 0.4, c: 0.5 }, FR49B: { y: 0.42, c: 0.5 },
+  FR53: { y: 0.45, c: 0.45 }, FR53B: { y: 0.45, c: 0.45 }, FR53C: { y: 0.45, c: 0.45 },
+  FR60: { y: 0.55, c: 0.5 },
 };
 
 /** La carte d'un âge : `RP34` et 3 → `RP34C`. */

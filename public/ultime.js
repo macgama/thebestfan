@@ -3514,6 +3514,12 @@
 
   function jouer({ src = '', cri = '', nom = '', couleur = '#F5C33B', grande = false, eux = false } = {}, fond, video = null) {
     poserStyle();
+    /* Le cri est posé lettre à lettre : la traduction automatique de la page
+       ne le reconnaît plus une fois découpé. On le traduit donc ici, avant
+       (le catalogue donne le cri en français ; une chaîne déjà traduite
+       ressort telle quelle). */
+    const tr = (s) => window.TBF_LANGUE?.t?.(s) ?? s;
+    cri = tr(cri); nom = tr(nom);
     // Deux coups fatals à la suite : le second remplace le premier.
     enCours?.couper?.();
     const calme = doux();

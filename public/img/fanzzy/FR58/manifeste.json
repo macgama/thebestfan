@@ -1,0 +1,21 @@
+{
+  "id": "FR58",
+  "rev": 1,
+  "evolutions": {
+    "e1": {
+      "skins": {
+        "base": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "sha": "b64d736fa245"
+        }
+      }
+    }
+  }
+}

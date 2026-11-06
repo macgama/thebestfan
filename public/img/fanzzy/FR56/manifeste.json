@@ -1,0 +1,22 @@
+{
+  "id": "FR56",
+  "rev": 2,
+  "evolutions": {
+    "e1": {
+      "skins": {
+        "base": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "sha": "edbdd2d9dfd2",
+          "cligne": true
+        }
+      }
+    }
+  }
+}
