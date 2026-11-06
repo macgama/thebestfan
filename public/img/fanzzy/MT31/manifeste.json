@@ -1,6 +1,6 @@
 {
   "id": "MT31",
-  "rev": 3,
+  "rev": 5,
   "evolutions": {
     "e1": {
       "skins": {
@@ -13,7 +13,7 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "8af16bfdb3fc"
+          "sha": "3a74ebf6e032"
         },
         "halloween": {
           "etats": [
@@ -25,7 +25,31 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "d24cf7979b15"
+          "sha": "c2196e01379f"
+        },
+        "apocalyptique": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "00b926b61ef4"
+        },
+        "prehistorique": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "c89a117cb762"
         }
       }
     },
@@ -67,7 +91,43 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "37bb7ae62815"
+          "sha": "c5e60107c911"
+        },
+        "apocalyptique": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "83d64f83bade"
+        },
+        "halloween": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "adfaa2da15d4"
+        },
+        "prehistorique": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "cae5831d417f"
         }
       }
     }
