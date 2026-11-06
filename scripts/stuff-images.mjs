@@ -39,7 +39,7 @@ import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { STUFF } from '../src/shared/fanzzy/inventaire.js';
-import { enIcone, partSuspecte, ecrireLesTrois } from './detourage.mjs';
+import { enIcone, partSuspecte, ecrireLesTrois, TOLERANCE_NOIR } from './detourage.mjs';
 import { INVITES_CLUBS, FOND_MAGENTA } from './stuff-clubs-invites.mjs';
 
 const RACINE = fileURLToPath(new URL('..', import.meta.url));
@@ -504,9 +504,11 @@ for (const FAMILLE of FAMILLES) {
   const src = sources.find((f) => f.replace(/\.[^.]+$/, '') === s.id);
   if (!src) { manquantes.push(s.id); continue; }
 
-  /* `trous` : le vert enfermé dans un objet est du fond — voir `detourer`. */
+  /* `trous` : le vert enfermé dans un objet est du fond — voir `detourer`.
+     `toleranceNoir` : les anciens rendus sur noir, sans trouer leurs tricots
+     sombres — voir `TOLERANCE_NOIR`. */
   const { png, part } = await enIcone(sharp, path.join(SOURCE, src), COTE, s.id,
-    { trous: true });
+    { trous: true, toleranceNoir: TOLERANCE_NOIR });
   if (partSuspecte(part)) suspectes.push(`${s.id} (${Math.round(part * 100)} % de fond)`);
   await ecrireLesTrois(sharp, png, CIBLE, s.id);
   faits++;

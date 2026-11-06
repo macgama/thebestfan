@@ -36,6 +36,19 @@ import path from 'node:path';
  */
 export const TOLERANCE = 44;
 
+/**
+ * Tolérance pour les **anciens rendus sur fond noir**.
+ *
+ * Les dix-sept premières pièces ont été dessinées sur du noir, avant le vert
+ * de studio. Sur elles, quarante-quatre unités, c'est la couleur d'un tricot
+ * sombre : les gants coupés perdaient la moitié de leur laine, l'écharpe ses
+ * rayures noires, la capuche ses plis — l'objet arrivait troué, et dans la
+ * boutique il avait l'air transparent. Le noir du générateur est bien plus
+ * régulier que son vert (deux ou trois unités de bruit) : huit suffit à le
+ * prendre sans toucher l'objet. Vérifié sur une planche contact des dix-sept.
+ */
+export const TOLERANCE_NOIR = 8;
+
 /** Avance minimale du vert sur le rouge et le bleu pour être du fond de studio. */
 export const VERT_STUDIO = 45;
 
@@ -59,7 +72,8 @@ export const FRANGE = 1.2;
  * jeu ne porte, un vert intérieur ne peut être que du fond. Les équipements
  * l'activent ; les logos, qui peuvent être verts, non.
  */
-export function detourer({ data, width, height }, reference, { trous = false } = {}) {
+export function detourer({ data, width, height }, reference,
+  { trous = false, toleranceNoir = null } = {}) {
   const n = width * height;
   const fond = new Uint8Array(n);
   const pile = [];
@@ -70,6 +84,10 @@ export function detourer({ data, width, height }, reference, { trous = false } =
      coin assombri du fauteuil (1, 116, 59) n'avait pas soixante unités
      d'avance sur le bleu, et n'était plus reconnu comme du studio. */
   const studio = reference[1] - Math.max(reference[0], reference[2]) >= VERT_STUDIO;
+
+  /* Un fond très sombre et pas de studio : un ancien rendu sur noir. */
+  const noir = !studio && toleranceNoir != null && Math.max(...reference) < 40;
+  const tol = noir ? toleranceNoir : TOLERANCE;
 
   /* **Le vert de studio se reconnaît aussi à sa teinte**, pour les équipements.
      Certains rendus assombrissent le fond vers les coins (un vignetage que le
@@ -84,9 +102,9 @@ export function detourer({ data, width, height }, reference, { trous = false } =
   const ressemble = (i) => {
     const p = i * 4;
     if (trous && studio && vertStudio(p)) return true;
-    return Math.abs(data[p] - reference[0]) <= TOLERANCE
-      && Math.abs(data[p + 1] - reference[1]) <= TOLERANCE
-      && Math.abs(data[p + 2] - reference[2]) <= TOLERANCE;
+    return Math.abs(data[p] - reference[0]) <= tol
+      && Math.abs(data[p + 1] - reference[1]) <= tol
+      && Math.abs(data[p + 2] - reference[2]) <= tol;
   };
 
   for (let x = 0; x < width; x++) {
@@ -115,8 +133,45 @@ export function detourer({ data, width, height }, reference, { trous = false } =
   if (trous && studio) {
     for (let i = 0; i < n; i++) if (!fond[i] && ressemble(i)) fond[i] = 1;
   }
+  if (noir) effacerLesMiettes(fond, width, height);
   for (let i = 0; i < n; i++) data[i * 4 + 3] = fond[i] ? 0 : 255;
   return { decoupes: fond.reduce((s, v) => s + v, 0), total: n };
+}
+
+/**
+ * Part minimale de l'image qu'un morceau d'objet doit couvrir pour rester.
+ *
+ * Avec la tolérance serrée des fonds noirs, quelques îlots de fond plus
+ * clairs que le reste échappent au détourage — le coin éclairci en bas à
+ * droite, un grain isolé. Invisibles sur le jeu sombre, ils comptaient
+ * pourtant pour le recadrage : l'objet se retrouvait petit au milieu de sa
+ * vignette. Un millième de l'image, c'est loin sous le plus petit vrai morceau
+ * (la tasse du thermos, la ficelle du sifflet) et au-dessus de ces miettes.
+ */
+export const MIETTE = 0.001;
+
+/** Rend au fond les petits îlots non découpés — voir `MIETTE`. */
+function effacerLesMiettes(fond, width, height) {
+  const n = width * height;
+  const vu = new Uint8Array(n);
+  const seuil = n * MIETTE;
+  const pile = [];
+  const morceau = [];
+  for (let d = 0; d < n; d++) {
+    if (fond[d] || vu[d]) continue;
+    vu[d] = 1; pile.push(d); morceau.length = 0;
+    while (pile.length) {
+      const i = pile.pop();
+      morceau.push(i);
+      const x = i % width;
+      const voisins = [x > 0 ? i - 1 : -1, x < width - 1 ? i + 1 : -1,
+        i >= width ? i - width : -1, i < n - width ? i + width : -1];
+      for (const j of voisins) {
+        if (j >= 0 && !fond[j] && !vu[j]) { vu[j] = 1; pile.push(j); }
+      }
+    }
+    if (morceau.length < seuil) for (const i of morceau) fond[i] = 1;
+  }
 }
 
 /**
