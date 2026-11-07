@@ -74,10 +74,14 @@ import { grandLivreFerme } from './auth/schema.js';
 
     `victoire` (6 novembre 2026, choix de Gaël) : un duel classé gagné, une
     fois par duel — la clé est l'identifiant du duel. Des tampons du carnet,
-    au plus `saison.victoires_jour` par jour (`nvn/index.js`). */
+    au plus `saison.victoires_jour` par jour (`nvn/index.js`).
+
+    `tbfo` (7 novembre 2026, choix de Gaël) : les écharpes d'un match TBFO
+    gagné ou nul par la tribune qu'on a poussée, une fois par match — la clé
+    est l'identifiant du match (`classements/victoires.js`). */
 export const SOURCES = ['bonus', 'mission', 'sachet', 'carnet', 'relais', 'cran', 'serie', 'division',
   'virage', 'prono', 'jongles', 'tirs', 'chant', 'deplacement', 'tifo', 'boss', 'cadeau', 'defi',
-  'hebdo', 'voie', 'victoire'];
+  'hebdo', 'voie', 'victoire', 'tbfo'];
 
 /** Les raisons d'un refus, liste fermée (`CONTRATS.md`, § 11). */
 export const RAISONS = ['deja', 'incomplet', 'jour_passe', 'change', 'inactif', 'plafond',

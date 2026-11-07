@@ -147,6 +147,65 @@ r = await (await fetch(`${base}/api/club/42`)).json();
 check('sans compte, le club se lit, sans ce qui est à moi', r.team?.name === 'Arsenal' && r.moi === null);
 moi = ID(1);
 
+/* ------------------------------------- les écharpes d'un match TBFO
+   (choix de Gaël, 7 novembre 2026 : victoire 20, nul 5, Virage +10). */
+{
+  const pq = async (sql, p = []) => (await pool.query(sql, p))[0];
+  await pq(`INSERT INTO fixtures (id,league_id,season,home_id,away_id,home_goals,away_goals,status_short,elapsed,kickoff_at) VALUES
+    (9004,39,2026,42,66,0,0,'FT',90,UTC_TIMESTAMP() - INTERVAL 1 DAY),
+    (9005,39,2026,49,66,1,0,'FT',90,UTC_TIMESTAMP() - INTERVAL 1 DAY),
+    (9006,39,2026,42,49,3,0,'FT',90,UTC_TIMESTAMP() - INTERVAL 6 DAY)`);
+  const conn = await mysql.createConnection({ uri: DB });
+  const ajouter = async (fixture, gagnant, perdant, sideGagnant, ilya) => {
+    const id = `cd-${++d}`;
+    for (const [u, issue, side] of [[gagnant, 'win', sideGagnant], [perdant, 'loss', 1 - sideGagnant]]) {
+      await conn.query(`INSERT INTO duel_results (duel_id,user_id,opponent_id,outcome,fixture_id,ferveur,mode,side,ended_at)
+        VALUES (?,?,'x',?,?,200,'classe',?,NOW(3) - INTERVAL ? MINUTE)`, [id, ID(u), issue, fixture, side, ilya]);
+    }
+  };
+  // 9004 : 1–1 aux duels, nul (NordBank pour Arsenal, Villan pour Aston Villa).
+  await ajouter(9004, 2, 4, 0, 24 * 60 - 30);
+  await ajouter(9004, 4, 2, 1, 24 * 60 - 40);
+  // 9005 : aucun duel, Aston Villa (extérieur) gagne la corde : Villan était au Virage.
+  await conn.query(`INSERT INTO virage_tribunes (fixture_id,buts_dom,buts_ext) VALUES (9005,0,2)`);
+  await conn.query(`INSERT INTO virage_presence (user_id,fixture_id,side,ferveur,classe,team_id) VALUES (?,9005,1,300,1,66)`, [ID(4)]);
+  // 9006 : gagné il y a six jours, trop vieux pour être payé.
+  await ajouter(9006, 1, 5, 0, 6 * 24 * 60 - 30);
+  await conn.end();
+
+  const bourse = async (n) => Number((await pq('SELECT scarves FROM user_wallet WHERE user_id = ?', [ID(n)]))[0]?.scarves ?? 0);
+  const lire = async (n) => { moi = ID(n); const j = await (await fetch(`${base}/api/club/victoires`)).json(); return j.victoires ?? []; };
+  const avant1 = await bourse(1);
+  let v = await lire(1);
+  check('Gael : 9001 gagné aux duels et au Virage, 20 + 10 écharpes',
+    v.length === 1 && v[0].match === 9001 && v[0].echarpes === 30 && v[0].issue === 'V' && v[0].viragegagne
+    && v[0].club.name === 'Arsenal' && v[0].adverse.name === 'Chelsea' && v[0].score.join() === '2,1'
+    || (console.log('        v :', JSON.stringify(v)), false));
+  check('versées dans la bourse', (await bourse(1)) - avant1 === 30
+    || (console.log('        bourse :', avant1, await bourse(1)), false));
+  v = await lire(1);
+  check('une seule fois : relu, rien de plus, la fête reste à montrer', v.length === 1
+    && (await bourse(1)) - avant1 === 30);
+  check('le match en cours (9002) et le match trop vieux (9006) ne paient pas',
+    !(await pq(`SELECT 1 FROM recompenses WHERE source='tbfo' AND cle IN ('9002','9006')`)).length);
+  v = await lire(3);
+  check('Kurve_K a perdu son duel, mais sa tribune a gagné : 30 aussi', v.find((x) => x.match === 9001)?.echarpes === 30);
+  v = await lire(2);
+  check('NordBank : 30 pour 9001, 5 pour le nul de 9004',
+    v.find((x) => x.match === 9001)?.echarpes === 30 && v.find((x) => x.match === 9004)?.echarpes === 5
+    && v.find((x) => x.match === 9004)?.issue === 'N' || (console.log('        v :', JSON.stringify(v)), false));
+  v = await lire(4);
+  check('Villan : 5 pour le nul de 9004, 10 pour le Virage gagné de 9005 sans duel',
+    v.find((x) => x.match === 9004)?.echarpes === 5 && v.find((x) => x.match === 9005)?.echarpes === 10
+    && v.find((x) => x.match === 9005)?.issue === null || (console.log('        v :', JSON.stringify(v)), false));
+  v = await lire(5);
+  check('Blue, tribune battue aux duels et au Virage : rien', v.length === 0);
+  moi = null;
+  st = (await fetch(`${base}/api/club/victoires`)).status;
+  check('sans compte : 401', st === 401);
+  moi = ID(1);
+}
+
 /* ----------------------------------------------------------- la page */
 const nav = await puppeteer.launch({ args: ['--no-sandbox', '--accept-lang=fr-FR'] });
 const erreurs = [];
@@ -200,6 +259,31 @@ if (process.env.CAPTURES) {
 await page.goto(`${base}/club/4242`, { waitUntil: 'domcontentloaded' });
 check('un club inconnu : une phrase, pas une page vide',
   await jusqua(async () => /Impossible de lire ce club/.test(await txt('#page'))));
+
+/* La fête du match TBFO (`tbfo-fete.js`), dans la case commune : ce que
+   l'API rend pour Gael, fêté sur sa page. */
+{
+  moi = ID(1);
+  const v = (await (await fetch(`${base}/api/club/victoires`)).json()).victoires;
+  const p2 = await nav.newPage();
+  p2.on('pageerror', (e) => erreurs.push(e.message));
+  await p2.setViewport({ width: 400, height: 860, deviceScaleFactor: process.env.CAPTURES ? 2 : 1 });
+  await p2.goto(`${base}/club/42`, { waitUntil: 'domcontentloaded' });
+  await p2.addScriptTag({ url: '/tbfo-fete.js' });
+  await p2.evaluate((liste) => { window.__choix = window.TBF_TBFO_FETE.feter(liste); }, v);
+  const vu = await jusqua(() => p2.evaluate(() => /VICTOIRE \+ VIRAGE/.test(document.body.innerText)
+    && /\+30/.test(document.body.innerText) && /ARSENAL/.test(document.body.innerText)));
+  check('la fête : VICTOIRE + VIRAGE, +30 écharpes, le club', vu
+    || (console.log('        texte :', await p2.evaluate(() => document.body.innerText.slice(-400))), false));
+  if (process.env.CAPTURES) {
+    await dodo(2200);
+    await p2.screenshot({ path: path.join(process.env.CAPTURES, 'fete-tbfo.png') });
+  }
+  await p2.evaluate(() => [...document.querySelectorAll('button')].find((b) => /VOIR MON CLUB/.test(b.textContent))?.click());
+  check('VOIR MON CLUB mène à la page du club', await p2.evaluate(() => window.__choix) === '/club/42');
+  await p2.close();
+  check('aucune erreur de page pendant la fête', erreurs.length === 0 || (console.log('        ', erreurs), false));
+}
 
 await nav.close();
 await pool.end();

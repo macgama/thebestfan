@@ -56,8 +56,8 @@ const SQL_FINIS = liste(FINIS);
 /** Le coup d'envoi d'un match à l'heure de la base (alias `f` par défaut). */
 export const coupEnvoiLocal = (f = 'f') => `(${f}.kickoff_at + INTERVAL ${DECALAGE} MINUTE)`;
 
-/* La fin d'un match fini, à l'heure de la base. */
-const finDuMatch = (f) => `(${coupEnvoiLocal(f)} + INTERVAL (CASE WHEN ${f}.status_short = 'FT'
+/** La fin d'un match fini, à l'heure de la base. */
+export const finDuMatch = (f) => `(${coupEnvoiLocal(f)} + INTERVAL (CASE WHEN ${f}.status_short = 'FT'
     THEN ${DUREE_MATCH_MIN.normal} ELSE ${DUREE_MATCH_MIN.prolongations} END) MINUTE)`;
 
 /* Le plafond du jour (réglage 4) : la ligne `dr` est-elle parmi les `n`
