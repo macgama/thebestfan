@@ -928,7 +928,7 @@ function tribunes(saison, ligue = null, variante = false) {
     if (!l.neutre || variante) c.joueurs.add(l.joueur);
     if (l.neutre) c.neutres++;
     c.J++; c[{ win: 'G', draw: 'N', loss: 'P' }[l.issue]]++;
-    c.points += { win: 3, draw: 1, loss: 0 }[l.issue] * (l.neutre ? R('tribune.neutre_points') : 1);
+    c.points += { win: 3, draw: 1, loss: 0 }[l.issue] * (l.neutre ? (R('tribune.neutre_points') ?? 0.5) : 1);
     c[l.source === 'duel' ? 'duels' : 'virages']++;
     parClub.set(l.club, c);
   }
@@ -940,7 +940,7 @@ function tribunes(saison, ligue = null, variante = false) {
     return { ...c, joueurs: ids.length, suiveurs: suiveurs.get(c.club) ?? 0,
       tryhards: profils.filter((x) => x === 'tryhard').length,
       points: Math.round(c.points * 10) / 10,
-      moyenne: Math.round((c.points / Math.max(ids.length, R('tribune.plancher'))) * 10) / 10 };
+      moyenne: Math.round((c.points / Math.max(ids.length, (R('tribune.plancher') ?? 5))) * 10) / 10 };
   }).sort((a, b) => b.moyenne - a.moyenne || b.points - a.points || b.G - a.G);
 }
 
@@ -1083,7 +1083,7 @@ const pointsParProfil = Object.fromEntries(['S1', 'S2'].map((sa) => {
   const o = Object.fromEntries(NOMS_PROFILS.map((k) => [k, 0]));
   const prof = new Map(joueurs.map((p) => [p.id, p.profil]));
   for (const l of LIGNES_CLUBS) if (l.saison === sa) {
-    o[prof.get(l.joueur)] += { win: 3, draw: 1, loss: 0 }[l.issue] * (l.neutre ? R('tribune.neutre_points') : 1);
+    o[prof.get(l.joueur)] += { win: 3, draw: 1, loss: 0 }[l.issue] * (l.neutre ? (R('tribune.neutre_points') ?? 0.5) : 1);
   }
   return [sa, o];
 }));
@@ -1102,7 +1102,7 @@ const resultat = {
   catalogue: { seriesS1: SERIES_S1, seriesS2: SERIES_S2, ...etatCollection(joueurs[0], SERIES_S1),
     stuffS1: STUFF_S1.length, carnetS1: CARNETS.S1, carnetS2: CARNETS.S2, tenues: TENUES },
   reglages: { packRegen: R('pack.regen_min'), packMax: R('pack.max'), aboRegen: R('abo.pack_regen_min'),
-    aboMax: R('abo.pack_max'), seuils: SEUILS, plancher: R('tribune.plancher'), neutre: R('tribune.neutre_points') },
+    aboMax: R('abo.pack_max'), seuils: SEUILS, plancher: (R('tribune.plancher') ?? 5), neutre: (R('tribune.neutre_points') ?? 0.5) },
   parProfil, courbes, jours: journal.jours, duelsParHeure: dh, totaux, sallesStats,
   tribunes: { S1: tribS1, S2: tribS2, S1variante: tribS1Variante }, bots: journal.bots, parHeure: journal.parHeure, ligues, supportersS1: supportersS1.slice(0, 25), ferveursS1: supportersS1.map((x) => ({ profil: x.profil, ferveur: x.ferveur })), divisions, proposition,
   duellistes: duellistes.slice(0, 15),

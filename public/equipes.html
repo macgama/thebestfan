@@ -79,11 +79,13 @@ input:focus{outline:none;border-color:var(--projo)}
 /* **Tout se touche** (demande de Gaël du 5 novembre 2026). Le nom du club
    mène à la page de son championnat, chaque match à sa fiche : la page
    montrait des résultats qu'on ne pouvait pas ouvrir. */
-a.club,a.match{color:inherit;text-decoration:none;-webkit-tap-highlight-color:transparent}
-a.club:hover,a.match:hover{background:rgba(242,238,228,.05)}
-a.club:focus-visible,a.match:focus-visible{outline:2px solid var(--projo);outline-offset:-2px}
+a.vers-club,a.ligue,a.match{color:inherit;text-decoration:none;-webkit-tap-highlight-color:transparent}
+a.vers-club:hover b,a.ligue:hover{text-decoration:underline}
+a.match:hover{background:rgba(242,238,228,.05)}
+a.vers-club:focus-visible,a.ligue:focus-visible,a.match:focus-visible{outline:2px solid var(--projo);outline-offset:-2px}
 .club .nom{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
 .club .nom b{flex:none}
+.club .nom a.vers-club{align-self:flex-start}
 .club .ligue{font-size:11.5px;opacity:.88;display:flex;align-items:center;gap:5px;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .club .ligue img{width:14px;height:14px}
@@ -428,19 +430,19 @@ function render(){
   if (!feed.length) { $('feed').innerHTML = `<div class="empty">${t('empty')}</div>`; return; }
 
   $('feed').innerHTML = feed.map(row => {
-    /* Le nom mène à la page du championnat du club (`/teletext?ligue=`). Sans
-       championnat connu, il reste un titre. */
+    /* Le nom mène à la page du club (`/club/:id`, « Le stade du club ») ; le
+       championnat, dessous, à sa page (`/teletext?ligue=`). */
     const ligue = row.ligue?.id ? row.ligue : null;
-    const tete = `
-        <img src="${esc(row.team.logo)}" alt="">
-        <span class="nom"><b>${esc(nomEquipe(row.team))}</b>
-          ${ligue?.name ? `<small class="ligue">${ligue.logo ? `<img src="${esc(ligue.logo)}" alt="">` : ''}${esc(ligue.name)} ›</small>` : ''}</span>
-        ${row.live.length ? `<span class="direct">${t('direct')}</span>` : ''}
-        ${row.team.is_main ? `<span class="main tbf-sticker">${t('main')}</span>` : ''}`;
+    const vers = `/club/${encodeURIComponent(row.team.id)}`;
     return `
     <div class="team" data-team="${row.team.id}">
-      ${ligue ? `<a class="club" href="/teletext?ligue=${encodeURIComponent(ligue.id)}">${tete}</a>`
-              : `<div class="club">${tete}</div>`}
+      <div class="club">
+        <a class="vers-club" href="${vers}" aria-hidden="true" tabindex="-1"><img src="${esc(row.team.logo)}" alt=""></a>
+        <span class="nom"><a class="vers-club" href="${vers}"><b>${esc(nomEquipe(row.team))}</b></a>
+          ${ligue?.name ? `<a class="ligue" href="/teletext?ligue=${encodeURIComponent(ligue.id)}">${ligue.logo ? `<img src="${esc(ligue.logo)}" alt="">` : ''}${esc(ligue.name)} ›</a>` : ''}</span>
+        ${row.live.length ? `<span class="direct">${t('direct')}</span>` : ''}
+        ${row.team.is_main ? `<span class="main tbf-sticker">${t('main')}</span>` : ''}
+      </div>
       ${row.live.length ? `<div class="section direct-titre">${t('direct')}</div>` + row.live.map(matchRow).join('') : ''}
       ${row.next.length ? `<div class="section">${t('next')}</div>` + row.next.map(matchRow).join('') : ''}
       ${row.last.length ? `<div class="section">${t('last')}</div>` + row.last.map(matchRow).join('') : ''}

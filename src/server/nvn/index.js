@@ -1673,10 +1673,6 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
   const issueDe = (d, j) => (d.vainqueur === null || d.vainqueur === undefined ? 'draw'
     : (j.side === d.vainqueur ? 'win' : 'loss'));
 
-  /* Les points d'un duel classé pour le club, ceux du championnat des clubs
-     (`classements/index.js`, qui les compte sur `outcome`). */
-  const POINTS_DUEL = { win: 3, draw: 1, loss: 0 };
-
   /**
    * La ferveur qu'un duel classé écrit pour un joueur : celle de la corde,
    * réduite pour un neutre (`ferveur.neutre`) et multipliée par son renfort.
@@ -1838,25 +1834,25 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
        doublée par le renfort, réduite de moitié pour un neutre : un joueur
        lisait 341 et le classement en comptait 682. Le bilan porte donc le
        chiffre écrit (`ferveurComptee`, le même que la ligne de résultat), ce
-       qui l'a fait bouger, et les points rapportés au club poussé — entiers
-       s'il le suit, une part sinon (`classements/index.js`). */
+       qui l'a fait bouger, et ce que le duel ajoute au score TBFO du match
+       pour le club poussé. */
     if (!salle.tuto && d.mode === 'classe' && !coteIllisible) {
       for (const [userId, j] of d.joueurs) {
         const g = gains.get(userId);
         if (userId.startsWith('bot:') || !g) continue;
         const m = salle.membres.get(userId);
         const issue = issueDe(d, j);
-        /* Le club poussé reçoit les points ; un neutre ne lui en donne
-           qu'une part (`tribune.neutre_points`), comme au classement. */
+        /* **Le score TBFO du vrai match** (barème de Gaël, 7 novembre
+           2026, `classements/championnat.js`) : un duel classé gagné ajoute
+           1 au score de la tribune poussée, neutre compris. Les points du
+           club se jouent au match entier, pas au duel. */
         const fx = d.fixture;
         const club = (j.side === 1 ? fx?.away?.name : fx?.home?.name) ?? null;
-        const part = m?.neutre === false ? 1 : Math.min(1, Math.max(0,
-          Number(reglage('tribune.neutre_points') ?? 0.5)));
         g.classement = {
           ferveur: ferveurComptee(j, m),
           renfort: Number((m?.bonus ?? 1).toFixed(2)),
           neutre: m?.neutre !== false,
-          points: club ? Math.round((POINTS_DUEL[issue] ?? 0) * part * 10) / 10 : null,
+          score: club ? (issue === 'win' ? 1 : 0) : null,
           club,
         };
       }

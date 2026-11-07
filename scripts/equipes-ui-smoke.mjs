@@ -334,7 +334,8 @@ async function chercher(terme) {
   const liens = await p.evaluate(() => {
     const lau = document.querySelector('.team[data-team="85"]');
     return {
-      club: lau?.querySelector('a.club')?.getAttribute('href') ?? '',
+      club: lau?.querySelector('.nom a.vers-club')?.getAttribute('href') ?? '',
+      vers: lau?.querySelector('a.ligue')?.getAttribute('href') ?? '',
       ligue: lau?.querySelector('.club .ligue')?.textContent ?? '',
       match: lau?.querySelector('a.match[data-fixture="9100"]')?.getAttribute('href') ?? '',
       direct: lau?.querySelector('.club .direct')?.textContent.trim() ?? '',
@@ -346,8 +347,8 @@ async function chercher(terme) {
       bale: document.querySelector('.team[data-team="91"] .fz-vide')?.textContent ?? '',
     };
   });
-  check('le nom du club mène à la page de son championnat',
-    liens.club === '/teletext?ligue=77' && /Super League/.test(liens.ligue)
+  check('le nom du club mène à sa page, son championnat à la sienne',
+    liens.club === '/club/85' && liens.vers === '/teletext?ligue=77' && /Super League/.test(liens.ligue)
     || (console.log('        lien :', liens.club, liens.ligue), false));
   check('chaque match mène à sa fiche', liens.match === '/matchs?match=9100');
   check('un match en direct se voit sur la carte du club', liens.direct === 'EN DIRECT' && liens.rangee);

@@ -159,10 +159,6 @@ const post = async (p, corps) => {
   return { status: r.status, json: await r.json().catch(() => null) };
 };
 
-/* Les moyennes de tribune éprouvées plus bas sont celles d'avant le plancher
-   de joueurs (`tribune.plancher`, 5 par défaut) : on le met à 1 pour elles.
-   Le plancher a son propre bloc, avec les neutres. */
-poserReglages({ 'tribune.plancher': 1 });
 
 let r = await get('/api/rank/supporters');
 check('classement des supporters', r.classement.length === 6);
@@ -180,8 +176,14 @@ check('le club du joueur est indiqué', r.classement[0].club === 'Petit Club');
 
 r = await get('/api/rank/tribunes');
 check('classement des tribunes', r.classement.length === 2);
-check('le petit club passe devant grâce à la moyenne de points',
-  r.classement[0].name === 'Petit Club');
+/* **Le championnat TBFO** (barème de Gaël, 7 novembre 2026) : le match 7001
+   (fini) a six duels classés gagnés, deux par la tribune du Petit Club (à
+   domicile), quatre par celle du Gros Club. Le Gros Club gagne le match TBFO
+   4–2 : 3 points, et le Petit Club 0. */
+check('le club qui gagne le plus de duels du match passe devant',
+  r.classement[0].name === 'Gros Club'
+  || (console.log('        la liste :', JSON.stringify(r.classement)), false));
+check('le barème part avec la liste', r.bareme?.victoire === 3 && r.bareme?.virage === 2);
 const petit = r.classement.find((x)=>x.name==='Petit Club');
 const gros = r.classement.find((x)=>x.name==='Gros Club');
 
@@ -223,20 +225,17 @@ const gros = r.classement.find((x)=>x.name==='Gros Club');
   await pool.query('DELETE FROM user_follows WHERE user_id = ? AND team_id = 91', [moi]);
   C.oublier();
 }
-/* **Le championnat des clubs** (Gaël, 29 octobre 2026) : chaque duel classé
-   est un match pour le club du joueur, 3 points la victoire, 0 la défaite.
-   Petit Club : 2 joueurs à deux victoires et une défaite, 12 points, 6 par
-   joueur. Gros Club : 4 joueurs, 5 victoires et 7 défaites, 15 points, 3,8
-   par joueur. Le total ne classe pas — c'est la moyenne. */
-check('le club a ses matchs, victoires, nuls et défaites',
-  petit.joues === 6 && petit.gagnes === 4 && petit.nuls === 0 && petit.perdus === 2
-  && gros.joues === 12 && gros.gagnes === 5 && gros.perdus === 7
+/* Un match TBFO par vrai match : la Ligue 1 (7001, 4–2 pour le Gros Club)
+   et la compétition 207 (7002, un duel de Momo pour le Petit Club). */
+check('le club a ses matchs TBFO, victoires, nuls et défaites',
+  gros.joues === 2 && gros.gagnes === 1 && gros.perdus === 1 && gros.pour === 4
+  && petit.joues === 2 && petit.gagnes === 1 && petit.perdus === 1 && petit.contre === 4
   || (console.log('        petit', JSON.stringify(petit), '· gros', JSON.stringify(gros)), false));
-check('3 points la victoire, et la moyenne par joueur qui a joué',
-  petit.points === 12 && petit.moyenne === 6 && gros.points === 15 && gros.moyenne === 3.8
-  || (console.log('        petit', petit.moyenne, '· gros', gros.moyenne), false));
-check('le gros club a plus de supporters mais moins de moyenne',
-  gros.supporters > petit.supporters && Number(gros.moyenne) < Number(petit.moyenne));
+check('3 points la victoire, 0 la défaite, sans moyenne par joueur',
+  gros.points === 3 && petit.points === 3 && !('moyenne' in gros)
+  || (console.log('        petit', JSON.stringify(petit), '· gros', JSON.stringify(gros)), false));
+check('à égalité de points, la différence de duels départage',
+  r.classement[0].name === 'Gros Club' && gros.diff === 1 && petit.diff === -1);
 
 r = await get('/api/rank/duellistes');
 check('classement des duels', r.classement.length === 6);
@@ -330,12 +329,10 @@ check('une ferveur gagnée dans une autre compétition ne remonte pas',
   Number(r.joueurs[0].ferveur) < 5000);
 
 check('les tribunes de la compétition sont classées', r.tribunes.length === 2);
-/* Sur les matchs de la Ligue 1 seulement : chacun y a gagné son premier duel.
-   Petit Club 6 points pour 2 joueurs, Gros Club 12 pour 4 — 3 par joueur des
-   deux côtés, et à égalité, le plus de points devant. */
-check('la compétition ne compte que ses matchs, à égalité le plus de points devant',
-  r.tribunes[0].name === 'Gros Club' && r.tribunes[0].points === 12 && r.tribunes[0].moyenne === 3
-  && r.tribunes[1].points === 6 && r.tribunes[1].moyenne === 3
+/* Sur les matchs de la Ligue 1 seulement : 7001, gagné 4–2 par le Gros Club. */
+check('la compétition ne compte que ses matchs',
+  r.tribunes[0].name === 'Gros Club' && r.tribunes[0].points === 3 && r.tribunes[0].joues === 1
+  && r.tribunes[1].points === 0 && r.tribunes[1].joues === 1
   || (console.log('        elle dit :', JSON.stringify(r.tribunes)), false));
 
 check('les KOP sont classés', r.kops.length === 2);
@@ -372,190 +369,186 @@ check('les deux équipes du plateau y figurent, poussées ou non',
 check('celle qui a des points devant', r.tribunes[0].name === 'Petit Club'
   && r.tribunes[0].points === 3
   || (console.log('        en tête :', JSON.stringify(r.tribunes[0])), false));
-check('et l’autre est là, à zéro, plutôt qu’absente',
-  r.tribunes[1].joues === 0 && r.tribunes[1].name === 'Gros Club'
+check('et l’autre est là, battue 1–0, plutôt qu’absente',
+  r.tribunes[1].joues === 1 && r.tribunes[1].points === 0 && r.tribunes[1].name === 'Gros Club'
   || (console.log('        seconde :', JSON.stringify(r.tribunes[1])), false));
 /* La compétition 61 n'a pas d'autre équipe : aucune ne doit s'y inviter. */
 check('et aucune équipe étrangère à la compétition ne s’y invite',
   noms.every((x) => ['Petit Club', 'Gros Club'].includes(x)));
 
-/* ---------------------------------------- les neutres, la saison, le plancher
+/* ================================ le barème TBFO, match par match
 
-   Gaël, 29 octobre 2026 : un duel classé joué sur un match dont on ne suit
-   aucun club compte pour **son club principal**. La moyenne se divise par les
-   joueurs du club qui ont joué, et au moins par cinq. Un compte fermé ne
-   compte plus. TRIBUNES suit la saison. Le KOP, lui, reste sur la ferveur
-   donnée pour son club. */
+   Gaël, 7 novembre 2026 (carte « Oui, avec tes 5 réglages ») : un vrai match
+   est un match TBFO. Le club qui gagne le plus de duels classés sur ce match
+   marque 3, autant 1, moins 0 ; le Virage gagné +2. Un duel compte 1 quel que
+   soit son format ; un match sans duel ni Virage ne compte pas ; le score se
+   fige à la fin du vrai match ; seuls les premiers duels classés du jour d'un
+   joueur comptent ; un neutre compte en entier.
+
+   Des matchs neufs, en Ligue 1, entre les mêmes clubs, retirés à la fin :
+   les contrôles d'après gardent leurs nombres. */
 {
-  C.oublier();
-  const kopNord = Number((await get('/api/rank/competition/61?saison=2026')).kops
-    .find((k) => k.nom === 'La Tribune Nord')?.ferveur);
+  const MOMO = 'u10000-0000-0000-0000-000000000001', SARAH = 'u20000-0000-0000-0000-000000000002';
+  const KEVIN = 'u30000-0000-0000-0000-000000000003', LILA = 'u40000-0000-0000-0000-000000000004';
   const NEUTRE = 'n10000-0000-0000-0000-000000000099';
   await pool.query(`INSERT INTO users (public_id,email,pseudo,password_hash)
                     VALUES (?,'neutre@ex.fr','Nina','x')`, [NEUTRE]);
-  /* Elle gagne un duel en neutre, sur un match sans club à elle. */
-  await pool.query(`INSERT INTO duel_results (duel_id,user_id,opponent_id,outcome,fixture_id,team_id,ferveur,mode,ended_at)
-                    VALUES ('dn-1',?,'x','win',7001,NULL,1000,'classe',NOW(3))`, [NEUTRE]);
+  await pool.query(`INSERT INTO fixtures (id,league_id,season,home_id,away_id,status_short,kickoff_at) VALUES
+    (7101,61,2026,85,91,'FT',UTC_TIMESTAMP() - INTERVAL 1 HOUR),
+    (7102,61,2026,85,91,'2H',UTC_TIMESTAMP() - INTERVAL 1 HOUR),
+    (7103,61,2026,91,85,'FT',UTC_TIMESTAMP() - INTERVAL 1 HOUR),
+    (7104,61,2026,91,85,'FT',UTC_TIMESTAMP() - INTERVAL 5 HOUR),
+    (7105,61,2026,91,85,'FT',UTC_TIMESTAMP() - INTERVAL 1 HOUR),
+    (7106,61,2025,85,91,'FT',UTC_TIMESTAMP() - INTERVAL 60 DAY)`);
+  let n = 0;
+  /* Un duel : `gagne` le camp vainqueur (null : nul), `camps` les joueurs de
+     chaque tribune. Une ligne par joueur, comme le moteur l'écrit. */
+  const duel = async (fixture, gagne, { camps = [[MOMO], [KEVIN]], mode = 'classe', fin = 'NOW(3)',
+    sansCamp = false } = {}) => {
+    const id = `tb-${++n}`;
+    for (const c of [0, 1]) {
+      for (const u of camps[c]) {
+        const issue = gagne == null ? 'draw' : gagne === c ? 'win' : 'loss';
+        await pool.query(`INSERT INTO duel_results (duel_id,user_id,opponent_id,outcome,fixture_id,team_id,
+                            ferveur,mode,side,ended_at) VALUES (?,?,'x',?,?,NULL,10,?,?,${fin})`,
+          [id, u, issue, fixture, mode, sansCamp ? null : c]);
+      }
+    }
+    return id;
+  };
+  const score = async (id) => {
+    C.oublier();
+    return (await get(`/api/rank/score-tbfo?ids=${id}`)).matchs?.find((m) => m.id === id) ?? null;
+  };
+  const dit = (m) => (console.log('        match :', JSON.stringify(m)), false);
+  poserReglages({ 'tribune.duels_jour': 0 });
+
+  // 7101 : trois duels pour le Petit Club, un pour le Gros, un nul.
+  await duel(7101, 0); await duel(7101, 0); await duel(7101, 0); await duel(7101, 1); await duel(7101, null);
+  let m = await score(7101);
+  check('le score TBFO d’un match : les duels gagnés par chaque tribune',
+    m?.score?.[0] === 3 && m.score[1] === 1 && m.duels === 5 && m.fini === true || dit(m));
+  check('3 points au club qui en gagne le plus, 0 à l’autre',
+    m?.points?.[0] === 3 && m.points[1] === 0 || dit(m));
+
+  // Le Virage : la corde au Gros Club, d'abord sans personne de classé.
+  await pool.query(`INSERT INTO virage_tribunes (fixture_id, buts_dom, buts_ext) VALUES (7101, 1, 2)`);
+  m = await score(7101);
+  check('un Virage où personne n’a poussé en classé ne compte pas', m?.virage === null || dit(m));
+  await pool.query(`INSERT INTO virage_presence (user_id,fixture_id,side,ferveur,classe) VALUES (?,7101,1,50,1)`, [KEVIN]);
+  m = await score(7101);
+  check('le Virage gagné donne 2 points, même au club battu aux duels',
+    m?.virage?.[0] === 1 && m.virage[1] === 2 && m.points[0] === 3 && m.points[1] === 2 || dit(m));
+
+  // 7105 : un duel partout, et la corde à égalité.
+  await duel(7105, 0); await duel(7105, 1);
+  await pool.query(`INSERT INTO virage_tribunes (fixture_id, buts_dom, buts_ext) VALUES (7105, 1, 1)`);
+  await pool.query(`INSERT INTO virage_presence (user_id,fixture_id,side,ferveur,classe) VALUES (?,7105,0,50,1)`, [KEVIN]);
+  m = await score(7105);
+  check('autant de duels : 1 point chacun, et un Virage nul ne donne rien',
+    m?.points?.[0] === 1 && m.points[1] === 1 || dit(m));
+
+  // 7103 : personne n'y a joué.
+  check('un match sans duel ni Virage n’a pas de match TBFO', (await score(7103)) === null);
+
+  // Un 2v2 : un seul duel, une seule unité au score.
+  await duel(7105, 1, { camps: [[MOMO, SARAH], [KEVIN, LILA]] });
+  m = await score(7105);
+  check('un duel compte 1, quel que soit son format', m?.score?.[1] === 2 && m.duels === 3 || dit(m));
+
+  // Un neutre (Nina ne suit aucun club) gagne pour la tribune du Gros Club.
+  await duel(7105, 1, { camps: [[MOMO], [NEUTRE]] });
+  m = await score(7105);
+  check('un neutre compte en entier pour la tribune qu’il pousse', m?.score?.[1] === 3 || dit(m));
+
+  // L'entraînement ne compte pas, ni un duel sans camp lisible.
+  await duel(7105, 0, { mode: 'entrainement' });
+  await duel(7105, 0, { sansCamp: true });
+  m = await score(7105);
+  check('l’entraînement et un duel sans camp ne comptent pas', m?.score?.[0] === 1 || dit(m));
+
+  // Un compte fermé ne fait plus gagner son club.
+  const ferme = await duel(7105, 0, { camps: [[SARAH], [KEVIN]] });
+  await pool.query(`UPDATE users SET status = 'deleted' WHERE public_id = ?`, [SARAH]);
+  m = await score(7105);
+  check('un compte fermé ne compte plus', m?.score?.[0] === 1 || dit(m));
+  await pool.query(`UPDATE users SET status = 'active' WHERE public_id = ?`, [SARAH]);
+  await pool.query(`DELETE FROM duel_results WHERE duel_id = ?`, [ferme]);
+
+  // 7104 : fini depuis longtemps. Un duel pendant le match compte, après non.
+  await duel(7104, 1, { fin: 'NOW(3) - INTERVAL 4 HOUR' });
+  await duel(7104, 0);
+  await duel(7104, 0);
+  m = await score(7104);
+  check('le score se fige à la fin du vrai match', m?.score?.[0] === 0 && m.score[1] === 1 || dit(m));
+
+  // 7102 : il se joue. Des points provisoires, pas encore au tableau.
+  await duel(7102, 0);
+  m = await score(7102);
+  check('un match qui se joue montre son score en direct',
+    m?.direct === true && m.fini === false && m.points[0] === 3 || dit(m));
+
+  /* Le plafond du jour : Nina en gagne sept, une minute plus tôt que son
+     duel de neutre : seuls les cinq premiers de sa journée comptent (le
+     plafond regarde les vainqueurs ; Kevin, battu, n'y entre pas). */
+  poserReglages({ 'tribune.duels_jour': 5 });
+  for (let i = 0; i < 7; i++) {
+    await duel(7103, 1, { camps: [[KEVIN], [NEUTRE]], fin: `NOW(3) - INTERVAL ${60 - i} SECOND` });
+  }
+  m = await score(7103);
+  check('seuls les premiers duels classés du jour d’un joueur comptent',
+    m?.score?.[1] === 5 || dit(m));
+  poserReglages({ 'tribune.duels_jour': 0 });
+  m = await score(7103);
+  check('zéro désarme le plafond', m?.score?.[1] === 7 || dit(m));
+
+  // Le tableau de la Ligue 1 : 7001, 7101, 7103, 7104, 7105 finis ; 7102 en direct.
+  C.oublier();
+  const comp = (await get('/api/rank/competition/61?saison=2026')).tribunes;
+  const pc = comp.find((x) => x.name === 'Petit Club'), gc = comp.find((x) => x.name === 'Gros Club');
+  check('le tableau compte les matchs TBFO finis, et pas celui sans jeu',
+    pc?.joues === 5 && gc?.joues === 5
+    || (console.log('        compétition :', JSON.stringify(comp)), false));
+  /* Les camps sont ceux du vrai match : à 7103, 7104 et 7105, le Gros Club
+     reçoit, et le camp 1 est celui du Petit Club. Petit Club : 7001 0,
+     7101 3, 7103 3, 7104 3, 7105 3 (1–3) : 12. Gros Club : 7001 3, 7101 2
+     (battu aux duels, Virage gagné), puis rien : 5. */
+  check('les points du barème, Virage compris',
+    pc?.points === 12 && gc?.points === 5
+    || (console.log('        petit', JSON.stringify(pc), '· gros', JSON.stringify(gc)), false));
+  check('et les points provisoires du match en cours, à part',
+    pc?.direct === 3 && gc?.direct === 0
+    || (console.log('        petit', JSON.stringify(pc), '· gros', JSON.stringify(gc)), false));
+  check('la forme : les cinq derniers matchs TBFO',
+    Array.isArray(gc?.forme) && gc.forme.length === 5 && gc.forme.every((x) => ['V', 'N', 'D'].includes(x)));
+
+  // La période : 7106, joué il y a deux mois, hors de la saison et du mois.
+  await duel(7106, 0, { fin: 'NOW(3) - INTERVAL 60 DAY' });
   const lire = async (q = '') => {
     C.oublier();
-    const t = (await get(`/api/rank/tribunes${q}`)).classement;
-    return { t, gros: t.find((x) => x.name === 'Gros Club'),
-      petit: t.find((x) => x.name === 'Petit Club') };
+    return (await get(`/api/rank/tribunes${q}`)).classement.find((x) => x.name === 'Petit Club');
   };
-  const g0 = { points: gros.points, supporters: gros.supporters, joueurs: gros.joueurs };
-  let { gros: g, t } = await lire();
-  check('sans club suivi, un duel ne rapporte à aucun club',
-    g.points === g0.points && t.every((x) => x.points <= 15)
-    || (console.log('        gros :', JSON.stringify(g)), false));
-  /* Elle se donne le Gros Club pour club principal : sa victoire y va. */
-  await pool.query('INSERT INTO user_follows (user_id,team_id,is_main) VALUES (?,91,1)', [NEUTRE]);
-  ({ gros: g } = await lire());
-  check('en neutre, la victoire va à son club principal',
-    g.points === g0.points + 3 && g.joueurs === g0.joueurs + 1 && g.gagnes === 6
-    || (console.log('        gros :', JSON.stringify(g)), false));
-  const comp = await get('/api/rank/competition/61?saison=2026');
-  const gc = comp.tribunes.find((x) => x.name === 'Gros Club');
-  check('et dans la compétition du match aussi', gc.points === 15
-    || (console.log('        compétition :', JSON.stringify(gc)), false));
-  check('mais rien au KOP',
-    Number(comp.kops.find((k) => k.nom === 'La Tribune Nord')?.ferveur) === kopNord
-    || (console.log('        KOP :', JSON.stringify(comp.kops)), false));
-  await pool.query('DELETE FROM user_follows WHERE user_id = ?', [NEUTRE]);
+  const saisonP = await lire(), toujoursP = await lire('?periode=toujours'), moisP = await lire('?periode=mois');
+  check('TRIBUNES compte la saison, TOUJOURS le cumul, MOIS les trente derniers jours',
+    toujoursP.joues === saisonP.joues + 1 && moisP.joues === saisonP.joues
+    || (console.log('        saison', saisonP.joues, '· toujours', toujoursP.joues, '· mois', moisP.joues), false));
 
-  /* **Le club poussé, une part pour un neutre** (Gaël, 30 octobre 2026) :
-     un duel enregistré avec son camp va au club de ce camp. Nina ne suit
-     pas le Petit Club, qui reçoit à domicile le match 7001 : il reçoit la
-     moitié de sa victoire, et elle compte parmi ses joueurs (même jour,
-     après la simulation de saison). */
-  {
-    await pool.query('INSERT INTO user_follows (user_id,team_id,is_main) VALUES (?,91,1)', [NEUTRE]);
-    const { petit: p0, gros: g1 } = await lire();
-    await pool.query(`INSERT INTO duel_results (duel_id,user_id,opponent_id,outcome,fixture_id,team_id,ferveur,mode,side,ended_at)
-                      VALUES ('dn-4',?,'x','win',7001,NULL,500,'classe',0,NOW(3))`, [NEUTRE]);
-    let { petit: p1, gros: g2 } = await lire();
-    check('un neutre donne la moitié des points au club poussé',
-      p1.points === p0.points + 1.5 && p1.joueurs === p0.joueurs + 1 && p1.gagnes === p0.gagnes + 1
-      || (console.log('        petit :', JSON.stringify(p0), '→', JSON.stringify(p1)), false));
-    check('et rien à son club principal',
-      g2.points === g1.points
-      || (console.log('        gros :', JSON.stringify(g1), '→', JSON.stringify(g2)), false));
-    poserReglages({ 'tribune.plancher': 1, 'tribune.neutre_points': 0 });
-    ({ petit: p1 } = await lire());
-    check('la part se règle dans /admin', p1.points === p0.points
-      || (console.log('        petit :', JSON.stringify(p1)), false));
-    poserReglages({ 'tribune.plancher': 1 });
-    await pool.query(`DELETE FROM duel_results WHERE duel_id = 'dn-4'`);
-    await pool.query('DELETE FROM user_follows WHERE user_id = ?', [NEUTRE]);
-  }
-
-  /* **Cinq duels classés par jour** comptent pour les clubs (Gaël,
-     30 octobre 2026) : Nina en gagne sept pour le Petit Club, le même jour,
-     son club principal. Ses duels classés déjà joués aujourd'hui (celui du
-     neutre, plus haut) entament le plafond : le reste ne rapporte rien. */
-  {
-    await pool.query('INSERT INTO user_follows (user_id,team_id,is_main) VALUES (?,85,1)', [NEUTRE]);
-    const { petit: p0 } = await lire();
-    const [[{ deja }]] = await pool.query(`SELECT COUNT(*) AS deja FROM duel_results
-                                            WHERE user_id = ? AND mode = 'classe' AND ended_at >= CURDATE()`, [NEUTRE]);
-    const comptes = Math.max(0, 5 - Number(deja));
-    for (let i = 0; i < 7; i++) {
-      await pool.query(`INSERT INTO duel_results (duel_id,user_id,opponent_id,outcome,fixture_id,team_id,ferveur,mode,ended_at)
-                        VALUES (?,?,'x','win',7001,85,10,'classe',DATE_SUB(NOW(3), INTERVAL ? SECOND))`,
-        [`dj-${i}`, NEUTRE, 1 + i]);
-    }
-    let { petit: p1 } = await lire();
-    check('au plus cinq duels classés par jour comptent pour le club',
-      Number(deja) < 5 && p1.points === p0.points + 3 * comptes && p1.joues === p0.joues + comptes
-      || (console.log('        petit :', JSON.stringify(p0), '→', JSON.stringify(p1)), false));
-    poserReglages({ 'tribune.plancher': 1, 'tribune.duels_jour': 0 });
-    ({ petit: p1 } = await lire());
-    check('zéro désarme le plafond', p1.points === p0.points + 21
-      || (console.log('        petit :', JSON.stringify(p1)), false));
-    poserReglages({ 'tribune.plancher': 1 });
-    await pool.query(`DELETE FROM duel_results WHERE duel_id LIKE 'dj-%'`);
-    await pool.query('DELETE FROM user_follows WHERE user_id = ?', [NEUTRE]);
-  }
-
-  /* L'entraînement ne rapporte aucun point. */
-  await pool.query(`INSERT INTO duel_results (duel_id,user_id,opponent_id,outcome,fixture_id,team_id,ferveur,mode,ended_at)
-                    VALUES ('dn-2',?,'x','win',7001,85,10,'entrainement',NOW(3))`,
-    ['u10000-0000-0000-0000-000000000001']);
-  let { petit: p } = await lire();
-  check('l’entraînement ne rapporte aucun point', p.points === 12 && p.joues === 6
-    || (console.log('        petit :', JSON.stringify(p)), false));
-
-  /* Le plancher : le Petit Club (2 joueurs) se divise par 5. */
-  poserReglages({});
-  ({ petit: p } = await lire());
-  check('la moyenne se divise par au moins cinq joueurs',
-    p.moyenne === Math.round(p.points / 5 * 10) / 10
-    || (console.log('        petit :', JSON.stringify(p)), false));
-
-  /* Un compte fermé ne pèse plus, ni en supporters ni en points. */
-  const lila = 'u40000-0000-0000-0000-000000000004';
-  poserReglages({ 'tribune.plancher': 1 });
-  await pool.query(`UPDATE users SET status = 'deleted' WHERE public_id = ?`, [lila]);
-  ({ gros: g } = await lire());
-  check('un compte fermé ne compte plus, ni parmi les supporters ni aux points',
-    g.supporters === g0.supporters - 1 && g.points === g0.points - 3 && g.joueurs === g0.joueurs - 1
-    || (console.log('        gros :', JSON.stringify(g)), false));
-  await pool.query(`UPDATE users SET status = 'active' WHERE public_id = ?`, [lila]);
-
-  /* La saison : un duel d'avant le lancement ne compte que sous TOUJOURS. */
-  await pool.query(`INSERT INTO duel_results (duel_id,user_id,opponent_id,outcome,fixture_id,team_id,ferveur,mode,ended_at)
-                    VALUES ('dn-3',?,'x','win',7999,85,7000,'classe',NOW(3) - INTERVAL 3 DAY)`,
-    ['u10000-0000-0000-0000-000000000001']);
-  ({ petit: p } = await lire());
-  const saisonP = p.points;
-  ({ petit: p } = await lire('?periode=toujours'));
-  check('TRIBUNES compte la saison, et TOUJOURS le cumul', p.points === saisonP + 3
-    || (console.log('        saison', saisonP, '· toujours', p.points), false));
-  ({ petit: p } = await lire('?periode=mois'));
-  check('et MOIS les trente derniers jours', p.points === saisonP + 3);
-
-  await pool.query(`DELETE FROM duel_results WHERE duel_id IN ('dn-1','dn-2','dn-3')`);
-
-  /* **Le Virage aussi rapporte des points** (Gaël, 29 octobre 2026) : la
-     tribune qui gagne la corde, 3 points au club de chacun de ses supporters
-     classés. Le match 7001 : le Petit Club reçoit, ses deux supporters y ont
-     chanté ; les quatre du Gros Club aussi, en face. */
-  ({ petit: p, gros: g } = await lire());
-  const avantP = { points: p.points, joues: p.joues }, avantG = { points: g.points, joues: g.joues };
-  await pool.query(`UPDATE fixtures SET status_short = '2H' WHERE id = 7001`);
-  await pool.query(`INSERT INTO virage_tribunes (fixture_id, buts_dom, buts_ext) VALUES (7001, 2, 1)`);
-  ({ petit: p } = await lire());
-  check('un Virage ne compte pas tant que le vrai match n’est pas fini',
-    p.points === avantP.points && p.joues === avantP.joues
-    || (console.log('        petit :', JSON.stringify(p)), false));
-  await pool.query(`UPDATE fixtures SET status_short = 'FT' WHERE id = 7001`);
-  ({ petit: p, gros: g } = await lire());
-  check('la tribune qui gagne la corde rapporte 3 points à chacun de ses supporters',
-    p.points === avantP.points + 6 && p.joues === avantP.joues + 2
-    || (console.log('        petit :', JSON.stringify(p)), false));
-  check('et celle qui perd joue ses matchs sans points',
-    g.points === avantG.points && g.joues === avantG.joues + 4
-    || (console.log('        gros :', JSON.stringify(g)), false));
-  await pool.query(`UPDATE virage_tribunes SET buts_ext = 2 WHERE fixture_id = 7001`);
-  ({ petit: p, gros: g } = await lire());
-  check('à égalité de corde, un point de chaque côté',
-    p.points === avantP.points + 2 && g.points === avantG.points + 4
-    || (console.log('        petit :', JSON.stringify(p), '· gros', JSON.stringify(g)), false));
-  const compV = (await get('/api/rank/competition/61?saison=2026')).tribunes;
-  check('et la compétition du match les compte aussi',
-    compV.find((x) => x.name === 'Petit Club')?.joues >= 3
-    || (console.log('        compétition :', JSON.stringify(compV)), false));
   {
     const avant = moi;
-    moi = 'u10000-0000-0000-0000-000000000001';
+    moi = MOMO;
     C.oublier();
     const pl = await get('/api/rank/moi');
     moi = avant;
-    check('ma place dit les points que j’ai rapportés à mon club',
-      pl.tribune?.nom === 'Petit Club' && Number.isFinite(pl.tribune?.points) && pl.tribune.joues > 0
+    check('ma place dit les duels que j’ai gagnés pour mon club',
+      pl.tribune?.nom === 'Petit Club' && pl.tribune.gagnes > 0 && pl.tribune.joues >= pl.tribune.gagnes
       || (console.log('        tribune :', JSON.stringify(pl.tribune)), false));
   }
+
+  poserReglages({});
+  await pool.query(`DELETE FROM duel_results WHERE duel_id LIKE 'tb-%'`);
   await pool.query(`DELETE FROM virage_tribunes`);
-  await pool.query(`DELETE FROM virage_presence WHERE user_id = ? OR fixture_id = 7999`, [NEUTRE]);
+  await pool.query(`DELETE FROM virage_presence WHERE user_id = ? OR fixture_id BETWEEN 7101 AND 7106`, [NEUTRE]);
+  await pool.query(`DELETE FROM fixtures WHERE id BETWEEN 7101 AND 7106`);
   await pool.query(`DELETE FROM users WHERE public_id = ?`, [NEUTRE]);
   C.oublier();
 }
@@ -761,7 +754,7 @@ check('une compétition sans match rend des listes vides',
   /* Son club encaisse ses deux victoires : il a joué **pour lui**. */
   const trib = (await get('/api/rank/tribunes')).classement ?? [];
   const gros3 = trib.find((x) => x.name === 'Gros Club');
-  check('et son club reçoit les points de ses victoires', gros3?.points >= 6
+  check('et son club reçoit ses victoires au score TBFO', gros3?.pour >= 6
     || (console.log('        il a :', JSON.stringify(gros3)), false));
 
   /* Et sa place le dit comme la liste : les deux lisaient deux sources
@@ -1717,10 +1710,10 @@ const BUD = ID(12);
   check('seuls les cinq meilleurs duels classés du jour comptent pour la ferveur',
     await ferveurDe('?periode=toujours') === 2500
     || (console.log('        ferveur :', await ferveurDe('?periode=toujours')), false));
-  poserReglages({ 'tribune.plancher': 1, 'ferveur.duels_jour': 0 });
+  poserReglages({ 'ferveur.duels_jour': 0 });
   C.oublier();
   check('zéro désarme le plafond de la ferveur', await ferveurDe('?periode=toujours') === 2800);
-  poserReglages({ 'tribune.plancher': 1 });
+  poserReglages({});
   C.oublier();
 
   const avant = moi;

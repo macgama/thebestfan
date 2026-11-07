@@ -50,6 +50,7 @@ import { createQuotidien, sonderJourDeJeu, phraseJourDeJeu }
 import { createDefis } from './src/server/defis/index.js';
 import { createRepetition } from './src/server/repetition/index.js';
 import { createKop } from './src/server/kop/index.js';
+import { createClub } from './src/server/club/index.js';
 import { createAmis } from './src/server/amis/index.js';
 import { createEnsemble } from './src/server/amis/ensemble.js';
 import { createPresence } from './src/server/presence/index.js';
@@ -561,6 +562,9 @@ if (process.env.DATABASE_URL) {
     classements = createClassements({ pool, requireAuth: auth.requireAuth, abonnement });
     app.use('/api/rank', classements.router);
     console.log('classements actifs');
+
+    /* ---- la page d'un club (« Le stade du club », 7 novembre 2026) */
+    app.use('/api/club', createClub({ pool, classements }).router);
 
     /* ---- l'interrupteur « apparaître hors ligne » (§ 18.2)
        Après la fermeture du jeu, comme toute route nouvelle : un jeu fermé
@@ -1361,6 +1365,7 @@ app.get('/fanzzy/:id', (_req, res) => page(res, 'fanzzy-fiche.html'));
 app.get('/compte', (_req, res) => page(res, 'compte.html'));
 app.get('/diagnostic', (_req, res) => page(res, 'diagnostic.html'));
 app.get('/equipes', (_req, res) => page(res, 'equipes.html'));
+app.get('/club/:id', (_req, res) => page(res, 'club.html'));
 app.get('/kop', (_req, res) => page(res, 'kop.html'));
 app.get('/amis', (_req, res) => page(res, 'amis.html'));
 // Qui est en ligne, pour tous (choix de Gaël du 6 novembre 2026).

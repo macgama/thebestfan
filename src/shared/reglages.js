@@ -245,29 +245,20 @@ export const REGLAGES = [
       'toujours sans limite ; les autres duels comptent pour la cote. Le ' +
       'Virage n’est pas concerné. Zéro désarme le plafond.' },
 
-  { cle: 'tribune.plancher', section: 'virage', type: 'entier',
-    titre: 'Les points d’un club se divisent par au moins', unite: 'joueurs',
-    min: 1, max: 100, defaut: 5,
-    aide: 'Au championnat des clubs (TRIBUNES et compétitions), les points se ' +
-      'divisent par les joueurs du club qui ont joué sur la période. Sans ' +
-      'plancher, un club d’un seul joueur passerait devant tout le monde. À 1, ' +
-      'on divise par le vrai nombre de joueurs.' },
-  { cle: 'tribune.neutre_points', section: 'virage', type: 'decimal',
-    titre: 'Points donnés à un club qu’on soutient sans le suivre', unite: '× les points',
-    min: 0, max: 1, pas: 0.05, defaut: 0.5,
-    aide: 'Au championnat des clubs, un joueur qui pousse un club qu’il ne suit ' +
-      'pas (au Duel classé comme au Virage) lui donne cette part de ses 3 / 1 / 0 ' +
-      'points. À 0,5, une victoire vaut 1,5 point. Ce joueur compte parmi les ' +
-      'joueurs du club pour la moyenne. À 0, un neutre ne rapporte rien.' },
+  /* Le 7 novembre 2026, le championnat des clubs passe au barème de Gaël
+     (un vrai match, un match TBFO : `classements/championnat.js`) : le
+     plancher de joueurs (`tribune.plancher`) et la part du neutre
+     (`tribune.neutre_points`) n'ont plus d'objet et sont retirés. */
   /* La simulation de saison (Gaël, 30 octobre 2026) : sans plafond, les
      abonnés, qui jouent autant de duels classés qu'ils veulent, faisaient
      70 % des points des clubs. */
   { cle: 'tribune.duels_jour', section: 'virage', type: 'entier',
     titre: 'Duels classés comptés par jour pour les clubs', unite: 'duels par joueur',
     min: 0, max: 200, defaut: 5,
-    aide: 'Au championnat des clubs, seuls les premiers duels classés du jour de ' +
-      'chaque joueur comptent, PASS ou non. Les suivants comptent pour le joueur ' +
-      '(ferveur, cote), pas pour le club. Zéro désarme le plafond.' },
+    aide: 'Au championnat des clubs (le score TBFO de chaque match), un duel ' +
+      'classé gagné compte quand il est parmi les premiers du jour de l’un de ses ' +
+      'vainqueurs, PASS ou non. Les suivants comptent pour le joueur (ferveur, ' +
+      'cote), pas pour le club. Zéro désarme le plafond.' },
 
   /* Les Fanzzy liés à un club (demande de Gaël du 21 octobre 2026) : voir
      `shared/fanzzy/clubs.js`. Deux nombres, parce que « gagner plus » et

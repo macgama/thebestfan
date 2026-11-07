@@ -9,7 +9,8 @@
    pouvait y jouer, et rien, nulle part sur ces pages, ne disait qu'un duel
    attendait quelqu'un.
 
-   Deux pastilles, sous le match :
+   Sous le match, d'abord le **score TBFO** quand on y a joué (7 novembre
+   2026, `bandeau`), puis deux pastilles :
      — **VIRAGE**, en vert, quand la tribune est ouverte : pendant le match,
        et dans la demi-heure qui le précède — la règle de `/api/virage/live`,
        recopiée ici telle quelle. « 12 EN TRIBUNE », quand il y a quelqu'un :
@@ -50,6 +51,7 @@
 
   let foules = new Map();   // fixtureId -> nombre de supporters qui poussent
   let duels = new Map();    // fixtureId -> { n, format, camp }
+  let scores = new Map();   // fixtureId -> le match TBFO (`/api/rank/score-tbfo`)
   let minuterie = null;
 
   /** La tribune de ce match est-elle ouverte maintenant ? */
@@ -106,12 +108,34 @@
     return out.join('');
   }
 
+  /**
+   * **Le score TBFO du match** (barème de Gaël, 7 novembre 2026) : les duels
+   * classés gagnés par chaque tribune, dans l'ordre du match (domicile,
+   * extérieur), le Virage, et les points en jeu — « si ça finit comme ça ».
+   * Gaël : « il faudrait que les résultats des matchs TBFO soient visibles
+   * sur les matchs pour que le user voie le résultat en cours et ait envie
+   * de faire pencher la balance ». Rien tant que personne n'y a joué.
+   */
+  function bandeau(id) {
+    const m = scores.get(id);
+    if (!m) return '';
+    const [a, b] = m.score ?? [0, 0];
+    const total = a + b;
+    const part = total ? Math.round((a / total) * 100) : 50;
+    const v = Array.isArray(m.virage) ? `VIRAGE ${m.virage[0]}–${m.virage[1]}` : '';
+    const pts = `${m.fini ? '' : m.direct ? 'EN JEU ' : ''}+${m.points?.[0] ?? 0} · +${m.points?.[1] ?? 0}`;
+    return `<span class="tbfo${m.direct ? ' direct' : ''}" title="Match TBFO : duels classés gagnés par chaque tribune">`
+      + `<b>TBFO</b><strong>${a}–${b}</strong>`
+      + `<i class="jauge" style="--part:${part}%"></i>`
+      + `<small>${v ? `${v} · ` : ''}${pts}</small></span>`;
+  }
+
   /** Remplit chaque emplacement, et ne touche qu'à ceux qui changent. */
   function poser(racine = document) {
     for (const el of racine.querySelectorAll('[data-jeu]')) {
       const id = Number(el.dataset.jeu);
       if (!Number.isInteger(id) || id <= 0) continue;
-      const html = pastilles(id, el.dataset.statut ?? '', el.dataset.coup ?? '');
+      const html = bandeau(id) + pastilles(id, el.dataset.statut ?? '', el.dataset.coup ?? '');
       /* Comparé à ce qu'on a posé la dernière fois, pas au contenu : la
          traduction de `langue.js` réécrit le texte en place, et le comparer
          au français le ferait reposer à chaque tour, sans fin. */
@@ -119,6 +143,21 @@
       el.dataset.pose = html;
       el.innerHTML = html;
     }
+  }
+  /* Les scores TBFO des matchs à l'écran : une lecture pour tous, et une
+     page qui ne sert pas l'adresse (bancs, hors ligne) n'y perd rien. */
+  async function lireScores() {
+    const ids = [...new Set([...document.querySelectorAll('[data-jeu]')]
+      .map((el) => Number(el.dataset.jeu)).filter((x) => Number.isInteger(x) && x > 0))].slice(0, 120);
+    if (!ids.length) return;
+    try {
+      const r = await fetch(`/api/rank/score-tbfo?ids=${ids.join(',')}`,
+        { credentials: 'same-origin', cache: 'no-store' });
+      if (!r.ok) return;
+      const d = await r.json();
+      if (!Array.isArray(d?.matchs)) return;
+      scores = new Map(d.matchs.map((m) => [Number(m.id), m]));
+    } catch { /* hors ligne : on garde ce qu'on a */ }
   }
 
   /** Peut-on jouer sur ce match maintenant ? Le filtre À JOUER de /matchs. */
@@ -146,6 +185,7 @@
           duels = lireDuels(d?.duels);
         }
       } catch { /* hors ligne : on garde ce qu'on a, et on réessaie */ }
+      await lireScores();
       // Même sans réponse : une tribune s'ouvre à l'heure, pas au serveur.
       poser();
       prevenir();
@@ -153,6 +193,13 @@
     minuterie = setTimeout(lire, CADENCE_MS);
   }
 
+  /* De nouvelles lignes (un autre jour, une autre compétition) : leurs scores
+     dans la seconde, sans attendre la relecture des vingt secondes. */
+  let scoresBientot = null;
+  function relireScoresBientot() {
+    clearTimeout(scoresBientot);
+    scoresBientot = setTimeout(async () => { await lireScores(); poser(); }, 400);
+  }
   /* Chaque rendu de la page recrée ses lignes, et leurs emplacements vides :
      on les remplit dans la foulée, avec ce qu'on sait déjà. */
   let prevu = false;
@@ -162,7 +209,7 @@
       && (n.matches?.('[data-jeu]') || n.querySelector?.('[data-jeu]:not([data-pose])'))));
     if (!neuf) return;
     prevu = true;
-    queueMicrotask(() => { prevu = false; poser(); });
+    queueMicrotask(() => { prevu = false; poser(); relireScoresBientot(); });
   }).observe(document.documentElement, { childList: true, subtree: true });
 
   document.addEventListener('visibilitychange', () => {

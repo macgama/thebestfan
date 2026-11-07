@@ -1,5 +1,18 @@
 # À déposer sur Infomaniak
 
+**Page d'un club « Le stade du club » et championnat TBFO par match** (branche
+`claude/project-thread-9zc9fe`, 7 novembre 2026, choix de Gaël « 1 Le stade du
+club » et barème « avec les 5 réglages »). Code seul, sans schéma. Nouvelle page
+`/club/:id` (API `/api/club/:id`), ouverte en touchant le nom d'un club
+(classements, téletext, Mes équipes, clubs voisins). Le championnat des clubs
+devient un championnat par vrai match : duels classés gagnés sur le match =
+3/1/0, Virage gagné +2, 1 duel = 1, figé au coup de sifflet, 5 duels par jour.
+Score TBFO sous chaque match (route `/api/rank/score-tbfo`), vrai tableau
+J G N P +/- PTS. Les réglages `tribune.plancher` et `tribune.neutre_points` ne
+servent plus. QUESTIONS et /comment-jouer à jour. **Redémarrer**.
+
+---
+
 **Page En ligne : voir qui est connecté et le défier** (branche
 `claude/project-thread-qf6m5h`, 6 novembre 2026, choix de Gaël « 3 · Tout le
 monde »). Code seul, sans schéma. Nouvelle page `/en-ligne` (menu, et appui sur
