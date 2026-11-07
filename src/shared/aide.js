@@ -507,16 +507,24 @@ const RUBRIQUES = [
           + 'Sous SUPPORTERS et DUELS, MON CLUB et MON PAYS te comparent aux '
           + 'supporters de ton club principal, ou des clubs de son pays.'],
       ['Comment se classent les clubs ?',
-        () => 'Comme un vrai championnat. Chaque duel classé et chaque Virage sont un '
-          + 'match pour le club que tu pousses : 3 points pour une victoire, 1 pour un nul, '
-          + '0 pour une défaite. Au Virage, c’est ta tribune qui gagne ou perd la corde, '
-          + 'compté à la fin du vrai match. Si tu ne suis pas ce club, il ne reçoit qu’une '
-          + `part de ces points (×${String(reglage('tribune.neutre_points')).replace('.', ',')}) : `
-          + 'tu l’as soutenu, mais pas comme ton club. '
+        () => 'Comme un vrai championnat : chaque vrai match est aussi un match TBFO entre '
+          + 'ses deux clubs. Son score, ce sont les duels classés gagnés par chaque tribune '
+          + 'sur ce match (un duel compte 1, du 1v1 au 5v5). Le club qui en gagne le plus '
+          + 'marque 3 points, à égalité 1 chacun, sinon 0. La tribune qui gagne le Virage '
+          + 'donne 2 points de plus à son club, même s’il a perdu aux duels. Le score se '
+          + 'fige à la fin du vrai match, et un match où personne n’a joué ne compte pas. '
+          + 'Tu peux pousser n’importe quel club : ta victoire compte pour lui. '
           + (reglage('tribune.duels_jour') ? `Tes ${reglage('tribune.duels_jour')} premiers duels classés du jour comptent pour les clubs. ` : '')
-          + 'Les clubs sont rangés sur '
-          + `les points par joueur qui a joué pour eux (au moins ${reglage('tribune.plancher')}), `
-          + 'pour que les petits clubs aient leur chance. Le classement repart à chaque saison.'],
+          + 'Le classement repart à chaque saison.'],
+      ['Où voir le score TBFO d’un match ?',
+        'Sous chaque match de MATCHS et des compétitions, dès qu’un duel ou un Virage y '
+          + 'a été joué : le score des duels, le Virage et les points en jeu. Pendant le '
+          + 'match, il bouge en direct : un duel de plus peut faire pencher la balance.'],
+      ['C’est quoi, la page d’un club ?',
+        'Touche le nom d’un club (classements, compétitions, mes équipes) : sa tribune, '
+          + 'son Fanzzy, son cri, ses fans, ses Fanzzy liés, ses duels, ses Virages gagnés, '
+          + 'son rang au championnat TBFO, sa forme, son prochain match, ses meilleurs fans '
+          + 'et ses KOP, avec les vraies infos du club.'],
       ['C’est quoi, le carnet de la saison ?',
         () => 'Chaque mission du jour y pose des tampons : '
           + `${reglage('saison.tampons_facile')} pour une facile, `

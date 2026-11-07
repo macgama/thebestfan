@@ -632,8 +632,8 @@ check('et la moitié du neutre annule le double du renfort',
 
 /* **Et le bilan le dit.** Il montrait la ferveur brute de la corde, et le
    classement en comptait une autre : le neutre lisait sa part, jamais son
-   renfort. Il porte maintenant le chiffre écrit, et les points rapportés au
-   club — le championnat des clubs (Gaël, 29 octobre 2026). */
+   renfort. Il porte maintenant le chiffre écrit, et ce que le duel ajoute au
+   score TBFO du club poussé. */
 {
   const clA = A.fin?.gains?.classement;
   const clB = B2.fin?.gains?.classement;
@@ -642,12 +642,16 @@ check('et la moitié du neutre annule le double du renfort',
     || (console.log('        A', JSON.stringify(clA), '· B', JSON.stringify(clB)), false));
   check('avec le renfort et le neutre qui l’ont fait bouger',
     clB?.renfort === 2 && clB?.neutre === true && clA?.renfort === 1 && clA?.neutre === false);
-  const pts = { win: 3, draw: 1, loss: 0 }[ligne(U[0])?.outcome];
-  check('et les points rapportés au club du match',
-    clA?.club === 'Sion' && clA?.points === pts
+  /* Le score TBFO du vrai match (barème de Gaël, 7 novembre 2026) : un duel
+     gagné ajoute 1 à la tribune poussée, un neutre compris. */
+  const but = ligne(U[0])?.outcome === 'win' ? 1 : 0;
+  check('et ce que le duel ajoute au score TBFO du club du match',
+    clA?.club === 'Sion' && clA?.score === but
     || (console.log('        A', JSON.stringify(clA)), false));
-  check('un neutre sans club principal ne rapporte de points à personne',
-    clB?.club === null && clB?.points === null);
+  check('un neutre compte pour la tribune qu’il pousse (rien sans club lisible)',
+    clB && (clB.club === null ? clB.score === null
+      : clB.score === (ligne(U[1])?.outcome === 'win' ? 1 : 0))
+    || (console.log('        B', JSON.stringify(clB)), false));
 }
 
 /* ------------------------------------------ le double pour son club

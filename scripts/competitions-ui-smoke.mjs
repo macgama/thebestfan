@@ -201,8 +201,10 @@ app.get('/api/rank/competition/:id', (q, s) => {
       { public_id: 'u2', pseudo: 'Sarah', ferveur: 800, seances: 3, club: 'FC Sion' },
     ],
     tribunes: [
-      { id: 85, name: 'FC Sion', logo: '', ferveur: 1800, supporters: 2, moyenne: 900 },
-      { id: 91, name: 'FC Bâle', logo: '', ferveur: 900, supporters: 4, moyenne: 225 },
+      { id: 85, name: 'FC Sion', logo: '', supporters: 2, joues: 2, gagnes: 2, nuls: 0, perdus: 0,
+        pour: 5, contre: 1, diff: 4, points: 6, direct: 3 },
+      { id: 91, name: 'FC Bâle', logo: '', supporters: 4, joues: 2, gagnes: 0, nuls: 0, perdus: 2,
+        pour: 1, contre: 5, diff: -4, points: 0, direct: 0 },
     ],
     kops: [
       { id: 'k1', nom: 'Les Fidèles', club: 'FC Sion', logo: '',
@@ -515,11 +517,16 @@ await controlerColonne(page, check, { nom: 'la page des compétitions',
   await page.evaluate(() => document.querySelector('[data-e=tribunes]').click());
   await jusqua(async () => (await page.$eval('thead', (n) => n.textContent)).includes('CLUB'));
   check('changer d’échelle ne redemande rien au serveur', appelsRang === avant);
-  /* Un championnat, comme en vrai (Gaël, 29 octobre 2026) : joués,
-     victoires, nuls, défaites, points, et la moyenne par joueur qui range. */
-  check('les tribunes sont classées en championnat, aux points par joueur',
-    /J\s*G\s*N\s*P\s*PTS\s*PTS\/J/.test(await page.$eval('thead', (n) => n.textContent))
+  /* Un championnat TBFO, comme en vrai (barème de Gaël, 7 novembre 2026) :
+     joués, victoires, nuls, défaites, différence de duels, points. */
+  check('les tribunes sont classées en championnat TBFO, avec la différence de duels',
+    /J\s*G\s*N\s*P\s*\+\/-\s*PTS/.test(await page.$eval('thead', (n) => n.textContent))
     || (console.log('        en-tête :', await page.$eval('thead', (n) => n.textContent)), false));
+  check('les points en direct du match qui se joue',
+    (await page.$eval('tbody tr td.pts', (n) => n.textContent)).replace(/\s+/g, ' ').trim() === '6 +3'
+    || (console.log('        il dit :', await page.$eval('tbody tr td.pts', (n) => n.textContent)), false));
+  check('et le nom du club mène à sa page',
+    await page.$eval('tbody tr td.club a', (a) => a.getAttribute('href')) === '/club/85');
 
   await page.evaluate(() => document.querySelector('[data-e=kops]').click());
   await jusqua(async () => (await page.$eval('thead', (n) => n.textContent)).includes('KOP'));

@@ -1,4 +1,6 @@
 import express from 'express';
+import { MATCHS_TBFO, lireMatch, tableau, ordreChampionnat, coupEnvoiLocal, BAREME }
+  from './championnat.js';
 import { parIdentifiant } from '../fanzzy/catalogue.js';
 import { habillerJoueurs } from '../fanzzy/avatar.js';
 import { couleursDuClub } from '../kop/index.js';
@@ -59,11 +61,11 @@ export function createClassements({ pool, requireAuth,
      Une promesse rejetée n'est pas gardée : une panne passagère de la base
      rendrait sinon le même refus pendant cinq minutes. */
   const cache = new Map();
-  function memo(cle, fn) {
+  function memo(cle, fn, ttl = TTL_MS) {
     const hit = cache.get(cle);
     if (hit && Date.now() < hit.expire) return hit.promesse;
     const promesse = Promise.resolve().then(fn);
-    cache.set(cle, { promesse, expire: Date.now() + TTL_MS });
+    cache.set(cle, { promesse, expire: Date.now() + ttl });
     promesse.catch(() => {
       if (cache.get(cle)?.promesse === promesse) cache.delete(cle);
     });
@@ -214,8 +216,6 @@ export function createClassements({ pool, requireAuth,
     const n = Number(v);
     return Number.isFinite(n) ? Math.min(max, Math.max(min, n)) : defaut;
   };
-  const plancherTribune = () => Math.round(borne(reglage('tribune.plancher'), 1, 100, 5));
-  const partNeutre = () => borne(reglage('tribune.neutre_points'), 0, 1, 0.5);
   const duelsDuJour = () => Math.round(borne(reglage('tribune.duels_jour'), 0, 200, 5));
 
   /* ================================================== la fenêtre d'une saison
@@ -371,93 +371,24 @@ export function createClassements({ pool, requireAuth,
 
   /* =============================================== le championnat des clubs
 
-     **Les clubs se classent aux points, comme un vrai championnat** (choix
-     de Gaël, 29 octobre 2026). Ils se classaient sur la ferveur moyenne par
-     supporter, et le résultat n'y comptait pour rien : un joueur qui perdait
-     son duel en poussant beaucoup rapportait davantage à son club que celui
-     qui le gagnait. La ferveur reste la mesure des **joueurs** (SUPPORTERS,
-     divisions, KOP) ; les clubs, eux, gagnent des matchs.
+     **Un vrai match, un match TBFO** (barème de Gaël, 7 novembre 2026) :
+     voir `championnat.js`. Les clubs gagnent des **matchs** : 3 points au
+     club qui gagne le plus de duels classés sur le vrai match, 1 à égalité,
+     0 sinon, et +2 à celui dont la tribune gagne le Virage. La ferveur reste
+     la mesure des **joueurs** (SUPPORTERS, divisions, KOP).
 
-     **Un duel classé est un match pour le club poussé** : 3 points pour
-     une victoire, 1 pour un nul, 0 pour une défaite, quand le joueur suit ce
-     club (`team_id`, écrit à la fin du duel). **Un neutre** — il pousse un
-     club qu'il ne suit pas — lui en donne une part, `tribune.neutre_points`
-     (Gaël, 30 octobre 2026 : « on les a soutenus, mais pas avec la même
-     ferveur que nos équipes favorites »). Le club poussé se lit sur le camp
-     (`side`) du match. **Le neutre compte parmi les joueurs du club**
-     (Gaël, 30 octobre 2026, après la simulation de saison) : sans ça, ses
-     points se divisaient par le seul plancher, et un club que personne ne
-     suit, joué un soir creux, finissait en tête des TRIBUNES.
-     Une ligne sans camp (d'avant `side`) reste à son club principal.
+     Remplace le championnat du 29 octobre (3/1/0 par duel et par joueur,
+     divisé par les joueurs du club, plancher 5, part du neutre) : il n'y a
+     plus ni moyenne ni plancher, ni part du neutre — un neutre tient la
+     tribune d'en face et compte en entier.
 
-     **Au plus `tribune.duels_jour` duels classés par joueur et par jour**
-     comptent pour les clubs (même décision) : un abonné joue autant de
-     duels classés qu'il veut, et sans plafond une poignée d'abonnés faisait
-     l'essentiel des points. Les premiers du jour, à l'heure de la base.
-
-     `team_id` est écrit une fois pour toutes : changer de club ne retire pas
-     les points qu'on lui a donnés.
-
-     **Le Virage aussi** (Gaël, 29 octobre 2026) : chaque présence classée
-     d'un supporter est un match pour son club, gagné si sa tribune a gagné
-     la corde (`virage_tribunes`, écrit à chaque but de corde), nul à
-     égalité. Seulement quand le vrai match est fini — le score de la corde
-     ne bouge plus — et pour qui a donné de la ferveur. Même règle de club,
-     et même part pour un neutre, qu'au duel.
-
-     L'entraînement ne compte jamais, ni un compte fermé.
-
-     `et` ajoute une condition à chaque moitié, écrite sur son alias (`dr`
-     pour le duel, `vp` pour le Virage) : les paramètres d'une condition se
-     passent donc **deux fois**, ou une seule sans le Virage. `virage` faux
-     lit sans la table du score, que le schéma n'a peut-être pas encore
-     posée (voir `avecLeVirage`). */
-  const POINTS = { win: 3, draw: 1, loss: 0 };
-  /* Le plafond du jour : les duels classés du même joueur finis plus tôt le
-     même jour (à égalité d'heure, l'identifiant du duel départage), comptés
-     par l'index (user_id, ended_at). Un nombre du registre, borné, jamais une
-     saisie : il s'écrit dans la requête. */
-  const PLAFOND_DU_JOUR = () => {
-    const n = duelsDuJour();
-    return n ? `AND (SELECT COUNT(*) FROM duel_results dj
-                      WHERE dj.user_id = dr.user_id AND dj.mode = 'classe'
-                        AND dj.ended_at >= DATE(dr.ended_at)
-                        AND (dj.ended_at < dr.ended_at
-                             OR (dj.ended_at = dr.ended_at AND dj.duel_id < dr.duel_id))) < ${n}` : '';
-  };
-  const MATCHS_DES_CLUBS = (et = () => '', virage = true) => `
-    SELECT dr.user_id, COALESCE(dr.team_id,
-             CASE dr.side WHEN 0 THEN fd.home_id WHEN 1 THEN fd.away_id END,
-             p.team_id) AS club,
-           (dr.team_id IS NULL AND fd.id IS NOT NULL AND COALESCE(dr.side IN (0, 1), 0)) AS neutre,
-           dr.fixture_id, dr.ended_at AS quand, dr.outcome AS issue
-      FROM duel_results dr
-      JOIN users u ON u.public_id = dr.user_id AND u.status = 'active'
-      LEFT JOIN fixtures fd ON fd.id = dr.fixture_id
-      LEFT JOIN user_follows p ON p.user_id = dr.user_id AND p.is_main = 1
-     WHERE dr.mode = 'classe' ${et('dr')} ${PLAFOND_DU_JOUR()}
-    ${virage ? `UNION ALL
-    SELECT vp.user_id, COALESCE(vp.team_id,
-             CASE vp.side WHEN 0 THEN fv.home_id WHEN 1 THEN fv.away_id END,
-             p.team_id) AS club,
-           (vp.team_id IS NULL AND COALESCE(vp.side IN (0, 1), 0)) AS neutre,
-           vp.fixture_id, vp.last_push_at AS quand,
-           CASE WHEN vt.buts_dom = vt.buts_ext THEN 'draw'
-                WHEN (vt.buts_dom > vt.buts_ext) = (vp.side = 0) THEN 'win'
-                ELSE 'loss' END AS issue
-      FROM virage_presence vp
-      JOIN virage_tribunes vt ON vt.fixture_id = vp.fixture_id
-      JOIN fixtures fv ON fv.id = vp.fixture_id AND fv.status_short IN ('FT', 'AET', 'PEN')
-      JOIN users u ON u.public_id = vp.user_id AND u.status = 'active'
-      LEFT JOIN user_follows p ON p.user_id = vp.user_id AND p.is_main = 1
-     WHERE vp.classe = 1 AND vp.ferveur > 0 ${et('vp')}` : ''}`;
-  /* Les points d'une ligne de `MATCHS_DES_CLUBS` : 3 / 1 / 0, et la part du
-     neutre (`part`, un nombre borné par le registre) quand il ne suit pas le
-     club. */
-  const POINTS_DE = (x, part) => `
-    (CASE ${x}.issue WHEN 'win' THEN ${POINTS.win}
-      WHEN 'draw' THEN ${POINTS.draw} ELSE ${POINTS.loss} END
-      * CASE WHEN ${x}.neutre THEN ${part} ELSE 1 END)`;
+     L'entraînement ne compte jamais, ni un compte fermé. */
+  const plafondClubs = () => duelsDuJour();
+  /* Les matchs TBFO d'un filtre (SQL sur `f`, sans paramètre), lus, avec et
+     sans la table de la corde. */
+  const matchsTbfo = (filtre) => avecLeVirage((virage) =>
+    q(MATCHS_TBFO(filtre, { plafond: plafondClubs(), virage })))
+    .then((l) => l.map(lireMatch));
   /* Une lecture qui compte le Virage, et sans lui si la table du score
      manque (`sql/virage-tribunes.sql` pas encore appliqué) : les duels
      gardent leurs points, et le journal le dit une fois. */
@@ -471,85 +402,106 @@ export function createClassements({ pool, requireAuth,
       return lire(false);
     }
   }
-  /* Le bilan d'un club sur des matchs déjà filtrés : joués, gagnés, nuls,
-     perdus, points, et le nombre de ses joueurs qui ont joué — neutres de
-     passage compris. */
-  const BILAN_DES_CLUBS = (matchs) => `
-    SELECT x.club, COUNT(DISTINCT x.user_id) AS joueurs,
-           COUNT(*) AS joues,
-           SUM(x.issue = 'win') AS gagnes, SUM(x.issue = 'draw') AS nuls,
-           SUM(x.issue = 'loss') AS perdus,
-           SUM(${POINTS_DE('x', partNeutre())}) AS points
-      FROM ${matchs} x
-     WHERE x.club IS NOT NULL
-     GROUP BY x.club`;
-  /* Les colonnes d'une ligne de club, et sa moyenne : les points divisés par
-     ses joueurs **qui ont joué** sur la période, et au moins
-     `tribune.plancher`. Diviser par tous ceux qui suivent le club écrasait
-     les clubs très suivis : trente suiveurs dont deux qui jouent, et la
-     moyenne tombait à rien quoi que fassent ces deux-là. Le plancher garde
-     un club d'un seul joueur de passer devant tout le monde. */
-  const COLONNES_CLUB = (plancher) => `
-    COALESCE(s.n, 0) AS supporters,
-    COALESCE(c.joueurs, 0) AS joueurs, COALESCE(c.joues, 0) AS joues,
-    COALESCE(c.gagnes, 0) AS gagnes, COALESCE(c.nuls, 0) AS nuls,
-    COALESCE(c.perdus, 0) AS perdus, ROUND(COALESCE(c.points, 0), 1) AS points,
-    ROUND(COALESCE(c.points, 0) / GREATEST(COALESCE(c.joueurs, 0), ${plancher}), 1) AS moyenne`;
-  const ORDRE_CLUBS = 'ORDER BY moyenne DESC, points DESC, gagnes DESC, t.name ASC';
-  /* Les nombres sortent de la base en chaînes (`SUM`, `ROUND`) : la page les
-     reçoit en nombres. */
-  const enNombres = (lignes) => lignes.map((l) => ({
-    ...l,
-    ...Object.fromEntries(['supporters', 'joueurs', 'joues', 'gagnes', 'nuls', 'perdus',
-      'points', 'moyenne'].map((k) => [k, Number(l[k] ?? 0)])),
-  }));
+  /* Une ligne de club, prête pour l'écran : ses nombres, sa forme, et ses
+     points provisoires du match qui se joue (`direct`, absent sinon). */
+  const ligneClub = (t, l, supporters) => ({
+    id: Number(t.id), name: t.name, logo: t.logo ?? null,
+    ...(t.country !== undefined ? { country: t.country } : {}),
+    supporters: Number(supporters ?? 0),
+    joues: l?.joues ?? 0, gagnes: l?.gagnes ?? 0, nuls: l?.nuls ?? 0, perdus: l?.perdus ?? 0,
+    pour: l?.pour ?? 0, contre: l?.contre ?? 0, diff: l?.diff ?? 0,
+    virages: l?.virages ?? 0, points: l?.points ?? 0, forme: l?.forme ?? [],
+    ...(l?.direct != null ? { direct: l.direct } : {}),
+  });
+  const supportersDe = async (ids) => {
+    if (!ids.length) return new Map();
+    const r = await q(`SELECT f.team_id, COUNT(*) AS n FROM user_follows f
+                         JOIN users u ON u.public_id = f.user_id AND u.status = 'active'
+                        WHERE f.team_id IN (${ids.map(Number).join(',')})
+                        GROUP BY f.team_id`);
+    return new Map(r.map((x) => [Number(x.team_id), Number(x.n)]));
+  };
+  /* Le filtre d'une période, sur le coup d'envoi du vrai match. `saison`
+     prend la fenêtre de la saison en cours, quand il y en a une (`EN_COURS`,
+     lue par la base : aucune date ne traverse le pilote). */
+  const filtrePeriode = (p) => {
+    const k = coupEnvoiLocal('f');
+    if (p === 'mois') return `${k} > (NOW(3) - INTERVAL 30 DAY)`;
+    if (p !== 'saison') return '1 = 1';
+    return `(NOT EXISTS (SELECT 1 FROM (${EN_COURS}) s0)
+             OR (${k} >= (SELECT s1.debut FROM (${EN_COURS}) s1)
+                 AND ${k} < (SELECT s2.fin FROM (${EN_COURS}) s2)))`;
+  };
+  /* Les matchs d'une période ; sans la table des saisons (schéma pas encore
+     appliqué), la saison compte sans fenêtre, dit une fois au journal. */
+  async function matchsDePeriode(p) {
+    try {
+      return await matchsTbfo(filtrePeriode(p));
+    } catch (e) {
+      if (p !== 'saison' || !estSchema(e)) throw e;
+      direUneFois('fenetre-tribunes', '[classement] les tribunes « saison » comptent sans '
+        + `fenêtre, schéma incomplet (${e.sqlMessage ?? e.message}) : applique `
+        + 'sql/saisons.sql puis sql/quotidien.sql');
+      return matchsTbfo('1 = 1');
+    }
+  }
+
+  /** Les matchs TBFO d'un club sur une période (la page du club). */
+  async function matchsDuClub(teamId, p = 'saison') {
+    const id = Number(teamId);
+    if (!Number.isInteger(id) || id <= 0) return [];
+    const club = `(f.home_id = ${id} OR f.away_id = ${id})`;
+    try {
+      return await matchsTbfo(`${club} AND ${filtrePeriode(periodeDe(p))}`);
+    } catch (e) {
+      if (!estSchema(e)) throw e;
+      return matchsTbfo(club);
+    }
+  }
 
   /**
-   * Les clubs, au championnat des points (voir plus haut).
+   * Les clubs, au championnat TBFO (voir plus haut), tous championnats
+   * confondus : l'onglet TRIBUNES.
    *
-   * Un club figure dès qu'il a un supporter actif ou un match joué ; à zéro,
-   * c'est une tribune à prendre.
+   * Un club figure dès qu'il a un supporter actif ou un match TBFO joué ; à
+   * zéro, c'est une tribune à prendre.
    *
    * ## La période, comme SUPPORTERS
    *
-   * `saison` (par défaut) repart au lancement de chaque saison, `mois` compte
-   * les trente derniers jours, `toujours` le cumul. Mêmes fenêtres, même
-   * repli sans schéma, que `supporters`.
+   * `saison` (par défaut) compte les vrais matchs joués depuis le lancement
+   * de la saison en cours, `mois` les trente derniers jours, `toujours` le
+   * cumul.
    */
   async function tribunes(periode = 'saison', limite = 50) {
     const p = periodeDe(periode);
     const n = Number(limite) || 50;
-    const plancher = plancherTribune();
-    return memo(`trib:${p}:${n}:${plancher}:${partNeutre()}:${duelsDuJour()}`, async () => {
-      const lire = (fenetre) => avecLeVirage((virage) => {
-        const x = `(SELECT x.* FROM (${MATCHS_DES_CLUBS(undefined, virage)}) x
-                     ${fenetre ? `LEFT JOIN (${EN_COURS}) s ON 1 = 1` : ''}
-                    WHERE 1 = 1
-                          ${p === 'mois' ? 'AND x.quand > (NOW(3) - INTERVAL 30 DAY)' : ''}
-                          ${fenetre ? `AND (s.id IS NULL OR (${dansFenetre('x', 's')}))` : ''})`;
-        return q(
-          `SELECT t.id, t.name, t.logo, t.country, ${COLONNES_CLUB(plancher)}
-             FROM teams t
-             LEFT JOIN (${SUPPORTERS_ACTIFS}) s ON s.team_id = t.id
-             LEFT JOIN (${BILAN_DES_CLUBS(x)}) c ON c.club = t.id
-            WHERE COALESCE(s.n, 0) >= 1 OR COALESCE(c.joues, 0) > 0
-            ${ORDRE_CLUBS}
-            LIMIT ${n}`).then(enNombres);
-      });
-      if (p !== 'saison') return lire(false);
-      try {
-        return await lire(true);
-      } catch (e) {
-        if (!estSchema(e)) throw e;
-        direUneFois('fenetre-tribunes', '[classement] les tribunes « saison » comptent sans '
-          + `fenêtre, schéma incomplet (${e.sqlMessage ?? e.message}) : applique `
-          + 'sql/saisons.sql puis sql/quotidien.sql');
-        return lire(false);
-      }
+    return memo(`trib:${p}:${n}:${plafondClubs()}`, async () => {
+      const matchs = await matchsDePeriode(p);
+      const tab = tableau(matchs);
+      const equipes = await q(
+        `SELECT t.id, t.name, t.logo, t.country, COALESCE(s.n, 0) AS supporters
+           FROM teams t
+           LEFT JOIN (${SUPPORTERS_ACTIFS}) s ON s.team_id = t.id
+          WHERE COALESCE(s.n, 0) >= 1
+                ${tab.size ? `OR t.id IN (${[...tab.keys()].join(',')})` : ''}`);
+      return equipes.map((t) => ligneClub(t, tab.get(Number(t.id)), t.supporters))
+        .sort(ordreChampionnat).slice(0, n);
     });
   }
 
-  /* -------------------------------------------------------- duellistes */
+  /**
+   * Les matchs TBFO de quelques vrais matchs : le score, le Virage, les
+   * points en jeu. Les pages MATCHS et COMPÉTITIONS le montrent sous chaque
+   * match (`a-jouer.js`) ; un match sans duel ni Virage n'y est pas.
+   */
+  async function scoresTbfo(ids) {
+    const propres = [...new Set(ids.map(Number).filter((x) => Number.isInteger(x) && x > 0))].slice(0, 120);
+    if (!propres.length) return [];
+    return memo(`scores:${propres.join(',')}:${plafondClubs()}`,
+      () => matchsTbfo(`f.id IN (${propres.join(',')})`), 15_000);
+  }
+
+    /* -------------------------------------------------------- duellistes */
 
   /**
    * Les duellistes, classés sur leur **cote**.
@@ -737,35 +689,33 @@ export function createClassements({ pool, requireAuth,
 
   /**
    * Les tribunes d'une compétition : **toutes ses équipes**, jouées ou non,
-   * au même championnat des points que TRIBUNES — sur les seuls matchs de
-   * cette compétition.
+   * au même championnat TBFO que TRIBUNES — sur les seuls matchs de cette
+   * compétition et de cette saison.
    *
    * Les équipes viennent de `fixtures`, la même source que les résultats et
    * le classement de la ligue affichés deux onglets plus loin : la
    * compétition montre partout le même plateau. Un club à zéro figure, ce
    * qui est une information — c'est une tribune à prendre.
    *
-   * `duels` reste le nombre de matchs joués pour le club (la page le lisait
-   * sous ce nom).
+   * `duels` reste le nombre de matchs TBFO joués par le club (la page le
+   * lisait sous ce nom). `direct` : les points provisoires d'un match qui se
+   * joue.
    */
   async function tribunesDe(leagueId, saison, limite = 50) {
-    const plancher = plancherTribune();
-    return avecLeVirage((virage) => q(
-      `SELECT t.id, t.name, t.logo, ${COLONNES_CLUB(plancher)},
-              COALESCE(c.joues, 0) AS duels
-         FROM (SELECT home_id AS team_id FROM fixtures WHERE league_id = ? AND season = ?
-               UNION
-               SELECT away_id FROM fixtures WHERE league_id = ? AND season = ?) plateau
-         JOIN teams t ON t.id = plateau.team_id
-         LEFT JOIN (${SUPPORTERS_ACTIFS}) s ON s.team_id = t.id
-         LEFT JOIN (${BILAN_DES_CLUBS(`(${MATCHS_DES_CLUBS((a) => `AND ${a}.fixture_id IN
-              (SELECT id FROM fixtures WHERE league_id = ? AND season = ?)`, virage)})`)}) c
-                ON c.club = t.id
-        ${ORDRE_CLUBS}
-        LIMIT ${Number(limite) || 50}`,
-      [leagueId, saison, leagueId, saison, leagueId, saison,
-       ...(virage ? [leagueId, saison] : [])]))
-      .then((l) => enNombres(l).map((x) => ({ ...x, duels: Number(x.duels) })));
+    const lg = Number(leagueId), sa = Number(saison);
+    const [equipes, matchs] = await Promise.all([
+      q(`SELECT t.id, t.name, t.logo
+           FROM (SELECT home_id AS team_id FROM fixtures WHERE league_id = ? AND season = ?
+                 UNION
+                 SELECT away_id FROM fixtures WHERE league_id = ? AND season = ?) plateau
+           JOIN teams t ON t.id = plateau.team_id`, [lg, sa, lg, sa]),
+      matchsTbfo(`f.league_id = ${lg} AND f.season = ${sa}`),
+    ]);
+    const tab = tableau(matchs);
+    const fans = await supportersDe(equipes.map((t) => t.id));
+    return equipes.map((t) => ({ ...ligneClub(t, tab.get(Number(t.id)), fans.get(Number(t.id))),
+      duels: tab.get(Number(t.id))?.joues ?? 0 }))
+      .sort(ordreChampionnat).slice(0, Number(limite) || 50);
   }
 
 
@@ -972,26 +922,29 @@ export function createClassements({ pool, requireAuth,
     }
     const couleurs = tribune ? couleursDuClub(tribune.couleur1, tribune.couleur2) : [];
 
-    /* **Ce que j'ai rapporté à mon club au championnat** : mes points de la
-       saison en cours (de toujours sans saison lancée), et mes matchs. C'est
-       ce que la note de l'onglet TRIBUNES me dit. Une base sans saisons
-       répond sans la fenêtre. */
+    /* **Ce que j'ai rapporté à mon club au championnat** : mes duels
+       classés gagnés pour lui (ceux qui comptent au score TBFO de ses
+       matchs, `championnat.js`) sur la saison en cours, et mes duels joués
+       pour lui. C'est ce que la note de l'onglet TRIBUNES me dit. Une base
+       sans saisons répond sans la fenêtre. */
     let apport = null;
     if (tribune) {
-      const lireApport = (fenetre) => avecLeVirage((virage) => q(
-        `SELECT COALESCE(SUM(${POINTS_DE('x', partNeutre())}), 0) AS points,
-                COUNT(*) AS joues
-           FROM (${MATCHS_DES_CLUBS((a) => `AND ${a}.user_id = ?`, virage)}) x
-           ${fenetre ? `LEFT JOIN (${EN_COURS}) s ON 1 = 1` : ''}
-          WHERE x.club = ? ${fenetre ? `AND (s.id IS NULL OR (${dansFenetre('x', 's')}))` : ''}`,
-        virage ? [userId, userId, tribune.id] : [userId, tribune.id]));
+      const lireApport = (fenetre) => q(
+        `SELECT COALESCE(SUM(dr.outcome = 'win'), 0) AS gagnes, COUNT(*) AS joues
+           FROM duel_results dr
+           JOIN fixtures f ON f.id = dr.fixture_id
+          WHERE dr.user_id = ? AND dr.mode = 'classe'
+            AND COALESCE(dr.side, CASE dr.team_id WHEN f.home_id THEN 0 WHEN f.away_id THEN 1 END)
+                = CASE ? WHEN f.home_id THEN 0 WHEN f.away_id THEN 1 END
+            ${fenetre ? `AND ${filtrePeriode('saison')}` : ''}`,
+        [userId, tribune.id]);
       try {
         [apport] = await lireApport(true).catch((e) => {
           if (!estSchema(e)) throw e;
           return lireApport(false);
         });
       } catch (e) {
-        console.warn('[classement] points apportés au club illisibles', e.message);
+        console.warn('[classement] duels apportés au club illisibles', e.message);
       }
     }
 
@@ -1013,7 +966,7 @@ export function createClassements({ pool, requireAuth,
       },
       tribune: tribune
         ? { id: tribune.id, nom: tribune.nom, ferveur: Number(tribune.ferveur),
-            ...(apport ? { points: Math.round(Number(apport.points) * 10) / 10, joues: Number(apport.joues) } : {}),
+            ...(apport ? { gagnes: Number(apport.gagnes), joues: Number(apport.joues) } : {}),
             ...(couleurs.length ? { couleurs } : {}) }
         : null,
     };
@@ -1879,7 +1832,16 @@ export function createClassements({ pool, requireAuth,
 
   router.get('/tribunes', safe(async (req, res) => {
     res.set('cache-control', 'private, max-age=120');
-    res.json({ classement: await tribunes(String(req.query.periode ?? 'saison')) });
+    res.json({ classement: await tribunes(String(req.query.periode ?? 'saison')), bareme: BAREME });
+  }));
+
+  /* **Le score TBFO de quelques vrais matchs** : `?ids=1,2,3` (120 au plus).
+     Les pages MATCHS et COMPÉTITIONS le posent sous chaque match
+     (`a-jouer.js`). Sans compte : ce sont des scores, comme ceux du match. */
+  router.get('/score-tbfo', safe(async (req, res) => {
+    const ids = String(req.query.ids ?? '').split(',').map(Number);
+    res.set('cache-control', 'public, max-age=15');
+    res.json({ matchs: await scoresTbfo(ids), bareme: BAREME });
   }));
 
   /* **Le plancher voyage avec la liste.**
@@ -1983,7 +1945,7 @@ export function createClassements({ pool, requireAuth,
     res.json({ ...(stats ?? {}), ...histoire });
   }));
 
-  return { router, supporters, tribunes, duellistes, assidus, maPlace,
+  return { router, supporters, tribunes, tribunesDe, scoresTbfo, matchsTbfo, matchsDuClub, duellistes, assidus, maPlace,
            competition, maPlaceDans, saisonDe, statsDe, historiqueDe, oublier,
            reclamerDivision };
 }

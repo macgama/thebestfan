@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<script src="/langue.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<script>/* Les barres du téléphone : dans un onglet Android, Chrome tient lui-même la page hors de la barre d'état et des boutons du bas ; depuis l'icône, la page passe sous les boutons et s'en garde par var(--bas) (ui.css, « Les barres du téléphone »). */if(/Android/i.test(navigator.userAgent)&&matchMedia('(display-mode: browser)').matches){var tbfVp=document.querySelector('meta[name=viewport]');tbfVp.content=tbfVp.content.replace(/,\s*viewport-fit=cover/,'')}</script>
+<script>/* Le bas caché sous les boutons du téléphone. Depuis l'icône, sur le S24+ de Gaël, Chrome dessine la page jusqu'au bas de l'écran, sous les trois boutons, sans toujours en dire la hauteur (var(--bas) à zéro) : le bas de l'accueil restait dessous (captures du 26 octobre 2026), celui de la fiche d'un Fanzzy aussi (28 octobre). Toutes les pages le gardent par var(--bas) (ui.css). Quand la fenêtre descend jusqu'au bas de l'écran (moins de 60 px d'écart : la seule barre d'état), on garde 52 px, la hauteur des boutons ; --bas prend le plus grand des deux. Un onglet, une fenêtre que Chrome tient au-dessus des boutons, ou le plein écran de l'icône (manifeste « fullscreen », 30 octobre 2026 : les boutons y sont cachés), ne garde rien. */try{if(/Android/i.test(navigator.userAgent)&&!matchMedia('(display-mode: browser)').matches&&!matchMedia('(display-mode: fullscreen)').matches&&screen.height-innerHeight<60)document.documentElement.style.setProperty('--bas-cache','52px')}catch(e){}</script>
+<script>/* La hauteur vraie de l'écran (4 novembre 2026). Dans l'appli Android (Play Store, plein écran), les boutons ÉVOLUER / EMMENER EN DUEL de la fiche tombaient sous le bas de l'écran : Chrome y annonçait une page (100dvh) plus haute que l'écran qu'on voit. Hors d'un onglet, les écrans de jeu prennent donc la plus petite de trois hauteurs : 100dvh, la fenêtre (innerHeight) et l'écran (screen.height) — var(--h-ecran), ui.css. Le clavier ouvert ne rétrécit rien : on ne remesure pas pendant une saisie. */try{if(/Android/i.test(navigator.userAgent)&&!matchMedia('(display-mode: browser)').matches){var tbfH=function(){var a=document.activeElement;if(a&&/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName))return;var h=Math.min(innerHeight||1e4,screen.height||1e4);if(h>0&&h<1e4)document.documentElement.style.setProperty('--h-ecran','min(100dvh, '+h+'px)')};tbfH();addEventListener('resize',tbfH)}}catch(e){}</script>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" href="/img/apple-touch-icon.png">
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#0A0D11">
+<title>Le club — thebestfan</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Permanent+Marker&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/ui.css">
+<script src="/dialogue.js" defer></script>
+<style>
+/* =======================================================================
+   « Le stade du club » (choix de Gaël sur carte, 7 novembre 2026 ; maquette
+   /mnt/project-files/equipe-gaming/proposition-1-stade.jpg).
+
+   On entre dans le stade du club : la tribune à ses couleurs, son Fanzzy
+   lié qui pousse au milieu, son cri en bulle (et son son au toucher), son
+   rang au championnat TBFO en grosse plaque. Dessous, quatre gros chiffres,
+   la forme TBFO et le prochain match avec son score TBFO en direct, et un
+   gros bouton pour aller pousser. Trois onglets : TRIBUNE (le jeu), LE VRAI
+   CLUB (classement, forme et calendrier réels), FANZZY (ses Fanzzy liés).
+   ======================================================================= */
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100dvh}
+body{background:var(--beton);color:var(--craie);font-family:var(--ui);display:flex;justify-content:center;
+  padding:0 0 calc(var(--nav-h,62px) + 26px)}
+main{width:100%;max-width:var(--colonne);padding:0 12px;--c1:#E0402C;--c2:#F2EEE4}
+.colonne{width:100%;max-width:620px;margin:0 auto}
+
+/* -------------------------------------------------------------- le stade */
+.stade{position:relative;height:388px;margin:0 -12px;overflow:hidden;isolation:isolate;
+  background:url(/img/fond-tribune.webp) 50% 30%/cover, #11151b}
+.stade::before{content:"";position:absolute;inset:0;z-index:0;
+  background:linear-gradient(rgba(15,18,22,.55),color-mix(in srgb,var(--c1) 30%,transparent) 42%,var(--beton) 97%)}
+.stade::after{content:"";position:absolute;inset:0;z-index:0;
+  background:repeating-conic-gradient(from 0deg at 50% 64%,rgba(255,255,255,.06) 0 5deg,transparent 5deg 13deg)}
+@media (prefers-reduced-motion:no-preference){
+  html:not([data-calme~="animations"]) .stade::after{animation:rayons 28s linear infinite}
+}
+@keyframes rayons{to{transform:rotate(360deg) scale(1.6)}}
+.stade>*{position:absolute;z-index:1}
+.blason{top:14px;left:16px;right:112px;display:flex;align-items:center;gap:11px}
+.blason img{width:56px;height:56px;object-fit:contain;flex:none;filter:drop-shadow(0 3px 0 #000)}
+.blason h1{margin:0;font-family:var(--banner);font-weight:700;font-size:30px;letter-spacing:.06em;line-height:.95;
+  text-shadow:0 3px 0 #000;overflow-wrap:anywhere}
+.blason small{display:block;margin-top:4px;font-family:var(--banner);font-size:11px;letter-spacing:.14em;
+  color:color-mix(in srgb,var(--c2) 70%,#fff);text-shadow:0 1px 2px #000}
+.rang{top:14px;right:14px;min-width:84px;text-align:center;background:rgba(0,0,0,.78);border:2px solid var(--projo);
+  border-radius:10px;padding:5px 8px 6px;box-shadow:0 0 18px rgba(245,195,59,.4);text-decoration:none;color:inherit}
+.rang b{display:block;font-family:var(--banner);font-size:34px;color:var(--projo);line-height:1}
+.rang b sup{font-size:14px}
+.rang small{display:block;font-family:var(--banner);font-size:9px;letter-spacing:.12em;line-height:1.25}
+.toi{top:94px;left:16px}
+.fz{left:50%;bottom:4px;translate:-50% 0;height:268px;width:auto;max-width:none;pointer-events:none;
+  filter:drop-shadow(0 10px 18px #000)}
+.fz.vide{display:none}
+.cri{left:14px;top:178px;max-width:46%;background:#fff;color:#111;font-family:var(--marqueur);font-size:15px;
+  line-height:1.15;padding:7px 11px;border-radius:12px;rotate:-6deg;box-shadow:3px 3px 0 #000;border:0;cursor:pointer;text-align:left}
+.cri::after{content:"";position:absolute;right:-9px;bottom:8px;border:8px solid transparent;border-left-color:#fff}
+.cri:active{scale:.96}
+
+/* ------------------------------------------------------ les quatre chiffres */
+.stats{position:relative;z-index:2;margin-top:-26px;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.st{background:linear-gradient(#1c222b,#12161c);border:1px solid rgba(242,238,228,.12);border-radius:8px;
+  padding:8px 2px 7px;text-align:center;box-shadow:0 4px 0 #000;min-width:0}
+.st b{display:block;font-family:var(--banner);font-size:22px;font-weight:700;line-height:1.05}
+.st small{display:block;font-family:var(--banner);font-size:9.5px;letter-spacing:.08em;opacity:.8;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.st.or b{color:var(--projo)}
+
+.cousu{font-family:var(--banner);letter-spacing:.14em;font-size:12.5px;font-weight:600;color:#d8d2c6;display:flex;
+  align-items:center;gap:8px;margin:16px 0 8px}
+.cousu::after{content:"";flex:1;border-top:2px dashed rgba(242,238,228,.25);order:2}
+.cousu i{font-style:normal;opacity:.7;font-size:10.5px;order:3}
+.forme{display:flex;gap:5px}
+.forme i{flex:1;font-style:normal;text-align:center;font-family:var(--banner);font-size:13px;padding:5px 0;
+  border-radius:4px;color:#fff}
+.forme .V{background:var(--vert)}.forme .N{background:#5b6270}.forme .D{background:var(--flare)}
+.forme .x{background:rgba(242,238,228,.08);color:rgba(242,238,228,.4)}
+.vide{font-size:13px;opacity:.8;padding:6px 2px}
+
+/* ------------------------------------------------------- le prochain match */
+.prochain{margin-top:12px;border-radius:10px;padding:11px 12px;
+  background:linear-gradient(110deg,color-mix(in srgb,var(--c1) 30%,#12161c),#171c23 62%);
+  border:1px solid color-mix(in srgb,var(--c1) 55%,transparent)}
+.prochain .quand{font-family:var(--banner);font-size:11px;letter-spacing:.12em;opacity:.85;display:flex;justify-content:space-between;gap:8px}
+.prochain .quand .live{color:#ff6a5a}
+.vs{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:6px}
+.vs a{display:flex;flex-direction:column;align-items:center;gap:3px;min-width:0;flex:1;color:inherit;text-decoration:none}
+.vs img{width:38px;height:38px;object-fit:contain}
+.vs span{font-size:11.5px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.vs .sc{flex:none;text-align:center;font-family:var(--banner)}
+.vs .sc b{display:block;font-size:30px;letter-spacing:.06em;line-height:1}
+.vs .sc small{display:block;font-size:10px;letter-spacing:.12em;color:var(--projo)}
+.jauge{height:9px;border-radius:5px;margin:9px 0 6px;background:#5b6270;overflow:hidden}
+.jauge i{display:block;height:100%;background:var(--c1);box-shadow:0 0 10px var(--c1)}
+.enjeu{display:flex;justify-content:space-between;gap:8px;font-size:11.5px;opacity:.9}
+.boutons{display:flex;gap:8px;margin-top:9px}
+.boutons a{flex:1;display:flex;align-items:center;justify-content:center;text-align:center;padding:4px 8px;line-height:1.1;min-height:44px;text-decoration:none;
+  font-family:var(--banner);font-size:clamp(12px,3.6vw,15px);letter-spacing:.06em;border-radius:6px}
+.pousser{background:var(--projo);color:#111;box-shadow:0 4px 0 #8a6a12;flex:1.6}
+.boutons a:only-child{flex:1}
+.virage{background:var(--vert);color:#fff;box-shadow:0 4px 0 #0d4d33}
+
+/* ------------------------------------------------------------ les onglets */
+.onglets{display:flex;gap:4px;margin:18px 0 4px}
+.onglets button{flex:1;min-height:38px;border:0;border-radius:6px;background:#1a1f27;color:rgba(242,238,228,.7);
+  font-family:var(--banner);font-size:12.5px;letter-spacing:.1em;cursor:pointer}
+.onglets button.on{background:var(--flare);color:#fff;box-shadow:0 3px 0 #7a1a10}
+.pan{background:#151a20;border:1px solid rgba(242,238,228,.09);border-radius:8px;padding:9px 11px}
+.podium{display:flex;align-items:flex-end;justify-content:center;gap:6px}
+.marche{flex:1;max-width:110px;text-align:center;min-width:0}
+.marche .tete{width:54px;height:54px;border-radius:50%;margin:0 auto -6px;border:2px solid #fff;position:relative;z-index:2;
+  background:#e4d3b5;overflow:hidden;display:grid;place-items:center;font-family:var(--banner);font-size:22px;color:#111}
+.marche .tete img{width:100%;height:100%;object-fit:cover}
+.marche .bloc{border-radius:6px 6px 0 0;background:linear-gradient(#2c333d,#1b2027);font-family:var(--banner);padding:10px 3px 4px}
+.marche .bloc b{display:block;font-size:22px}
+.marche .bloc small{display:block;font-size:10.5px;letter-spacing:.04em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.m1 .bloc{min-height:92px;background:linear-gradient(var(--projo),#9c7a1f);color:#111}
+.m1 .tete{width:62px;height:62px;border-color:var(--projo)}
+.m2 .bloc{min-height:72px}.m3 .bloc{min-height:58px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+td{padding:6px 4px;border-bottom:1px solid rgba(242,238,228,.07)}
+tr:last-child td{border-bottom:0}
+td.n{font-family:var(--banner);text-align:right;font-size:14px;white-space:nowrap}
+td a{color:inherit;text-decoration:none}
+tr.moi td{background:color-mix(in srgb,var(--c1) 22%,transparent)}
+td img{width:18px;height:18px;object-fit:contain;vertical-align:-4px;margin-right:6px}
+.kops{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.kop{display:block;background:#1a1f27;border:1px solid rgba(242,238,228,.1);border-radius:8px;padding:8px;font-size:11.5px;
+  color:inherit;text-decoration:none;min-width:0}
+.kop b{display:block;font-family:var(--banner);font-size:14px;letter-spacing:.03em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mtbfo{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(242,238,228,.07);font-size:12.5px}
+.mtbfo:last-child{border-bottom:0}
+.mtbfo em{font-style:normal;font-family:var(--banner);font-size:11px;padding:1px 6px;border-radius:3px;color:#fff}
+.mtbfo b{margin-left:auto;font-family:var(--banner);font-size:14px;white-space:nowrap}
+.fanzzys{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.fzc{position:relative;height:150px;border-radius:9px;overflow:hidden;border:2px solid var(--projo);
+  background:linear-gradient(color-mix(in srgb,var(--c1) 45%,transparent),#14181e);display:block;color:inherit;text-decoration:none}
+.fzc img{position:absolute;left:50%;bottom:-4px;translate:-50% 0;height:132px;width:auto;max-width:none}
+.fzc small{position:absolute;left:5px;top:4px;font-family:var(--banner);font-size:10.5px;background:rgba(0,0,0,.65);padding:1px 5px;border-radius:3px}
+.fzc.non{border:2px dashed rgba(242,238,228,.3);background:#14181e}
+.fzc.non img{filter:brightness(0) opacity(.55)}
+.fzc.non::after{content:"?";position:absolute;inset:0;display:grid;place-items:center;font-family:var(--banner);font-size:34px;color:rgba(242,238,228,.55)}
+.ligne{display:flex;justify-content:space-between;gap:10px;font-size:13px;padding:4px 0}
+.ligne b{font-family:var(--banner);font-size:14.5px;letter-spacing:.03em;text-align:right}
+.note{font-size:12px;opacity:.75;line-height:1.45;margin:14px 2px 0}
+.chargement{padding:60px 0;text-align:center;opacity:.8}
+</style>
+</head>
+<body>
+<main id="app"><div class="colonne" id="page"><div class="chargement">Chargement du club…</div></div></main>
+<div class="tbf-pile"><div class="tbf-toast" id="toast" role="status" hidden></div></div>
+
+<script src="/fanzzy-art.js"></script>
+<script src="/fanzzy-etats.js"></script>
+<script>
+/* =======================================================================
+   La page d'un club (`/club/<id>`), lue d'un trait sur `/api/club/<id>`
+   (`src/server/club/index.js`). Rien n'y est calculé : le serveur rend le
+   championnat TBFO, la page le dessine.
+   ======================================================================= */
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g,
+  (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const nombre = (n) => Number(n ?? 0).toLocaleString('fr-CH').replace(/ | /g, ' ');
+const ID = Number(location.pathname.split('/').filter(Boolean)[1]);
+const S = { d: null, onglet: 'tribune' };
+const EN_JEU = new Set(['1H', 'HT', '2H', 'ET', 'BT', 'P', 'LIVE']);
+
+const ordinal = (n) => (n === 1 ? '1<sup>er</sup>' : `${n}<sup>e</sup>`);
+function quand(iso) {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '';
+  return d.toLocaleString(document.documentElement.lang || 'fr',
+    { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+}
+const logo = (src) => (src ? `<img src="${esc(src)}" alt="">` : '');
+
+/* ------------------------------------------------------------ le stade */
+function stade(d) {
+  const t = d.team;
+  const r = d.tbfo?.rang;
+  const ligue = d.vrai?.ligue;
+  const rang = r?.position
+    ? `<a class="rang" href="/teletext?league=${Number(r.ligue.id)}" aria-label="Rang au championnat TBFO">
+         <b>${ordinal(r.position)}</b><small>CHAMPIONNAT<br>TBFO</small></a>`
+    : `<span class="rang"><b>–</b><small>CHAMPIONNAT<br>TBFO</small></span>`;
+  const toi = d.moi?.principal ? 'TON CLUB' : d.moi?.suit ? 'TU LE SUIS' : '';
+  return `<section class="stade" aria-label="${esc(t.name)}">
+    <div class="blason">${logo(t.logo)}<div><h1>${esc(t.name)}</h1>
+      <small>${esc([ligue?.name, d.serie?.nom].filter(Boolean).join(' · ').toUpperCase())}</small></div></div>
+    ${rang}
+    ${toi ? `<span class="toi tbf-sticker" data-ton="flare">${toi}</span>` : ''}
+    <img class="fz vide" id="heros" alt="">
+    ${d.cri ? `<button type="button" class="cri" id="cri" aria-label="Le cri du club">« ${esc(d.cri)} »</button>` : ''}
+  </section>
+  <div class="stats">
+    <div class="st or"><b>${nombre(d.fans)}</b><small>FANS</small></div>
+    <div class="st"><b>${nombre(d.fanzzy?.lies?.length ?? 0)}</b><small>FANZZY LIÉS</small></div>
+    <div class="st"><b>${nombre(d.tbfo?.duels ?? 0)}</b><small>DUELS</small></div>
+    <div class="st"><b>${nombre(d.tbfo?.virages ?? 0)}</b><small>${(d.tbfo?.virages ?? 0) === 1 ? "VIRAGE GAGNÉ" : "VIRAGES GAGNÉS"}</small></div>
+  </div>`;
+}
+
+function forme(f) {
+  const cinq = [...(f ?? [])].slice(0, 5);
+  while (cinq.length < 5) cinq.push(null);
+  return `<div class="forme">${cinq.reverse().map((x) => (x
+    ? `<i class="${x}">${x}</i>` : '<i class="x">·</i>')).join('')}</div>`;
+}
+
+/* Le prochain match, ou celui qui se joue : son score TBFO et ce qu'il
+   reste à prendre. « Fais pencher la balance » mène au duel de ce match,
+   dans la tribune du club. */
+function prochain(d) {
+  const m = d.prochain;
+  if (!m) return '<p class="vide">Pas de match annoncé pour l’instant.</p>';
+  const camp = m.home.id === ID ? 0 : 1;
+  const s = m.tbfo;
+  const sc = s ? s.score : [0, 0];
+  const total = sc[0] + sc[1];
+  const part = total ? Math.round((sc[camp] / total) * 100) : 50;
+  const direct = EN_JEU.has(m.statut);
+  const moi = s ? s.points[camp] : null, eux = s ? s.points[1 - camp] : null;
+  const nomEux = (camp ? m.home : m.away).name;
+  const enjeu = s
+    ? `${s.fini ? 'Points :' : 'Si ça finit comme ça :'} ${esc(d.team.name)} +${moi} · ${esc(nomEux)} +${eux}`
+    : 'Personne n’a encore joué ce match : le premier duel peut tout lancer.';
+  const q = new URLSearchParams({ match: String(m.id), camp: String(camp) });
+  return `<div class="prochain">
+    <div class="quand"><span>${esc((m.ligue ?? '').toUpperCase())}</span>
+      <span class="${direct ? 'live' : ''}">${direct ? `● EN DIRECT${m.minute ? ` · ${m.minute}'` : ''}` : esc(quand(m.coup))}</span></div>
+    <div class="vs">
+      <a href="/club/${m.home.id}">${logo(m.home.logo)}<span>${esc(m.home.name)}</span></a>
+      <div class="sc"><b>${sc[0]} – ${sc[1]}</b><small>${direct ? 'TBFO EN DIRECT' : 'SCORE TBFO'}</small></div>
+      <a href="/club/${m.away.id}">${logo(m.away.logo)}<span>${esc(m.away.name)}</span></a>
+    </div>
+    <div class="jauge" aria-hidden="true"><i style="width:${part}%"></i></div>
+    <div class="enjeu"><span>${s?.virage ? `Virage ${s.virage[0]}–${s.virage[1]} · ` : ''}${enjeu}</span>
+      ${m.buts && direct ? `<span>Vrai score ${m.buts[0]}–${m.buts[1]}</span>` : ''}</div>
+    <div class="boutons"><a class="pousser" href="/duel-nvn?${esc(q.toString())}">⚡ FAIS PENCHER LA BALANCE</a>
+      ${direct ? `<a class="virage" href="/virage?match=${m.id}">VIRAGE</a>` : ''}</div>
+  </div>`;
+}
+
+/* -------------------------------------------------------- les onglets */
+function tribune(d) {
+  const f = d.meilleursFans ?? [];
+  const tete = (x) => {
+    const src = x?.avatar && window.FZART?.dessinAvatar?.(x.avatar, 'buste');
+    return src ? `<img src="${esc(src)}" alt="">` : esc((x?.pseudo ?? '?').slice(0, 1).toUpperCase());
+  };
+  const marche = (x, rang) => (x ? `<div class="marche m${rang}"><div class="tete">${tete(x)}</div>
+    <div class="bloc"><b>${rang}</b><small>${esc(x.pseudo)}</small><small>${nombre(x.ferveur)}</small></div></div>` : '');
+  const podium = f.length
+    ? `<div class="podium">${marche(f[1], 2)}${marche(f[0], 1)}${marche(f[2], 3)}</div>`
+    : '<p class="vide">Personne n’a encore poussé pour ce club cette saison. La première place est à prendre.</p>';
+  const r = d.tbfo?.rang;
+  const voisins = r?.voisins?.length
+    ? `<div class="pan"><table>${r.voisins.map((v) => `<tr class="${v.id === ID ? 'moi' : ''}">
+        <td>${v.joues > 0 ? v.position : '–'}</td>
+        <td><a href="/club/${v.id}">${logo(v.logo)}${v.id === ID ? `<b>${esc(v.name)}</b>` : esc(v.name)}</a></td>
+        <td class="n">${nombre(v.points)} PTS</td></tr>`).join('')}</table></div>`
+    : '<p class="vide">Le championnat TBFO de ce club n’a pas encore commencé.</p>';
+  const kops = (d.kops ?? []).slice(0, 5).map((k) => `<a class="kop" href="/kop"><b>${esc(k.nom)}</b>${
+    k.membres > 1 ? `${k.membres} membres` : `${k.membres} membre`}</a>`).join('')
+    + '<a class="kop" href="/kop"><b>+ CRÉER</b>ton KOP</a>';
+  const t = d.tbfo ?? {};
+  const derniers = (t.derniers ?? []).map((m) => {
+    const c = m.home === ID ? 0 : 1;
+    const pour = m.score[c], contre = m.score[1 - c];
+    const issue = pour > contre ? ['V', 'var(--vert)'] : pour === contre ? ['N', '#5b6270'] : ['D', 'var(--flare)'];
+    const vir = m.virage && m.virage[c] > m.virage[1 - c] ? ' · +2 VIR.' : '';
+    return `<div class="mtbfo"><em style="background:${issue[1]}">${issue[0]}</em>
+      <span>${esc(quand(m.coup))}</span><b>${pour}–${contre}${vir} · +${m.points[c]}</b></div>`;
+  }).join('');
+  return `<div class="cousu">MEILLEURS FANS <i>SAISON</i></div>${podium}
+    <div class="cousu">CHAMPIONNAT TBFO <i>${esc((r?.ligue?.name ?? '').toUpperCase())}</i></div>${voisins}
+    <div class="cousu">BILAN TBFO <i>SAISON</i></div>
+    <div class="pan">
+      <div class="ligne"><span>Matchs TBFO</span><b>${t.gagnes ?? 0} V · ${t.nuls ?? 0} N · ${t.perdus ?? 0} D</b></div>
+      <div class="ligne"><span>Points</span><b>${nombre(t.points)}</b></div>
+      <div class="ligne"><span>Duels gagnés pour le club</span><b>${nombre(t.duelsGagnes)} / ${nombre(t.duels)}</b></div>
+      <div class="ligne"><span>Virages gagnés</span><b>${nombre(t.virages)}</b></div>
+    </div>
+    ${derniers ? `<div class="cousu">DERNIERS MATCHS TBFO</div><div class="pan">${derniers}</div>` : ''}
+    <div class="cousu">LES KOP DU CLUB <i>${(d.kops ?? []).length}</i></div><div class="kops">${kops}</div>
+    <p class="note">Chaque vrai match est un match TBFO : le club qui gagne le plus de duels classés sur ce match
+      marque 3 points, à égalité 1, et la tribune qui gagne le Virage donne 2 points de plus.</p>`;
+}
+
+function vraiClub(d) {
+  const v = d.vrai ?? {};
+  const c = v.classement;
+  const resultat = (m) => {
+    const c2 = m.home.id === ID ? 0 : 1;
+    const b = m.buts ?? [0, 0];
+    return `<div class="mtbfo"><span>${logo((c2 ? m.home : m.away).logo)}${esc((c2 ? m.home : m.away).name)}</span>
+      <b>${b[0]}–${b[1]}</b></div>`;
+  };
+  const avenir = (m) => `<div class="mtbfo"><span>${logo((m.home.id === ID ? m.away : m.home).logo)}${
+    esc(m.home.name)} – ${esc(m.away.name)}</span><b>${esc(quand(m.coup))}</b></div>`;
+  return `<div class="cousu">${esc((v.ligue?.name ?? 'CHAMPIONNAT').toUpperCase())}</div>
+    <div class="pan">${c ? `
+      <div class="ligne"><span>Classement</span><b>${ordinal(c.rang)}${c.sur ? ` sur ${c.sur}` : ''} · ${c.points} PTS</b></div>
+      <div class="ligne"><span>Bilan</span><b>${c.gagnes} V · ${c.nuls} N · ${c.perdus} D</b></div>
+      <div class="ligne"><span>Buts</span><b>${c.pour} – ${c.contre}</b></div>
+      ${c.forme ? `<div class="ligne"><span>Forme</span>${forme(String(c.forme).slice(-5).split('').reverse()
+        .map((x) => ({ W: 'V', D: 'N', L: 'D' }[x] ?? null)))}</div>` : ''}`
+      : '<p class="vide">Le classement de ce championnat n’est pas encore chargé.</p>'}</div>
+    ${v.prochains?.length ? `<div class="cousu">PROCHAINS MATCHS</div><div class="pan">${v.prochains.map(avenir).join('')}</div>` : ''}
+    ${v.derniers?.length ? `<div class="cousu">DERNIERS RÉSULTATS</div><div class="pan">${v.derniers.map(resultat).join('')}</div>` : ''}
+    <div class="cousu">LE CLUB</div>
+    <div class="pan">
+      ${d.team.country ? `<div class="ligne"><span>Pays</span><b>${esc(window.TBF_PAYS?.nom?.(d.team.country) ?? d.team.country)}</b></div>` : ''}
+      ${d.team.founded ? `<div class="ligne"><span>Fondé en</span><b>${Number(d.team.founded)}</b></div>` : ''}
+      ${v.prochains?.[0]?.stade ? `<div class="ligne"><span>Stade</span><b>${esc(v.prochains[0].stade)}</b></div>` : ''}
+      ${(v.ligues ?? []).length ? `<div class="ligne"><span>Compétitions</span><b>${v.ligues.map((l) => esc(l.name)).join(', ')}</b></div>` : ''}
+    </div>`;
+}
+
+function fanzzy(d) {
+  const lies = d.fanzzy?.lies ?? [];
+  const miens = d.moi?.fanzzy ?? {};
+  if (!lies.length) {
+    return `<p class="vide">Aucun Fanzzy n’est encore lié d’office à ce club. Tu peux lier un de tes Fanzzy neutres
+      à ton club principal depuis sa fiche.</p>
+      ${d.fanzzy?.achetes ? `<p class="note">${nombre(d.fanzzy.achetes)} Fanzzy liés à ce club par ses fans.</p>` : ''}`;
+  }
+  const a = Object.keys(miens).length;
+  return `<div class="cousu">FANZZY LIÉS <i>${a} / ${lies.length} DANS TA COLLECTION</i></div>
+    <div class="fanzzys">${lies.map((f) => `<a class="fzc${miens[f.id] ? '' : ' non'}" href="${miens[f.id] ? `/fanzzy/${esc(f.id)}` : '/boosters'}">
+      <img data-fz="${esc(f.id)}" data-evo="${miens[f.id] ?? 1}" alt=""><small>${esc(f.nom ?? f.id)}</small></a>`).join('')}</div>
+    <p class="note">Un Fanzzy lié pousse plus fort dans les matchs de son club, au Virage comme en duel.
+      ${d.fanzzy?.achetes ? `Et ${nombre(d.fanzzy.achetes)} Fanzzy ont été liés à ce club par ses fans.` : ''}</p>`;
+}
+
+const ONGLETS = { tribune, vrai: vraiClub, fanzzy };
+
+function rendreOnglet() {
+  const d = S.d;
+  $('onglet').innerHTML = ONGLETS[S.onglet](d);
+  for (const b of document.querySelectorAll('.onglets [data-o]')) {
+    b.classList.toggle('on', b.dataset.o === S.onglet);
+    b.setAttribute('aria-selected', String(b.dataset.o === S.onglet));
+  }
+  const E = window.TBF_ETATS;
+  for (const img of $('onglet').querySelectorAll('img[data-fz]')) {
+    const r = E?.resoudre?.(img.dataset.fz, { evo: Number(img.dataset.evo) || 1, etat: 'pousse' });
+    if (r?.src) img.src = r.src; else img.remove();
+  }
+}
+
+function rendre() {
+  const d = S.d;
+  const c = d.team.couleurs ?? [];
+  if (c[0]) $('app').style.setProperty('--c1', c[0]);
+  if (c[1]) $('app').style.setProperty('--c2', c[1]);
+  document.title = `${d.team.name} — thebestfan`;
+  $('page').innerHTML = `${stade(d)}
+    <div class="cousu">FORME TBFO <i>5 DERNIERS</i></div>${forme(d.tbfo?.forme)}
+    <div class="cousu">${d.prochain && EN_JEU.has(d.prochain.statut) ? 'LE MATCH EN COURS' : 'LE PROCHAIN MATCH'}</div>${prochain(d)}
+    <div class="onglets" role="tablist">
+      <button type="button" role="tab" data-o="tribune">TRIBUNE</button>
+      <button type="button" role="tab" data-o="vrai">LE VRAI CLUB</button>
+      <button type="button" role="tab" data-o="fanzzy">FANZZY</button>
+    </div>
+    <div id="onglet"></div>`;
+  rendreOnglet();
+  /* Le héros : le premier Fanzzy lié qui pousse, à son plus grand âge
+     possédé (sinon le dernier dessiné). */
+  const premier = d.fanzzy?.lies?.[0];
+  const img = $('heros');
+  const r = premier && window.TBF_ETATS?.resoudre?.(premier.id,
+    { evo: d.moi?.fanzzy?.[premier.id] ?? 3, etat: 'pousse' });
+  if (r?.src) { img.src = r.src; img.classList.remove('vide'); img.onerror = () => img.classList.add('vide'); }
+  window.TBF_SON?.clubs?.([ID]);
+}
+
+document.addEventListener('click', (e) => {
+  const o = e.target.closest('.onglets [data-o]');
+  if (o) { S.onglet = o.dataset.o; rendreOnglet(); return; }
+  if (e.target.closest('#cri')) {
+    /* Le cri du club : son son, et son écharpe qui traverse l'écran. */
+    window.TBF_SON?.club?.(ID);
+    const c = S.d?.team?.couleurs;
+    window.FX?.club?.(c?.length ? c : ['#E0402C', '#F2EEE4'], { titre: S.d?.cri ?? '', sous: S.d?.team?.name ?? '' });
+  }
+});
+
+async function charger() {
+  if (!Number.isInteger(ID) || ID <= 0) {
+    $('page').innerHTML = '<p class="chargement">Ce club n’existe pas.</p>';
+    return;
+  }
+  try {
+    const [r] = await Promise.all([
+      fetch(`/api/club/${ID}`, { credentials: 'same-origin', cache: 'no-store' }),
+      window.TBF_ETATS?.charger?.(),
+    ]);
+    const d = await r.json().catch(() => null);
+    if (!r.ok || !d?.team) throw new Error(d?.error ?? `http ${r.status}`);
+    S.d = d;
+    rendre();
+  } catch {
+    if (!S.d) $('page').innerHTML = '<p class="chargement">Impossible de lire ce club pour l’instant.</p>';
+  }
+}
+charger();
+/* Le score TBFO bouge pendant le match : relu chaque minute, page visible. */
+setInterval(() => { if (!document.hidden && S.d) charger(); }, 60_000);
+</script>
+<script src="/pays.js" defer></script>
+<script src="/son.js" defer></script>
+<script src="/fx.js" defer></script>
+<script src="/visite.js" defer></script>
+<script src="/menu.js" defer></script>
+<script src="/nav.js" defer></script>
+<script src="/pwa.js" defer></script>
+</body>
+</html>

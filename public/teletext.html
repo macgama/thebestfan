@@ -170,7 +170,10 @@ td.club{display:flex;align-items:center;gap:7px;min-width:0}
    supporter (`.tbf-buste`, plus bas) est aussi un `span` qui porte une
    image, et ces deux règles l'auraient réduit à dix-sept pixels et rogné. */
 td.club>img{width:17px;height:17px;object-fit:contain;flex:none}
-td.club>span:not(.tbf-buste){overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+td.club>span:not(.tbf-buste),td.club>a.lien-club{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* Le nom d'un club mène à sa page (« Le stade du club », 7 novembre 2026). */
+a.lien-club{color:inherit;text-decoration:none;border-bottom:1px dotted rgba(242,238,228,.35)}
+td.pts small.direct{color:#ff6a5a;font-size:11px}
 /* **Le visage d'un supporter**, dans l'échelle SUPPORTERS de la ferveur : le
    buste de son Fanzzy, ou son initiale (`CONTRATS.md`, § 3), à la taille
    d'une ligne de classement — la brique est celle de `/classement`.
@@ -187,7 +190,7 @@ tr.top3 td:first-child{color:var(--vert);font-weight:700}
    dans le plateau, sans rang, et en retrait d'un cran seulement — à 42 %
    d'opacité on ne lisait plus le nom du club qu'on venait y chercher. */
 tr.a-prendre{opacity:.88}
-tr.a-prendre td.club span{font-style:italic}
+tr.a-prendre td.club span,tr.a-prendre td.club a{font-style:italic}
 tr.bottom td:first-child{color:var(--flare)}
 td.pts{font-family:var(--banner);font-size:15px}
 .form{display:flex;gap:2px;justify-content:flex-end}
@@ -710,7 +713,8 @@ function rendreClassement(d) {
       <tbody>${g.map((r, i) => `
         <tr class="${i < 3 ? 'top3' : i >= g.length - 2 ? 'bottom' : ''}">
           <td>${r.rank}</td>
-          <td class="club"><img src="${esc(r.logo)}" alt=""><span>${esc(r.name)}</span></td>
+          <td class="club"><img src="${esc(r.logo)}" alt="">${Number(r.teamId) > 0
+            ? `<a class="lien-club" href="/club/${Number(r.teamId)}">${esc(r.name)}</a>` : `<span>${esc(r.name)}</span>`}</td>
           <td>${r.played}</td><td>${r.win}</td><td>${r.draw}</td><td>${r.lose}</td>
           <td>${r.gf - r.ga > 0 ? '+' : ''}${r.gf - r.ga}</td>
           <td class="pts">${r.points}</td>
@@ -1081,22 +1085,24 @@ function tableFerveur(liste) {
        donc là, en retrait — c'est une tribune à prendre, pas une ligne vide.
        Ils n'ont pas de rang, et leur case reste vide.
 
-       **Un championnat, comme en vrai** (Gaël, 29 octobre 2026) : chaque duel
-       classé sur un match de cette compétition est un match pour le club du
-       joueur — 3 points la victoire, 1 le nul. La liste est rangée sur les
-       points par joueur (PTS/J), qui laisse leur chance aux petits clubs. */
+       **Un championnat, comme en vrai** (barème de Gaël, 7 novembre 2026) :
+       chaque vrai match de cette compétition est un match TBFO. 3 points au
+       club qui gagne le plus de duels classés sur ce match, 1 à égalité, +2
+       au Virage gagné. +/- : la différence de duels. Le « +3 » rouge : les
+       points provisoires du match qui se joue. Le nom mène à la page du
+       club. */
     return `<table>
-      <thead><tr><th>#</th><th>CLUB</th><th>J</th><th>G</th><th>N</th><th>P</th><th>PTS</th><th>PTS/J</th></tr></thead>
+      <thead><tr><th>#</th><th>CLUB</th><th>J</th><th>G</th><th>N</th><th>P</th><th>+/-</th><th>PTS</th></tr></thead>
       <tbody>${liste.map((t, i) => `
-        <tr class="${i < 3 && t.points > 0 ? 'top3' : ''}${t.joues > 0 ? '' : ' a-prendre'}">
+        <tr class="${i < 3 && t.points > 0 ? 'top3' : ''}${t.joues > 0 || t.direct != null ? '' : ' a-prendre'}">
           <td>${t.joues > 0 ? i + 1 : ''}</td>
-          <td class="club"><img src="${esc(t.logo)}" alt=""><span>${esc(t.name)}</span></td>
+          <td class="club"><img src="${esc(t.logo)}" alt=""><a class="lien-club" href="/club/${Number(t.id)}">${esc(t.name)}</a></td>
           <td>${t.joues ?? 0}</td>
           <td>${t.gagnes ?? 0}</td>
           <td>${t.nuls ?? 0}</td>
           <td>${t.perdus ?? 0}</td>
-          <td>${String(t.points ?? 0).replace('.', ',')}</td>
-          <td class="pts">${String(t.moyenne ?? 0).replace('.', ',')}</td>
+          <td>${Number(t.diff) > 0 ? '+' : ''}${Number(t.diff ?? 0)}</td>
+          <td class="pts">${Number(t.points ?? 0)}${t.direct != null ? ` <small class="direct">+${Number(t.direct)}</small>` : ''}</td>
         </tr>`).join('')}</tbody></table>`;
   }
   return `<table>

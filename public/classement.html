@@ -134,6 +134,8 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
 /* Une ligne qui a quelque chose de plus à dire est un bouton : toute la
    ligne, cinquante-deux pixels de haut, se touche. Elle n'a de bouton que le
    comportement — ni fond, ni cerne, ni police du système. */
+a.lien{color:inherit;text-decoration:none}
+a.row.lien:active{background:rgba(242,238,228,.05)}
 button.row{width:100%;margin:0;background:none;border-left:0;border-right:0;border-bottom:0;
   border-radius:0;color:inherit;font:inherit;font-size:13px;text-align:left;cursor:pointer;
   -webkit-appearance:none;appearance:none}
@@ -342,7 +344,7 @@ const NOTES = {
      qui ne faisait que des duels lisait sinon une explication qui ne
      décrivait pas le classement qu'il avait sous les yeux. */
   supporters: 'La ferveur se gagne en chantant dans le Grand Virage et en gagnant des duels classés. Un joueur qui n’a jamais ouvert un booster peut être premier.',
-  tribunes: 'Un championnat, comme en vrai : chaque duel classé et chaque Virage sont un match pour le club poussé. Une victoire rapporte 3 points, un nul 1, une défaite 0 ; au Virage, c’est ta tribune qui gagne ou perd la corde. Un club que tu ne suis pas n’en reçoit qu’une part. Les clubs sont classés sur les points par joueur qui a joué, pour que les petits clubs aient leur chance.',
+  tribunes: 'Un championnat, comme en vrai : chaque vrai match est un match TBFO. Le club qui gagne le plus de duels classés sur ce match marque 3 points, à égalité 1, sinon 0 ; la tribune qui gagne le Virage donne 2 points de plus. Touche un club pour ouvrir sa page.',
   duellistes: 'Classé sur la cote, pas sur le nombre de victoires : battre plus fort rapporte plus, perdre contre plus faible coûte plus. Tout le monde part de 1000. Duels contre de vrais adversaires uniquement — les entraînements ne comptent pas.',
   /* **Ce tableau classe sur les parties jouées, et il faut le dire** : on
      s'entraîne aussi contre des machines, et classer sur les victoires ferait
@@ -515,14 +517,16 @@ const LECTURES = {
   supporters: (x) => ({ cle: x.public_id ?? `p:${x.pseudo}`, joueur: true, nom: x.pseudo,
     sous: [x.club], plus: [compte(x.matchs, 'match', 'matchs'), compte(x.vecus, 'vécu', 'vécus')],
     val: nombre(x.ferveur), unite: 'FERVEUR', mot: 'de ferveur' }),
-  /* Le championnat des clubs : les points par joueur en grand, sur quoi la
-     liste est rangée ; les points, et victoires-nuls-défaites, dessous —
-     c'est ce qui explique la moyenne. Le reste s'ouvre au toucher. */
-  tribunes: (x) => ({ cle: `t:${x.id}`, nom: x.name, logo: x.logo,
-    sous: [compte(x.points, 'point', 'points'),
-      Number(x.joues) > 0 ? `${Number(x.gagnes)}\u00a0V · ${Number(x.nuls)}\u00a0N · ${Number(x.perdus)}\u00a0D` : null],
-    plus: [x.country, compte(x.joueurs, 'joueur', 'joueurs'), compte(x.supporters, 'supporter', 'supporters')],
-    val: nombre(x.moyenne), unite: 'PTS / JOUEUR', mot: 'points par joueur' }),
+  /* Le championnat des clubs (barème de Gaël, 7 novembre 2026) : les points
+     en grand, sur quoi la liste est rangée ; victoires-nuls-défaites et la
+     différence de duels dessous, et les points provisoires du match qui se
+     joue. La ligne mène à la page du club. */
+  tribunes: (x) => ({ cle: `t:${x.id}`, nom: x.name, logo: x.logo, lien: `/club/${Number(x.id)}`,
+    sous: [Number(x.joues) > 0 ? `${Number(x.gagnes)}\u00a0V · ${Number(x.nuls)}\u00a0N · ${Number(x.perdus)}\u00a0D` : null,
+      Number(x.joues) > 0 ? `${Number(x.diff) > 0 ? '+' : ''}${Number(x.diff)}\u00a0duels` : null,
+      x.direct != null ? `+${Number(x.direct)} en direct` : null],
+    plus: [x.country, compte(x.supporters, 'supporter', 'supporters')],
+    val: nombre(x.points), unite: 'POINTS', mot: 'points' }),
   /* Le grand chiffre est **la cote**, sur laquelle on est classé ; les
      victoires et le taux s'ouvrent au toucher. Les écrire sous le nom
      faisait lire un classement de victoires rangé dans un ordre qui n'est
@@ -548,7 +552,7 @@ function marche(x, i, L) {
   return `<li data-rang="${i + 1}"${colle}>${visage}
     <div class="tbf-podium-bache">
       <b class="tbf-podium-rang">${i + 1}</b>
-      <b class="tbf-podium-nom"><span${gainPass(x, 'badge_or') ? ' class="pass-or"' : ''}>${nomSecable(L.nom)}${passDe(x)}</span></b>
+      <b class="tbf-podium-nom">${L.lien ? `<a class="lien" href="${esc(L.lien)}">` : ''}<span${gainPass(x, 'badge_or') ? ' class="pass-or"' : ''}>${nomSecable(L.nom)}${passDe(x)}</span>${L.lien ? '</a>' : ''}</b>
       <span class="tbf-podium-val">${L.val}<span class="vh"> ${L.mot}</span></span>
       ${gainPass(x, 'titre') && x.pass.titre ? `<small class="pass-titre">${esc(x.pass.titre)}</small>` : ''}
     </div></li>`;
@@ -565,7 +569,7 @@ function alignerPodium() {
   podiumVu?.disconnect();
   podiumVu = null;
   const ol = $('list').querySelector('.tbf-podium');
-  const noms = ol ? [...ol.querySelectorAll('.tbf-podium-nom>span')] : [];
+  const noms = ol ? [...ol.querySelectorAll('.tbf-podium-nom>span, .tbf-podium-nom>a>span')] : [];
   if (!noms.length || typeof ResizeObserver !== 'function') return;
   const compter = () => {
     const ligne = parseFloat(getComputedStyle(noms[0]).lineHeight) || 16.8;
@@ -629,6 +633,7 @@ function ligne(x, i, L, ecart) {
     <span class="n"><b>${nomSecable(L.nom)}${passDe(x)}</b>${division || sous ? `<small>${division}${sous}</small>` : ''}</span>
     ${delta(ecart(L.cle, rang), 'depuis ta dernière visite')}
     <span class="v">${L.val}<span class="vh"> ${L.mot}</span></span>`;
+  if (L.lien) return `<a class="row lien${moi}" href="${esc(L.lien)}">${corps}</a>`;
   return L.joueur && bulleDe(x, L).length
     ? `<button type="button" class="row${moi}"${pid} data-i="${i}" aria-expanded="false">${corps}</button>`
     : `<div class="row${moi}"${pid}>${corps}</div>`;
@@ -962,13 +967,13 @@ function maPlace() {
     }
   } else if (onglet === 'tribunes') {
     /* **Ce tableau ne classe pas des joueurs** : la question qu'on se pose
-       devant lui est l'autre — qu'ai-je rapporté à mon club ? Ses points de
-       la saison, gagnés en duel classé. */
+       devant lui est l'autre — qu'ai-je rapporté à mon club ? Mes duels
+       classés gagnés pour lui cette saison, au score TBFO de ses matchs. */
     const t = m.tribune;
     if (t?.nom) {
       corps = Number(t.joues) > 0
-        ? quoi(`pour ${esc(t.nom)}`) + valeur(nombre(t.points ?? 0), 'points rapportés')
-        : quoi(`pour ${esc(t.nom)} · gagne un duel classé ou un Virage pour lui rapporter 3 points`);
+        ? quoi(`pour ${esc(t.nom)}`) + valeur(nombre(t.gagnes ?? 0), 'duels gagnés au score TBFO')
+        : quoi(`pour ${esc(t.nom)} · gagne un duel classé sur son match pour faire pencher le score`);
       dit = `Tu joues pour ${t.nom}`;
     } else {
       corps = quoi('Aucun club suivi : tes parties ne rapportent à aucun club');

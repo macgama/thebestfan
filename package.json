@@ -50,6 +50,7 @@
     "appel:ui": "node scripts/appel-ui-smoke.mjs",
     "ensemble:ui": "node scripts/ensemble-ui-smoke.mjs",
     "equipes:ui": "node scripts/equipes-ui-smoke.mjs",
+    "club:ui": "node scripts/club-ui-smoke.mjs",
     "matchs:ui": "node scripts/matchs-ui-smoke.mjs",
     "competitions:ui": "node scripts/competitions-ui-smoke.mjs",
     "legende:smoke": "node scripts/legende-smoke.mjs",

@@ -1631,7 +1631,9 @@
      * pas de `h1` du tout — un lecteur d'écran l'annoncerait et ne dirait
      * rien. Les écrans sans entrée dans `TITRES` sont ceux qui se nomment
      * eux-mêmes, comme l'accueil, qui n'a même pas cette barre. */
-    const titre = TITRES[chemin] ?? '';
+    /* `/club/<id>` (la page d'un club, 7 novembre 2026) se nomme par sa
+       racine : une table par identifiant de club n'aurait aucun sens. */
+    const titre = TITRES[chemin] ?? TITRES[chemin.replace(/\/\d+$/, '')] ?? '';
     const balise = titre ? 'h1' : 'span';
     haut.innerHTML = `${retourHTML}${maisonHTML}<${balise} class="tbf-ou"></${balise}>${boutonHTML}`;
     /* `textContent` et non une interpolation : le titre vient d'une table
