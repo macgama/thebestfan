@@ -260,6 +260,31 @@ export const REGLAGES = [
       'vainqueurs, PASS ou non. Les suivants comptent pour le joueur (ferveur, ' +
       'cote), pas pour le club. Zéro désarme le plafond.' },
 
+  /* Les écharpes d'un match TBFO (choix de Gaël, 7 novembre 2026 : « Victoire
+     20, nul 5, Virage +10 ») : chaque supporter qui a poussé la tribune d'un
+     club sur un vrai match (un duel classé, ou le Virage classé) les reçoit
+     une fois le match fini, avec une fête à sa visite suivante. */
+  { cle: 'tbfo.actif', section: 'virage', type: 'booleen',
+    titre: 'Écharpes des matchs TBFO', defaut: true,
+    aide: 'Éteint : plus aucune écharpe ni fête pour un match TBFO gagné, nul ou un ' +
+      'Virage gagné. Rien n’est perdu : les matchs des trois derniers jours sont ' +
+      'payés quand on rallume.' },
+  { cle: 'tbfo.victoire_echarpes', section: 'virage', type: 'entier',
+    titre: 'Match TBFO gagné aux duels : écharpes à chaque supporter', unite: 'écharpes',
+    min: 0, max: 300, defaut: 20,
+    aide: 'Versées à chaque joueur qui a joué un duel classé ou le Virage classé ' +
+      'pour la tribune qui a gagné le plus de duels sur le match, une fois le vrai ' +
+      'match fini. Zéro : rien.' },
+  { cle: 'tbfo.nul_echarpes', section: 'virage', type: 'entier',
+    titre: 'Match TBFO nul aux duels : écharpes à chaque supporter', unite: 'écharpes',
+    min: 0, max: 300, defaut: 5,
+    aide: 'Autant de duels gagnés de chaque côté (au moins un duel joué). Zéro : rien.' },
+  { cle: 'tbfo.virage_echarpes', section: 'virage', type: 'entier',
+    titre: 'Virage gagné : écharpes en plus à chaque supporter', unite: 'écharpes',
+    min: 0, max: 300, defaut: 10,
+    aide: 'En plus du résultat aux duels, à toute la tribune qui a gagné la corde ' +
+      'du Virage, même si elle a perdu aux duels. Zéro : rien.' },
+
   /* Les Fanzzy liés à un club (demande de Gaël du 21 octobre 2026) : voir
      `shared/fanzzy/clubs.js`. Deux nombres, parce que « gagner plus » et
      « pousser plus fort » ne pèsent pas pareil sur l'équilibre. */

@@ -1530,6 +1530,14 @@
       cadeau.defer = true;
       document.head.append(cadeau);
     }
+    /* **Le match TBFO gagné** (`tbfo-fete.js`) : les écharpes de la tribune
+       qu'on a poussée, fêtées à la visite suivante (Gaël, 7 novembre 2026). */
+    if (user && !document.querySelector('script[src="/tbfo-fete.js"]')) {
+      const tbfo = document.createElement('script');
+      tbfo.src = '/tbfo-fete.js';
+      tbfo.defer = true;
+      document.head.append(tbfo);
+    }
     /* **L'appel d'un ami** (`appel-fete.js`) : une demande d'ami, une
        invitation en duel ou dans un KOP, annoncée en grand. Avant le rappel
        du duel, qui lui passe les invitations qu'il lit. */

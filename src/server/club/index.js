@@ -24,6 +24,7 @@ import { serieDeLigue } from '../../shared/fanzzy/series-ligues.js';
 import { parIdentifiant } from '../fanzzy/catalogue.js';
 import { couleursDuClub } from '../kop/index.js';
 import { lireMatch, tableau } from '../classements/championnat.js';
+import { createVictoires } from '../classements/victoires.js';
 
 const TTL_MS = 60_000;
 
@@ -229,6 +230,22 @@ export function createClub({ pool, classements, store = null }) {
   }
 
   const router = express.Router();
+  const victoires = createVictoires({ pool, classements });
+
+  /* Les écharpes des matchs TBFO gagnés par la tribune qu'on a poussée
+     (choix de Gaël, 7 novembre 2026) : réglées à la lecture, fêtées par
+     `public/tbfo-fete.js`. */
+  router.get('/victoires', async (req, res) => {
+    if (!req.user?.id) return res.status(401).json({ error: 'auth.error.unauthenticated' });
+    try {
+      res.set('cache-control', 'no-store');
+      res.json(await victoires.lire(req.user.id));
+    } catch (e) {
+      console.error('[club] victoires', e);
+      res.status(500).json({ error: 'club.error.lecture' });
+    }
+  });
+
   router.get('/:id', async (req, res) => {
     const id = Number(req.params.id);
     if (!Number.isInteger(id) || id <= 0) return res.status(400).json({ error: 'club.error.inconnu' });
@@ -245,7 +262,7 @@ export function createClub({ pool, classements, store = null }) {
     }
   });
 
-  return { router, fiche, oublier: () => cache.clear() };
+  return { router, fiche, victoires, oublier: () => cache.clear() };
 }
 
 export { lireMatch };

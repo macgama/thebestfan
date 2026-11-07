@@ -525,6 +525,12 @@ const RUBRIQUES = [
           + 'son Fanzzy, son cri, ses fans, ses Fanzzy liés, ses duels, ses Virages gagnés, '
           + 'son rang au championnat TBFO, sa forme, son prochain match, ses meilleurs fans '
           + 'et ses KOP, avec les vraies infos du club.'],
+      ['Qu’est-ce que je gagne quand mon club gagne un match TBFO ?',
+        'Des écharpes, si tu étais dans la tribune : un duel classé ou le Virage classé '
+          + 'joué pour ce club pendant le vrai match. Une fois le match fini : 20 écharpes '
+          + 'si ta tribune a gagné le plus de duels, 5 à égalité, et 10 de plus si elle a '
+          + 'gagné le Virage. Une fête te les annonce à ta visite suivante. Même si ton duel '
+          + 'est perdu, tu touches ta part quand ta tribune gagne.'],
       ['C’est quoi, le carnet de la saison ?',
         () => 'Chaque mission du jour y pose des tampons : '
           + `${reglage('saison.tampons_facile')} pour une facile, `

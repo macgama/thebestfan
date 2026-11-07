@@ -1,5 +1,18 @@
 # À déposer sur Infomaniak
 
+**Écharpes d'un match TBFO gagné, et sa fête** (branche
+`claude/project-thread-9zc9fe`, 7 novembre 2026, choix de Gaël « Victoire 20,
+nul 5, Virage +10 »). Code seul, sans schéma (grand livre `recompenses`,
+source `tbfo`, une fois par match). Chaque joueur qui a poussé une tribune
+(duel classé ou Virage classé) reçoit, le match fini : 20 si elle gagne aux
+duels, 5 au nul, +10 au Virage gagné ; une fête l'annonce à sa visite
+suivante (VOIR MON CLUB). Réglages dans /admin › LE GRAND VIRAGE
+(`tbfo.actif`, `tbfo.victoire_echarpes`, `tbfo.nul_echarpes`,
+`tbfo.virage_echarpes`). Les matchs des trois derniers jours sont payés à la
+première visite. QUESTIONS et /comment-jouer à jour. **Redémarrer**.
+
+---
+
 **Page d'un club « Le stade du club » et championnat TBFO par match** (branche
 `claude/project-thread-9zc9fe`, 7 novembre 2026, choix de Gaël « 1 Le stade du
 club » et barème « avec les 5 réglages »). Code seul, sans schéma. Nouvelle page
