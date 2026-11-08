@@ -103,7 +103,8 @@ const classements = createClassements({ pool, requireAuth: (r, _s, n) => { r.use
 const app = express();
 app.use((req, _res, next) => { if (moi) req.user = { id: moi }; next(); });
 app.use('/api/rank', classements.router);
-app.use('/api/club', createClub({ pool, classements }).router);
+const club = createClub({ pool, classements });
+app.use('/api/club', club.router);
 app.get('/club/:id', (_req, res) => res.sendFile(path.join(RACINE, 'public', 'club.html')));
 app.get('/tbfo/:id', (_req, res) => res.sendFile(path.join(RACINE, 'public', 'tbfo.html')));
 app.use('/api', (_req, res) => res.status(404).json({ error: 'absent' }));
@@ -177,25 +178,40 @@ moi = ID(1);
   const bourse = async (n) => Number((await pq('SELECT scarves FROM user_wallet WHERE user_id = ?', [ID(n)]))[0]?.scarves ?? 0);
   const lire = async (n) => { moi = ID(n); const j = await (await fetch(`${base}/api/club/victoires`)).json(); return j.victoires ?? []; };
   const avant1 = await bourse(1);
-  let v = await lire(1);
+  const matchsDe = (l) => l.filter((x) => x.type === 'match');
+  let v = matchsDe(await lire(1));
   check('Gael : 9001 gagné aux duels et au Virage, 20 + 10 écharpes',
     v.length === 1 && v[0].match === 9001 && v[0].echarpes === 30 && v[0].issue === 'V' && v[0].viragegagne
     && v[0].club.name === 'Arsenal' && v[0].adverse.name === 'Chelsea' && v[0].score.join() === '2,1'
     || (console.log('        v :', JSON.stringify(v)), false));
-  check('versées dans la bourse', (await bourse(1)) - avant1 === 30
+  /* L'homme du match (Gaël, 8 novembre 2026) : sur 9001, Gael, NordBank et
+     Blue ont gagné un duel chacun ; Gael départage par sa ferveur au Virage. */
+  const tout1 = await lire(1);
+  const hdm = tout1.find((x) => x.type === 'hdm');
+  check('Gael, homme du match de 9001 : 15 écharpes de plus et le titre',
+    hdm?.match === 9001 && hdm.echarpes === 15 && hdm.gagnes === 1 && hdm.club?.name === 'Arsenal'
+    && (await pq(`SELECT titre FROM recompenses WHERE source='tbfo-hdm' AND cle='9001' AND user_id=?`, [ID(1)]))[0]?.titre === 'Homme du match TBFO'
+    || (console.log('        hdm :', JSON.stringify(tout1)), false));
+  check('versées dans la bourse', (await bourse(1)) - avant1 === 45
     || (console.log('        bourse :', avant1, await bourse(1)), false));
-  v = await lire(1);
+  v = matchsDe(await lire(1));
   check('une seule fois : relu, rien de plus, la fête reste à montrer', v.length === 1
-    && (await bourse(1)) - avant1 === 30);
+    && (await bourse(1)) - avant1 === 45);
+  check('un seul homme du match par match', (await pq(`SELECT COUNT(*) AS n FROM recompenses WHERE source='tbfo-hdm' AND cle='9001'`))[0].n == 1);
   check('le match en cours (9002) et le match trop vieux (9006) ne paient pas',
     !(await pq(`SELECT 1 FROM recompenses WHERE source='tbfo' AND cle IN ('9002','9006')`)).length);
-  v = await lire(3);
+  v = matchsDe(await lire(3));
   check('Kurve_K a perdu son duel, mais sa tribune a gagné : 30 aussi', v.find((x) => x.match === 9001)?.echarpes === 30);
   v = await lire(2);
+  check('NordBank, homme du match de 9004 (sa victoire est la première)',
+    v.find((x) => x.type === 'hdm')?.match === 9004 || (console.log('        v :', JSON.stringify(v)), false));
+  v = matchsDe(v);
   check('NordBank : 30 pour 9001, 5 pour le nul de 9004',
     v.find((x) => x.match === 9001)?.echarpes === 30 && v.find((x) => x.match === 9004)?.echarpes === 5
     && v.find((x) => x.match === 9004)?.issue === 'N' || (console.log('        v :', JSON.stringify(v)), false));
   v = await lire(4);
+  check('Villan, à égalité de duels gagnés sur 9004, n’est pas homme du match', !v.some((x) => x.type === 'hdm'));
+  v = matchsDe(v);
   check('Villan : 5 pour le nul de 9004, 10 pour le Virage gagné de 9005 sans duel',
     v.find((x) => x.match === 9004)?.echarpes === 5 && v.find((x) => x.match === 9005)?.echarpes === 10
     && v.find((x) => x.match === 9005)?.issue === null || (console.log('        v :', JSON.stringify(v)), false));
@@ -265,7 +281,8 @@ check('un club inconnu : une phrase, pas une page vide',
    l'API rend pour Gael, fêté sur sa page. */
 {
   moi = ID(1);
-  const v = (await (await fetch(`${base}/api/club/victoires`)).json()).victoires;
+  const tous = (await (await fetch(`${base}/api/club/victoires`)).json()).victoires;
+  const v = tous.filter((x) => x.type === 'match');
   const p2 = await nav.newPage();
   p2.on('pageerror', (e) => erreurs.push(e.message));
   await p2.setViewport({ width: 400, height: 860, deviceScaleFactor: process.env.CAPTURES ? 2 : 1 });
@@ -330,6 +347,153 @@ check('un club inconnu : une phrase, pas une page vide',
     await p3.screenshot({ path: path.join(process.env.CAPTURES, 'match-tbfo-vide.png'), fullPage: true });
   }
   await p3.close();
+}
+
+/* ------------------------------------------------ les exploits TBFO
+   (Gaël, 8 novembre 2026, « les 4 idées m'intéressent ») : l'homme du match,
+   le derby de la semaine, l'alerte « ton club perd », la fin de saison. */
+{
+  const pq = async (sql, p = []) => (await pool.query(sql, p))[0];
+  const lire = async (n) => { moi = ID(n); const j = await (await fetch(`${base}/api/club/victoires`)).json(); return j.victoires ?? []; };
+  const ajouter = async (fixture, gagnant, perdant, sideGagnant, ilya) => {
+    const id = `cd-${++d}`;
+    for (const [u, issue, side] of [[gagnant, 'win', sideGagnant], [perdant, 'loss', 1 - sideGagnant]]) {
+      await pq(`INSERT INTO duel_results (duel_id,user_id,opponent_id,outcome,fixture_id,ferveur,mode,side,ended_at)
+        VALUES (?,?,'x',?,?,200,'classe',?,NOW(3) - INTERVAL ? MINUTE)`, [id, ID(u), issue, fixture, side, ilya]);
+    }
+  };
+  const p4 = await nav.newPage();
+  p4.on('pageerror', (e) => erreurs.push(e.message));
+  await p4.setViewport({ width: 400, height: 860, deviceScaleFactor: process.env.CAPTURES ? 2 : 1 });
+  const t4 = async (sel) => p4.$eval(sel, (n) => n.textContent.replace(/\s+/g, ' ').trim()).catch(() => '');
+
+  /* 1. L'homme du match, sur la page du match et dans la fête. */
+  moi = ID(1);
+  const res = await (await fetch(`${base}/api/club/match/9001`)).json();
+  check('résumé : l’homme du match, son camp et son titre', res.homme?.pseudo === 'Gael' && res.homme.gagnes === 1
+    && res.homme.camp === 0 && res.homme.titres === 1 && res.homme.echarpes === 15
+    || (console.log('        homme :', JSON.stringify(res.homme)), false));
+  check('résumé : un match en cours n’a pas encore d’homme du match',
+    (await (await fetch(`${base}/api/club/match/9002`)).json()).homme === null);
+  await p4.goto(`${base}/tbfo/9001`, { waitUntil: 'domcontentloaded' });
+  check('la page du match : HOMME DU MATCH TBFO, Gael', await jusqua(async () => /HOMME DU MATCH TBFO Gael/.test(await t4('.hdm'))));
+  if (process.env.CAPTURES) {
+    await dodo(300);
+    await p4.screenshot({ path: path.join(process.env.CAPTURES, 'homme-du-match.png'), fullPage: true });
+  }
+  await p4.goto(`${base}/tbfo/9002`, { waitUntil: 'domcontentloaded' });
+  check('match en cours : le titre est à prendre, le meneur du moment', await jusqua(async () =>
+    /À PRENDRE Gael/.test(await t4('.hdm.attente'))));
+  const hdm = (await lire(1)).find((x) => x.type === 'hdm');
+  await p4.goto(`${base}/club/42`, { waitUntil: 'domcontentloaded' });
+  await p4.addScriptTag({ url: '/tbfo-fete.js' });
+  await p4.evaluate((l) => { window.__choix = window.TBF_TBFO_FETE.feter(l); }, [hdm]);
+  check('la fête de l’homme du match', await jusqua(() => p4.evaluate(() => /HOMME DU MATCH/.test(document.body.innerText)
+    && /\+15/.test(document.body.innerText))));
+  if (process.env.CAPTURES) {
+    await dodo(2200);
+    await p4.screenshot({ path: path.join(process.env.CAPTURES, 'fete-homme-du-match.png') });
+  }
+  await p4.evaluate(() => [...document.querySelectorAll('button')].find((b) => /VOIR LE MATCH/.test(b.textContent))?.click());
+  check('VOIR LE MATCH mène au résumé', await p4.evaluate(() => window.__choix) === '/tbfo/9001');
+
+  /* 2. Le derby de la semaine : les suivis d'avant le lundi comptent. */
+  await pq(`UPDATE user_follows SET created_at = NOW(3) - INTERVAL 30 DAY`);
+  await pq(`INSERT INTO fixtures (id,league_id,season,home_id,away_id,home_goals,away_goals,status_short,elapsed,kickoff_at)
+    VALUES (9010,39,2026,42,49,1,0,'FT',90,UTC_TIMESTAMP() + INTERVAL 1 MINUTE)`);
+  await ajouter(9010, 3, 5, 0, 5);
+  club.oublier();
+  let dz = (await (await fetch(`${base}/api/club/derby`)).json()).derby;
+  check('le derby de la semaine : le match qui réunit le plus de supporters', dz?.id === 9010 && dz.coef === 2
+    && dz.home.name === 'Arsenal' && dz.home.fans === 3 && dz.away.fans === 1
+    || (console.log('        derby :', JSON.stringify(dz)), false));
+  let v = await lire(3);
+  const x = v.find((y) => y.type === 'match' && y.match === 9010);
+  check('au derby, les écharpes de la tribune doublent : 40', x?.echarpes === 40 && x.derby === true && x.coef === 2
+    || (console.log('        v :', JSON.stringify(v)), false));
+  check('le résumé du derby le dit', (await (await fetch(`${base}/api/club/match/9010`)).json()).derby?.coef === 2);
+  await p4.goto(`${base}/tbfo/9010`, { waitUntil: 'domcontentloaded' });
+  check('la page du match : le ruban DERBY DE LA SEMAINE', await jusqua(async () => /DERBY DE LA SEMAINE ÉCHARPES ×2/.test(await t4('.derby'))));
+  await p4.goto(`${base}/club/42`, { waitUntil: 'domcontentloaded' });
+  await p4.evaluate(() => {
+    const a = document.createElement('div'); a.dataset.derby = 'carte'; a.style.padding = '12px';
+    const b = document.createElement('div'); b.dataset.derby = 'bandeau'; b.style.padding = '0 12px';
+    const m = document.querySelector('main') ?? document.body;
+    m.prepend(b); m.prepend(a);
+  });
+  await p4.addScriptTag({ url: '/derby.js' });
+  check('l’affiche du derby (matchs) et sa ligne dorée (accueil)', await jusqua(async () =>
+    /LE DERBY DE LA SEMAINE/.test(await t4('.tbf-derby-c')) && /DERBY : Arsenal – Chelsea/.test(await t4('.tbf-derby-b'))));
+  if (process.env.CAPTURES) {
+    await p4.screenshot({ path: path.join(process.env.CAPTURES, 'derby.png'), clip: { x: 0, y: 40, width: 400, height: 320 } });
+  }
+
+  /* 3. « Ton club perd au TBFO » : 9002 se joue, Arsenal mène 2–1. */
+  moi = ID(4);
+  let al = (await (await fetch(`${base}/api/club/alertes`)).json()).alertes;
+  check('alerte : Villan (Aston Villa, menée 1–2) est prévenu', al?.length === 1 && al[0].match === 9002
+    && al[0].camp === 1 && al[0].score.join() === '1,2' && al[0].club.name === 'Aston Villa'
+    || (console.log('        alertes :', JSON.stringify(al)), false));
+  moi = ID(1);
+  al = (await (await fetch(`${base}/api/club/alertes`)).json()).alertes;
+  check('alerte : Gael (Arsenal, qui mène) ne l’est pas', Array.isArray(al) && al.length === 0);
+  moi = null;
+  check('alerte : sans compte, 401', (await fetch(`${base}/api/club/alertes`)).status === 401);
+  moi = ID(4);
+  await p4.goto(`${base}/club/66`, { waitUntil: 'domcontentloaded' });
+  await p4.addScriptTag({ url: '/tbfo-alerte.js' });
+  await p4.evaluate(() => window.TBF_TBFO_ALERTE.lire());
+  check('alerte : le bandeau rouge, et le duel pour son camp', await jusqua(async () =>
+    /TON CLUB PERD AU TBFO Aston Villa 1–2 Arsenal/.test(await t4('.tbf-alerte')))
+    && await p4.$eval('.tbf-alerte .duel', (a) => a.getAttribute('href')) === '/duel-nvn?match=9002&camp=1');
+  if (process.env.CAPTURES) {
+    await dodo(600);
+    await p4.screenshot({ path: path.join(process.env.CAPTURES, 'alerte-club-perd.png') });
+  }
+  await p4.click('.tbf-alerte .tard');
+  await p4.evaluate(() => window.TBF_TBFO_ALERTE.lire());
+  await dodo(400);
+  check('alerte : PLUS TARD la fait taire tant que l’écart ne grandit pas', (await p4.$('.tbf-alerte')) === null);
+
+  /* 4. La fin de saison TBFO : 2025 finie il y a cinq jours, Arsenal champion. */
+  await pq(`INSERT INTO souvenir_leagues (league_id,season,name,country,type,family,starts_on,ends_on) VALUES
+    (39,2025,'Premier League','England','League','top',CURDATE() - INTERVAL 280 DAY,CURDATE() - INTERVAL 5 DAY),
+    (39,2026,'Premier League','England','League','top',CURDATE() - INTERVAL 60 DAY,CURDATE() + INTERVAL 200 DAY)`);
+  await pq(`INSERT INTO fixtures (id,league_id,season,home_id,away_id,home_goals,away_goals,status_short,elapsed,kickoff_at)
+    VALUES (9020,39,2025,42,49,1,1,'FT',90,UTC_TIMESTAMP() - INTERVAL 10 DAY)`);
+  await ajouter(9020, 1, 5, 0, 10 * 24 * 60 - 30);
+  club.oublier();
+  const fin = (await (await fetch(`${base}/api/club/fin/39?saison=2025`)).json()).fin;
+  check('fin de saison : 2025 finie, Arsenal champion TBFO', fin?.finie === true && fin.champion?.name === 'Arsenal'
+    && fin.echarpes === 100 || (console.log('        fin :', JSON.stringify(fin)), false));
+  const course = (await (await fetch(`${base}/api/club/fin/39?saison=2026`)).json()).fin;
+  check('fin de saison : 2026 se joue, la course au titre et son leader', course?.finie === false
+    && course.reste === 200 && course.leader?.name === 'Arsenal' && course.champion === null
+    || (console.log('        course :', JSON.stringify(course)), false));
+  v = await lire(2);
+  const sacre = v.find((y) => y.type === 'champion');
+  check('le champion gâte ses supporters : NordBank reçoit 100 écharpes et le titre',
+    sacre?.echarpes === 100 && sacre.club?.name === 'Arsenal' && sacre.saison === 2025 && sacre.ligue?.name === 'Premier League'
+    && (await pq(`SELECT titre FROM recompenses WHERE source='tbfo-champ' AND cle='39-2025' AND user_id=?`, [ID(2)]))[0]?.titre === 'Champion TBFO'
+    || (console.log('        v :', JSON.stringify(v)), false));
+  v = await lire(5);
+  check('un supporter de Chelsea ne reçoit rien', !v.some((y) => y.type === 'champion'));
+  moi = ID(1);
+  const fiche = await (await fetch(`${base}/api/club/42`)).json();
+  check('la page du club : son titre de champion TBFO', fiche.tbfo?.titres?.[0]?.saison === 2025
+    || (console.log('        titres :', JSON.stringify(fiche.tbfo?.titres)), false));
+  await p4.goto(`${base}/club/42`, { waitUntil: 'domcontentloaded' });
+  check('la vitrine des trophées', await jusqua(async () => /CHAMPION 2025/.test(await t4('.vitrine'))));
+  await p4.addScriptTag({ url: '/tbfo-fete.js' });
+  await p4.evaluate((l) => { window.TBF_TBFO_FETE.feter(l); }, [sacre]);
+  check('la fête du champion TBFO', await jusqua(() => p4.evaluate(() => /CHAMPION TBFO !/.test(document.body.innerText)
+    && /\+100/.test(document.body.innerText))));
+  if (process.env.CAPTURES) {
+    await dodo(2200);
+    await p4.screenshot({ path: path.join(process.env.CAPTURES, 'fete-champion.png') });
+  }
+  await p4.close();
+  check('aucune erreur de page pendant les exploits', erreurs.length === 0 || (console.log('        ', erreurs), false));
 }
 
 await nav.close();

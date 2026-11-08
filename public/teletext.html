@@ -263,6 +263,25 @@ td.pts{font-family:var(--banner);font-size:15px}
 .vers-tbfo span{flex:1;font-size:12px;opacity:.9;min-width:0}
 .vers-tbfo i{font-style:normal;font-family:var(--banner);font-size:18px;color:var(--projo)}
 
+/* La fin de saison TBFO (Gaël, 8 novembre 2026) : la course au titre, puis
+   le champion et son trophée. */
+.titre-tbfo{position:relative;display:grid;grid-template-columns:62px 1fr;gap:10px;align-items:center;margin:0 0 10px;
+  padding:10px 12px;border-radius:10px;overflow:hidden;isolation:isolate;color:var(--craie);text-decoration:none;
+  background:linear-gradient(110deg,#2a2014,#141820 70%);border:2px solid var(--projo);box-shadow:0 4px 0 #000}
+.titre-tbfo::before{content:"";position:absolute;inset:-60%;z-index:-1;opacity:.12;
+  background:repeating-conic-gradient(from 0deg at 12% 50%,var(--projo) 0 7deg,transparent 7deg 20deg)}
+.titre-tbfo .coupe{position:relative;width:56px;height:56px;display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(90deg,#c9961f,#ffe08a 45%,#c9961f);border:2px solid #111;border-radius:6px 6px 28px 28px;
+  box-shadow:3px 3px 0 #111}
+.titre-tbfo .coupe img{width:32px;height:32px;object-fit:contain}
+.titre-tbfo small{display:block;font-family:var(--banner);font-size:10.5px;letter-spacing:.18em;color:var(--projo)}
+.titre-tbfo strong{display:block;font-family:var(--banner);font-size:17px;letter-spacing:.04em;line-height:1.15;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.titre-tbfo span{display:block;font-size:11.5px;opacity:.9;line-height:1.35;margin-top:2px}
+.titre-tbfo.course .coupe{background:#1d232c;border-style:dashed;border-color:var(--projo)}
+.titre-tbfo.course .coupe::after{content:"?";font-family:var(--banner);font-size:26px;color:var(--projo)}
+.titre-tbfo.course .coupe img{position:absolute;opacity:.25}
+
 .chips.ech{margin:8px 0 10px}
 .maplace{font-size:12px;padding:2px 6px 12px;opacity:.9;line-height:1.6}
 /* Le rang, en craie grasse : en or et en quatorze pixels, il ne tenait pas
@@ -628,7 +647,7 @@ async function ouvrir(id) {
   /* La saison et les classements appartiennent à la compétition qu'on
      quitte : les garder ferait afficher les siens sous le nom de l'autre,
      le temps d'un aller-retour au serveur. */
-  SAISON = null; SAISON_VOULUE = null; FERVEUR = null; echelle = 'tribunes';
+  SAISON = null; SAISON_VOULUE = null; FERVEUR = null; FIN = null; echelle = 'tribunes';
   $('back').classList.add('on');
   // La feuille : un seul panneau sous le tableau, la colonne étant rendue au décor.
   $('list').classList.add('feuille');
@@ -934,6 +953,8 @@ const ECHELLES = [['tribunes', 'CLUBS'], ['joueurs', 'SUPPORTERS'], ['kops', 'KO
 let echelle = 'tribunes';
 /** La dernière réponse : changer d'échelle ne doit rien redemander. */
 let FERVEUR = null;
+/* La fin de saison TBFO de la compétition (`/api/club/fin/:ligue`). */
+let FIN = null;
 /** La saison que le télétexte a retenue, transmise telle quelle au classement. */
 let SAISON = null;
 /** La saison choisie au sélecteur, ou `null` : la courante, que le serveur choisit. */
@@ -1007,9 +1028,12 @@ async function chargerFerveur() {
   // En même temps que le classement, pas après lui : l'attente ne s'ajoute pas.
   const dessinsP = dessins();
   let d;
+  const finP = fetch(`/api/club/fin/${ligue}${SAISON ? `?saison=${SAISON}` : ''}`, { credentials: 'same-origin' })
+    .then((r) => (r.ok ? r.json() : null)).then((j) => j?.fin ?? null).catch(() => null);
   try { d = await rang(`/competition/${ligue}${SAISON ? `?saison=${SAISON}` : ''}`); }
   catch (e) { return panne(e); }
   await dessinsP;
+  FIN = await finP;
   if (quelle !== ligue || vue !== 'ligue' || onglet !== 'ferveur') return;
   FERVEUR = d;
   rendreFerveur();
@@ -1065,7 +1089,7 @@ function rendreFerveur() {
         + 'donnent <i>pour son club</i>.'
       : 'Aucun KOP n’a encore de ferveur dans cette compétition.',
   };
-  $('list').innerHTML = chips + moi + (liste.length ? tableFerveur(liste)
+  $('list').innerHTML = chips + (echelle === 'tribunes' ? titreTbfo(FIN) : '') + moi + (liste.length ? tableFerveur(liste)
     : `<div class="empty">${RIEN[echelle] ?? RIEN.joueurs}</div>`);
 
   $('list').querySelector('.ech').onclick = (e) => {
@@ -1074,6 +1098,30 @@ function rendreFerveur() {
     echelle = b.dataset.e;
     rendreFerveur();
   };
+}
+
+/**
+ * **La fin de saison TBFO** (idée 4, Gaël, 8 novembre 2026) : tant que la
+ * saison se joue, la course au titre et ce que le champion offrira ; une
+ * fois finie, le champion et son trophée. Rien pour une coupe.
+ */
+function titreTbfo(f) {
+  if (!f) return '';
+  const ech = Number(f.echarpes) || 0;
+  const cadeau = ech ? `${ech} écharpes à chacun de ses supporters` : 'la gloire';
+  if (f.finie) {
+    if (!f.champion) return '';
+    return `<a class="titre-tbfo" href="/club/${Number(f.champion.id)}"><span class="coupe">${f.champion.logo
+      ? `<img src="${esc(f.champion.logo)}" alt="">` : ''}</span><span>
+      <small>🏆 CHAMPION TBFO ${esc(f.saison)}</small><strong>${esc(f.champion.name)}</strong>
+      <span>${Number(f.champion.points) || 0} points · ${esc(cadeau)} offertes</span></span></a>`;
+  }
+  const j = Number(f.reste) || 0;
+  const l = f.leader;
+  return `<div class="titre-tbfo course"><span class="coupe">${l?.logo ? `<img src="${esc(l.logo)}" alt="">` : ''}</span><span>
+    <small>LA COURSE AU TITRE TBFO · ${j > 1 ? `ENCORE ${j} JOURS` : j === 1 ? 'DERNIER JOUR' : 'DERNIERS MATCHS'}</small>
+    <strong>${l ? `En tête : ${esc(l.name)}` : 'Le titre est à prendre'}</strong>
+    <span>À la fin de la saison, le champion TBFO offre ${esc(cadeau)}.</span></span></div>`;
 }
 
 /**

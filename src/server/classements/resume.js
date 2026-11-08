@@ -14,7 +14,8 @@
        les mêmes règles que `championnat.js`) ;
      — le Virage : la corde, les présents de chaque tribune et leur ferveur ;
      — les meneurs de chaque tribune (duels gagnés qui comptent) ;
-     — les écharpes de chaque supporter (`victoires.js`).
+     — les écharpes de chaque supporter (`victoires.js`), le derby ×2 ;
+     — l'homme du match TBFO, avec son Fanzzy (`exploits.js`).
 
    Rien n'écrit ; sans schéma.
    ======================================================================= */
@@ -22,11 +23,13 @@ import { reglage } from '../../shared/reglages.js';
 import { couleursDuClub } from '../kop/index.js';
 import { FINIS, finDuMatch, dansLePlafond } from './championnat.js';
 import { echarpesDe } from './victoires.js';
+import { createExploits } from './exploits.js';
+import { habillerJoueurs } from '../fanzzy/avatar.js';
 
 const SQL_FINIS = FINIS.map((s) => `'${s}'`).join(',');
 const SCHEMA = new Set(['ER_NO_SUCH_TABLE', 'ER_BAD_FIELD_ERROR']);
 
-export function createResume({ pool, classements }) {
+export function createResume({ pool, classements, exploits = createExploits({ pool, classements }) }) {
   const q = async (sql, params = []) => (await pool.execute(sql, params))[0];
   const facultatif = async (fn, defaut) => {
     try { return await fn(); } catch (e) { if (SCHEMA.has(e?.code)) return defaut; throw e; }
@@ -124,6 +127,22 @@ export function createResume({ pool, classements }) {
       for (const p of x.joueurs[x.gagnant]) meneurs[x.gagnant].set(p, (meneurs[x.gagnant].get(p) ?? 0) + 1);
     }
     const fini = FINIS.includes(f.status_short);
+    /* L'homme du match (fini seulement), habillé de son Fanzzy, et ses titres. */
+    const [elus, coef] = await Promise.all([
+      fini ? exploits.hommesDuMatch([id]) : new Map(),
+      m ? exploits.coefDe(m) : (async () => ((await exploits.derbyDe(new Date(f.kickoff_at))) === id
+        ? Math.max(1, Math.round(Number(reglage('tbfo.derby_coef')) || 1)) : 1))(),
+    ]);
+    const elu = elus.get(id) ?? null;
+    let homme = null;
+    if (elu) {
+      const [habits, titres] = await Promise.all([
+        facultatif(() => habillerJoueurs(q, [elu.userId]), null), exploits.titresHdm([elu.userId])]);
+      const camp = d.liste.find((x) => x.compte && x.gagnant != null && x.joueurs[x.gagnant].includes(elu.pseudo))?.gagnant ?? null;
+      homme = { pseudo: elu.pseudo, gagnes: elu.gagnes, camp, avatar: habits?.get(elu.userId)?.avatar ?? null,
+        titres: titres.get(elu.userId) ?? 0, echarpes: reglage('tbfo.hdm_echarpes') };
+    }
+    const derby = coef > 1 || (await exploits.derbyDe(new Date(f.kickoff_at))) === id;
     return {
       match: {
         id, saison: Number(f.season), statut: f.status_short, minute: f.elapsed ?? null, coup: f.kickoff_at,
@@ -139,10 +158,12 @@ export function createResume({ pool, classements }) {
       virage: v,
       meneurs: meneurs.map((mp) => [...mp].map(([pseudo, gagnes]) => ({ pseudo, gagnes }))
         .sort((a, b) => b.gagnes - a.gagnes || a.pseudo.localeCompare(b.pseudo)).slice(0, 3)),
-      echarpes: m && reglage('tbfo.actif') ? [echarpesDe(m, 0), echarpesDe(m, 1)] : [0, 0],
+      echarpes: m && reglage('tbfo.actif') ? [echarpesDe(m, 0, coef), echarpesDe(m, 1, coef)] : [0, 0],
+      homme,
+      derby: derby ? { coef } : null,
       bareme: {
         victoire: reglage('tbfo.victoire_echarpes'), nul: reglage('tbfo.nul_echarpes'),
-        virage: reglage('tbfo.virage_echarpes'),
+        virage: reglage('tbfo.virage_echarpes'), homme: reglage('tbfo.hdm_echarpes'),
       },
     };
   }

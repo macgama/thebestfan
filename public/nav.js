@@ -1538,6 +1538,14 @@
       tbfo.defer = true;
       document.head.append(tbfo);
     }
+    /* **« Ton club perd au TBFO ! »** (`tbfo-alerte.js`, Gaël, 8 novembre
+       2026) : pendant un vrai match, un duel pour faire pencher la balance. */
+    if (user && !document.querySelector('script[src="/tbfo-alerte.js"]')) {
+      const alerte = document.createElement('script');
+      alerte.src = '/tbfo-alerte.js';
+      alerte.defer = true;
+      document.head.append(alerte);
+    }
     /* **L'appel d'un ami** (`appel-fete.js`) : une demande d'ami, une
        invitation en duel ou dans un KOP, annoncée en grand. Avant le rappel
        du duel, qui lui passe les invitations qu'il lit. */

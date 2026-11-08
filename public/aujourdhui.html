@@ -365,6 +365,8 @@ a.vers-club:hover span,a.vers-club:focus-visible span{text-decoration:underline}
        quand la barre du haut le dit déjà. Le sous-titre reste — il nomme la
        compétition qu'on regarde, ce qu'aucune barre ne dira. -->
   <div class="top"><h1><span>LES MATCHS</span><small id="sous">TOUTES COMPÉTITIONS</small></h1></div>
+  <!-- Le derby de la semaine (Gaël, 8 novembre 2026) : `derby.js`. -->
+  <div data-derby="carte" id="derby" hidden></div>
   <!-- Deux rails d'onglets au vert du foot, le ton de cet écran sur l'accueil. -->
   <div class="jours tbf-onglets" data-ton="vert" id="jours"></div>
   <div class="filtres tbf-onglets" data-ton="vert" data-ajuste>
@@ -393,6 +395,7 @@ a.vers-club:hover span,a.vers-club:focus-visible span{text-decoration:underline}
 <!-- L’horloge du match, la même que dans le Grand Virage : elle fait courir
      la minute entre deux relevés, sans un appel de plus. -->
 <script src="/horloge.js"></script>
+<script src="/derby.js" defer></script>
 <script src="/a-jouer.js" defer></script>
 <!-- Classique et sans « defer » : le rendu de la liste appelle TBF_PAYS dès la
      première journée reçue, donc il doit être là avant le bloc du bas. -->

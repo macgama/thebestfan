@@ -27,6 +27,7 @@ import { habillerJoueurs } from '../fanzzy/avatar.js';
 import { lireMatch, tableau } from '../classements/championnat.js';
 import { createVictoires } from '../classements/victoires.js';
 import { createResume } from '../classements/resume.js';
+import { createExploits } from '../classements/exploits.js';
 
 const TTL_MS = 60_000;
 
@@ -38,6 +39,10 @@ export function lignéesDuClub(teamId) {
 }
 
 export function createClub({ pool, classements, store = null }) {
+  /* Les exploits TBFO (Gaël, 8 novembre 2026) : homme du match, derby,
+     alerte, fin de saison. Un seul module pour les écharpes, le résumé et
+     les routes, pour qu'ils partagent leur mémoire. */
+  const exploits = createExploits({ pool, classements });
   const q = async (sql, params = []) => (await pool.query(sql, params))[0];
   const cache = new Map();
   const memo = (cle, fn) => {
@@ -221,9 +226,10 @@ export function createClub({ pool, classements, store = null }) {
         { type: 'club', id, nom: team.name }), []),
     ]);
     const ligue = ligues.find((l) => l.type === 'League') ?? ligues[0] ?? null;
-    const [jeu, reel, reels2] = await Promise.all([tbfo(id, ligue, ligues), classementReel(id, ligue),
+    const [jeu, reel, reels2, titres] = await Promise.all([tbfo(id, ligue, ligues), classementReel(id, ligue),
       Promise.all(ligues.map(async (l) => ({ ligue: { id: l.id, name: l.name, logo: l.logo ?? null, type: l.type ?? null },
-        classement: await classementReel(id, l) })))]);
+        classement: await classementReel(id, l) }))),
+      facultatif('titres TBFO', () => exploits.titresDuClub(id), [])]);
     /* Le prochain match (ou celui qui se joue) et son score TBFO en direct. */
     const prochain = reels.prochains[0] ?? null;
     const [score] = prochain ? await classements.scoresTbfo([prochain.id]) : [];
@@ -238,7 +244,7 @@ export function createClub({ pool, classements, store = null }) {
       meilleursFans: (meilleurs ?? []).slice(0, 3).map((x) => ({
         public_id: x.public_id, pseudo: x.pseudo, ferveur: Number(x.ferveur ?? 0),
         avatar: x.avatar ?? null, niveau: x.niveau ?? null })),
-      tbfo: jeu,
+      tbfo: { ...jeu, titres },
       prochain: prochain ? { ...prochain, tbfo: score ?? null } : null,
       vrai: { ligues, ligue, classement: reel, classements: reels2.filter((x) => x.classement),
         derniers: reels.derniers, prochains: reels.prochains },
@@ -247,7 +253,7 @@ export function createClub({ pool, classements, store = null }) {
   }
 
   const router = express.Router();
-  const victoires = createVictoires({ pool, classements });
+  const victoires = createVictoires({ pool, classements, exploits });
 
   /* Les écharpes des matchs TBFO gagnés par la tribune qu'on a poussée
      (choix de Gaël, 7 novembre 2026) : réglées à la lecture, fêtées par
@@ -265,7 +271,41 @@ export function createClub({ pool, classements, store = null }) {
 
   /* Le résumé d'un vrai match côté jeu : duels, Virage, meneurs, écharpes
      (Gaël, 8 novembre 2026). La page `/tbfo/:id`. */
-  const { resume } = createResume({ pool, classements });
+  const { resume } = createResume({ pool, classements, exploits });
+
+  const lecture = (nom, fn) => async (req, res) => {
+    try { await fn(req, res); } catch (e) {
+      console.error(`[club] ${nom}`, e);
+      res.status(500).json({ error: 'club.error.lecture' });
+    }
+  };
+
+  /* Le derby de la semaine (idée 2) : l'accueil et la page des matchs. */
+  router.get('/derby', lecture('derby', async (_req, res) => {
+    res.set('cache-control', 'public, max-age=30');
+    res.json(await exploits.derbyDeLaSemaine());
+  }));
+
+  /* « Ton club perd au TBFO » (idée 3) : `public/tbfo-alerte.js`. */
+  router.get('/alertes', lecture('alertes', async (req, res) => {
+    if (!req.user?.id) return res.status(401).json({ error: 'auth.error.unauthenticated' });
+    res.set('cache-control', 'no-store');
+    res.json({ alertes: await exploits.alertes(req.user.id) });
+  }));
+
+  /* La fin de saison TBFO d'un championnat (idée 4) : la course au titre,
+     ou son champion. `?saison=` ; sans, la plus récente connue. */
+  router.get('/fin/:ligue', lecture('fin de saison', async (req, res) => {
+    const lg = Number(req.params.ligue);
+    if (!Number.isInteger(lg) || lg <= 0) return res.status(400).json({ error: 'club.error.ligue' });
+    let sa = Number(req.query.saison);
+    if (!Number.isInteger(sa) || sa <= 0) {
+      const [r] = await q('SELECT MAX(season) AS s FROM fixtures WHERE league_id = ?', [lg]);
+      sa = Number(r?.s) || 0;
+    }
+    res.set('cache-control', 'public, max-age=120');
+    res.json({ fin: sa ? await exploits.finDeSaison(lg, sa) : null });
+  }));
   const resumes = new Map();
   router.get('/match/:id', async (req, res) => {
     const id = Number(req.params.id);
@@ -305,7 +345,7 @@ export function createClub({ pool, classements, store = null }) {
     }
   });
 
-  return { router, fiche, victoires, oublier: () => cache.clear() };
+  return { router, fiche, victoires, exploits, oublier: () => { cache.clear(); exploits.oublier(); } };
 }
 
 export { lireMatch };

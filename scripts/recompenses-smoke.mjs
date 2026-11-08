@@ -249,7 +249,7 @@ check('les vingt-deux sources, liste fermée (la neuvième : l’XP du Virage ; 
   + 'pronostic ; puis six pour les mini-jeux, deux entre amis, deux pour les défis de la semaine, la victoire en duel classé, et le match TBFO)',
   meme(SOURCES, ['bonus', 'mission', 'sachet', 'carnet', 'relais', 'cran', 'serie', 'division',
     'virage', 'prono', 'jongles', 'tirs', 'chant', 'deplacement', 'tifo', 'boss', 'cadeau', 'defi',
-    'hebdo', 'voie', 'victoire', 'tbfo']));
+    'hebdo', 'voie', 'victoire', 'tbfo', 'tbfo-hdm', 'tbfo-champ']));
 check('les raisons de refus sont celles du contrat (§ 11), quota compris',
   meme([...RAISONS].sort(), ['deja', 'incomplet', 'jour_passe', 'change', 'inactif', 'plafond',
     'schema', 'inconnu', 'quota'].sort()));

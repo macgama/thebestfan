@@ -544,6 +544,25 @@ const RUBRIQUES = [
           + 'si ta tribune a gagné le plus de duels, 5 à égalité, et 10 de plus si elle a '
           + 'gagné le Virage. Une fête te les annonce à ta visite suivante. Même si ton duel '
           + 'est perdu, tu touches ta part quand ta tribune gagne.'],
+      ['C’est quoi, l’homme du match TBFO ?',
+        () => 'Sur chaque vrai match fini, le joueur qui a gagné le plus de duels classés '
+          + '(à égalité : la plus grosse ferveur au Virage). Il reçoit le titre « Homme du '
+          + `match TBFO » et ${reglage('tbfo.hdm_echarpes')} écharpes. Sa carte est sur la `
+          + 'page du match TBFO ; tant que le match se joue, le titre est à prendre.'],
+      ['C’est quoi, le derby de la semaine ?',
+        () => 'Chaque semaine, le vrai match qui réunit le plus de supporters des deux clubs. '
+          + 'Il est affiché sur l’accueil et sur la page des matchs, et les écharpes de la '
+          + `tribune y sont multipliées par ${reglage('tbfo.derby_coef')}.`],
+      ['Pourquoi je reçois « Ton club perd au TBFO » ?',
+        'Pendant un vrai match, quand un club que tu suis a moins de points TBFO en jeu que '
+          + 'son adversaire, le jeu te prévient : un duel gagné pour ta tribune ou le Virage '
+          + 'peuvent encore faire pencher la balance. PLUS TARD la fait taire tant que l’écart '
+          + 'ne grandit pas.'],
+      ['Que se passe-t-il à la fin d’une saison TBFO ?',
+        () => 'Quand la saison d’un championnat est finie, le premier de son championnat TBFO '
+          + 'est champion. Chacun de ses supporters reçoit le titre « Champion TBFO » et '
+          + `${reglage('tbfo.champion_echarpes')} écharpes, et le trophée s’affiche sur la page `
+          + 'du club. Pendant la saison, l’onglet ⚡ TBFO de la compétition montre la course au titre.'],
       ['C’est quoi, le carnet de la saison ?',
         () => 'Chaque mission du jour y pose des tampons : '
           + `${reglage('saison.tampons_facile')} pour une facile, `

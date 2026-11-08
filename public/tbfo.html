@@ -18,6 +18,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Permanent+Marker&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/ui.css">
 <script src="/dialogue.js" defer></script>
+<script src="/fanzzy-art.js"></script>
+<script src="/fanzzy-etats.js"></script>
 <style>
 /* =======================================================================
    Le match TBFO d'un vrai match (`/tbfo/<id>`) : tout ce qui s'y est joué.
@@ -125,6 +127,34 @@ main{width:100%;max-width:var(--colonne);padding:0 12px}
 .mene b{font-family:var(--banner)}
 .vide-msg{text-align:center;padding:14px 8px;font-size:13px;line-height:1.5}
 .vide-msg b{display:block;font-family:var(--banner);font-size:18px;letter-spacing:.06em;color:#9fb7d8;margin-bottom:4px}
+/* ------------------------------------------- le derby et l'homme du match
+   (Gaël, 8 novembre 2026, « les 4 idées m'intéressent »). */
+.derby{position:absolute;z-index:4;top:34px;left:-40px;right:-40px;rotate:-4deg;text-align:center;pointer-events:none;
+  background:repeating-linear-gradient(90deg,#F5C33B 0 22px,#ffd85e 22px 44px);color:#111;font-family:var(--banner);
+  font-size:13px;letter-spacing:.2em;padding:4px 0;box-shadow:0 3px 0 #000,0 0 18px rgba(245,195,59,.6);
+  -webkit-text-stroke:0}
+.derby b{display:inline-block;background:#111;color:#F5C33B;padding:0 7px;border-radius:3px;margin-left:8px;letter-spacing:.06em}
+.hdm{position:relative;display:grid;grid-template-columns:96px 1fr;gap:12px;align-items:center;margin-top:14px;
+  padding:10px 12px 10px 6px;border-radius:12px;overflow:hidden;isolation:isolate;
+  background:radial-gradient(circle at 18% 60%,color-mix(in srgb,var(--k) 55%,transparent),transparent 62%),#0f1318;
+  border:2px solid #F5C33B;box-shadow:0 0 0 3px #111,0 0 26px rgba(245,195,59,.35)}
+.hdm::before{content:"";position:absolute;inset:-40%;z-index:-1;opacity:.18;
+  background:repeating-conic-gradient(from 0deg at 18% 60%,#F5C33B 0 6deg,transparent 6deg 18deg)}
+.hdm .perso{width:96px;height:108px;display:flex;align-items:flex-end;justify-content:center}
+.hdm .perso img{max-width:100%;max-height:100%;object-fit:contain;filter:drop-shadow(3px 4px 0 #000)}
+.hdm .perso span{width:72px;height:72px;border-radius:50%;background:var(--k);display:flex;align-items:center;
+  justify-content:center;font-family:var(--banner);font-size:34px;border:3px solid #111}
+.hdm .t{min-width:0}
+.hdm small{display:block;font-family:var(--banner);font-size:11px;letter-spacing:.2em;color:#F5C33B}
+.hdm strong{display:block;font-family:'Permanent Marker',var(--banner);font-size:26px;line-height:1.05;margin:2px 0 4px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-shadow:3px 3px 0 #000}
+.hdm .l2{font-size:12px;color:#d8d2c6}
+.hdm .l2 b{font-family:var(--banner);color:#fff}
+.hdm .prix{display:inline-flex;align-items:center;gap:4px;margin-top:6px;background:#111;border-radius:6px;padding:2px 8px 2px 4px;
+  font-family:var(--banner);font-size:14px;color:#F5C33B}
+.hdm .prix img{width:22px;height:22px}
+.hdm.attente{border-style:dashed;border-color:#6b7280;box-shadow:none}
+.hdm.attente small{color:#aab}
 .note{font-size:12px;opacity:.75;line-height:1.45;margin:16px 2px 0}
 .note a{color:inherit}
 </style>
@@ -169,6 +199,7 @@ function versus(d) {
     ${m.ligue ? `<a class="ligue" href="/teletext?ligue=${Number(m.ligue.id)}">${esc(String(m.ligue.name).toUpperCase())} · MATCH TBFO</a>` : ''}
     ${m.home.logo ? `<img class="ecu a" src="${esc(m.home.logo)}" alt="">` : ''}
     ${m.away.logo ? `<img class="ecu b" src="${esc(m.away.logo)}" alt="">` : ''}
+    ${d.derby ? `<div class="derby">⚔ DERBY DE LA SEMAINE <b>ÉCHARPES ×${Number(d.derby.coef) || 2}</b></div>` : ''}
     <div class="eclair">VS</div>${reel}
     <a class="nom a" href="/club/${Number(m.home.id)}">${esc(m.home.name)}</a>
     <a class="nom b" href="/club/${Number(m.away.id)}">${esc(m.away.name)}</a>
@@ -198,13 +229,44 @@ function tableauScore(d) {
   </div>`;
 }
 
+/* L'homme du match TBFO : le joueur qui a gagné le plus de duels qui
+   comptent, avec son Fanzzy. Tant que le match se joue : le meilleur du
+   moment est à battre. */
+function homme(d) {
+  const m = d.match, h = d.homme;
+  const k = h?.camp === 1 ? coul(m.away.couleurs, 0, '#2f6fd0') : coul(m.home.couleurs, 0, '#E0402C');
+  if (!h) {
+    if (m.fini || !(d.duels ?? []).length) return '';
+    const tous = [...(d.meneurs?.[0] ?? []), ...(d.meneurs?.[1] ?? [])].sort((a, b) => b.gagnes - a.gagnes);
+    const t = tous[0];
+    return `<div class="hdm attente" style="--k:#555"><div class="perso"><span>?</span></div><div class="t">
+      <small>HOMME DU MATCH TBFO · À PRENDRE</small>
+      <strong>${t ? esc(t.pseudo) : 'Personne'}</strong>
+      <div class="l2">${t ? `mène avec <b>${t.gagnes}</b> duel${t.gagnes > 1 ? 's' : ''} gagné${t.gagnes > 1 ? 's' : ''}. ` : ''}Le titre se joue jusqu’au coup de sifflet.</div>
+    </div></div>`;
+  }
+  let src = null;
+  try { src = h.avatar?.id ? window.FZART?.dessinAvatar?.(h.avatar, 'plein', { etat: 'victoire' }) : null; } catch { src = null; }
+  const club = h.camp === 1 ? m.away : h.camp === 0 ? m.home : null;
+  return `<div class="hdm" style="--k:${k}"><div class="perso">${src ? `<img src="${esc(src)}" alt="">`
+      : `<span>${esc(String(h.pseudo ?? '?').slice(0, 1).toUpperCase())}</span>`}</div><div class="t">
+    <small>★ HOMME DU MATCH TBFO</small>
+    <strong>${esc(h.pseudo)}</strong>
+    <div class="l2"><b>${h.gagnes}</b> duel${h.gagnes > 1 ? 's' : ''} gagné${h.gagnes > 1 ? 's' : ''}${club ? ` pour ${esc(club.name)}` : ''}
+      ${h.titres > 1 ? ` · <b>${h.titres}</b>ᵉ titre` : ''}</div>
+    ${h.echarpes ? `<span class="prix"><img src="/img/gains/echarpes.webp" alt="">+${Number(h.echarpes)}</span>` : ''}
+  </div></div>`;
+}
+
 function echarpes(d) {
   const m = d.match;
   if (!m.fini) {
     const b = d.bareme ?? {};
-    return `<div class="cousu">CE QUE LA TRIBUNE GAGNE</div><div class="pan" style="font-size:12.5px;line-height:1.5">
-      À la fin du match, chaque joueur de la tribune gagnante reçoit <b>${b.victoire ?? 20}</b> écharpes
-      (<b>${b.nul ?? 5}</b> au nul), et <b>${b.virage ?? 10}</b> de plus si elle gagne le Virage.</div>`;
+    const x = Number(d.derby?.coef) > 1 ? Number(d.derby.coef) : 1;
+    return `<div class="cousu">CE QUE LA TRIBUNE GAGNE${x > 1 ? ` <i>DERBY ×${x}</i>` : ''}</div><div class="pan" style="font-size:12.5px;line-height:1.5">
+      À la fin du match, chaque joueur de la tribune gagnante reçoit <b>${(b.victoire ?? 20) * x}</b> écharpes
+      (<b>${(b.nul ?? 5) * x}</b> au nul), et <b>${(b.virage ?? 10) * x}</b> de plus si elle gagne le Virage.
+      ${b.homme ? `L’homme du match en reçoit <b>${b.homme}</b> de plus.` : ''}</div>`;
   }
   const e = d.echarpes ?? [0, 0];
   const c = (club, n, k) => `<div class="cote" style="--k:${k}"><h3>${esc(club.name.toUpperCase())}</h3>
@@ -275,7 +337,7 @@ function rendre(d) {
   const msg = vide ? `<div class="pan vide-msg"><b>0–0 D’OFFICE</b>${m.fini
     ? 'Personne n’a joué de duel classé ni le Virage sur ce match : 1 point pour chaque club au championnat TBFO.'
     : 'Personne n’a encore joué ce match. Le premier duel gagné fait pencher la balance.'}</div>` : '';
-  $('page').innerHTML = versus(d) + tableauScore(d) + msg + (vide && m.fini ? '' : echarpes(d)) + virage(d) + meneurs(d) + duels(d)
+  $('page').innerHTML = versus(d) + tableauScore(d) + homme(d) + msg + (vide && m.fini ? '' : echarpes(d)) + virage(d) + meneurs(d) + duels(d)
     + `<p class="note">Chaque vrai match est un match TBFO : la tribune qui gagne le plus de duels classés marque
       3 points, 1 à égalité, 0 sinon, et le Virage gagné donne 2 points de plus. Un match où personne n’a joué
       compte 0–0. <a href="/comment-jouer#saisons">Les règles</a></p>`;
