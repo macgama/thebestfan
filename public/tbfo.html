@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<script src="/langue.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<script>/* Les barres du téléphone : dans un onglet Android, Chrome tient lui-même la page hors de la barre d'état et des boutons du bas ; depuis l'icône, la page passe sous les boutons et s'en garde par var(--bas) (ui.css, « Les barres du téléphone »). */if(/Android/i.test(navigator.userAgent)&&matchMedia('(display-mode: browser)').matches){var tbfVp=document.querySelector('meta[name=viewport]');tbfVp.content=tbfVp.content.replace(/,\s*viewport-fit=cover/,'')}</script>
+<script>/* Le bas caché sous les boutons du téléphone. Depuis l'icône, sur le S24+ de Gaël, Chrome dessine la page jusqu'au bas de l'écran, sous les trois boutons, sans toujours en dire la hauteur (var(--bas) à zéro) : le bas de l'accueil restait dessous (captures du 26 octobre 2026), celui de la fiche d'un Fanzzy aussi (28 octobre). Toutes les pages le gardent par var(--bas) (ui.css). Quand la fenêtre descend jusqu'au bas de l'écran (moins de 60 px d'écart : la seule barre d'état), on garde 52 px, la hauteur des boutons ; --bas prend le plus grand des deux. Un onglet, une fenêtre que Chrome tient au-dessus des boutons, ou le plein écran de l'icône (manifeste « fullscreen », 30 octobre 2026 : les boutons y sont cachés), ne garde rien. */try{if(/Android/i.test(navigator.userAgent)&&!matchMedia('(display-mode: browser)').matches&&!matchMedia('(display-mode: fullscreen)').matches&&screen.height-innerHeight<60)document.documentElement.style.setProperty('--bas-cache','52px')}catch(e){}</script>
+<script>/* La hauteur vraie de l'écran (4 novembre 2026). Dans l'appli Android (Play Store, plein écran), les boutons ÉVOLUER / EMMENER EN DUEL de la fiche tombaient sous le bas de l'écran : Chrome y annonçait une page (100dvh) plus haute que l'écran qu'on voit. Hors d'un onglet, les écrans de jeu prennent donc la plus petite de trois hauteurs : 100dvh, la fenêtre (innerHeight) et l'écran (screen.height) — var(--h-ecran), ui.css. Le clavier ouvert ne rétrécit rien : on ne remesure pas pendant une saisie. */try{if(/Android/i.test(navigator.userAgent)&&!matchMedia('(display-mode: browser)').matches){var tbfH=function(){var a=document.activeElement;if(a&&/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName))return;var h=Math.min(innerHeight||1e4,screen.height||1e4);if(h>0&&h<1e4)document.documentElement.style.setProperty('--h-ecran','min(100dvh, '+h+'px)')};tbfH();addEventListener('resize',tbfH)}}catch(e){}</script>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" href="/img/apple-touch-icon.png">
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#0A0D11">
+<title>Match TBFO — thebestfan</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Permanent+Marker&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/ui.css">
+<script src="/dialogue.js" defer></script>
+<style>
+/* =======================================================================
+   Le match TBFO d'un vrai match (`/tbfo/<id>`) : tout ce qui s'y est joué.
+
+   Demande de Gaël du 8 novembre 2026 : « une page avec un résumé de tout ce
+   qui s'est passé au niveau des duels, Virage par match réel ». En haut, le
+   VERSUS aux couleurs des deux clubs, le vrai score en petit et le score
+   TBFO en grand ; puis les écharpes de chaque tribune, le Virage (la corde
+   et ses présents), les meneurs, et chaque duel classé dans l'ordre, avec
+   ce qui l'a fait compter ou non. Un match où personne n'a joué : son 0–0
+   d'office, d'une autre couleur, et de quoi aller jouer s'il n'est pas fini.
+   ======================================================================= */
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100dvh}
+body{background:var(--beton);color:var(--craie);font-family:var(--ui);display:flex;justify-content:center;
+  padding:0 0 calc(var(--nav-h,62px) + 26px)}
+main{width:100%;max-width:var(--colonne);padding:0 12px}
+.colonne{width:100%;max-width:620px;margin:0 auto}
+.chargement{padding:60px 0;text-align:center;opacity:.8}
+
+/* ------------------------------------------------------------- le versus */
+.colonne{--a1:#E0402C;--a2:#7a1a10;--b1:#2f6fd0;--b2:#0e2a55}
+.vs{position:relative;height:250px;margin:0 -12px;overflow:hidden;isolation:isolate;background:#0b0e12}
+.vs .g,.vs .d{position:absolute;top:0;bottom:0;width:58%}
+.vs .g{left:0;background:linear-gradient(160deg,var(--a1),var(--a2));clip-path:polygon(0 0,100% 0,76% 100%,0 100%)}
+.vs .d{right:0;background:linear-gradient(200deg,var(--b1),var(--b2));clip-path:polygon(24% 0,100% 0,100% 100%,0 100%)}
+.vs.vide .g,.vs.vide .d{filter:saturate(.35) brightness(.7)}
+.vs .ecu{position:absolute;top:58px;width:84px;height:84px;object-fit:contain;filter:drop-shadow(0 6px 0 rgba(0,0,0,.55))}
+.vs .ecu.a{left:22px}.vs .ecu.b{right:22px}
+.vs .nom{position:absolute;top:150px;width:40%;font-family:var(--banner);font-size:15px;letter-spacing:.06em;
+  text-shadow:0 2px 0 #000;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#fff;text-decoration:none}
+.vs .nom.a{left:16px}.vs .nom.b{right:16px;text-align:right}
+.vs .ligue{position:absolute;top:12px;left:0;right:0;text-align:center;font-family:var(--banner);font-size:11.5px;
+  letter-spacing:.16em;color:#fff;text-shadow:0 2px 2px #000;text-decoration:none}
+.vs .eclair{position:absolute;left:50%;top:60px;translate:-50% 0;rotate:-8deg;font-family:var(--banner);font-size:54px;
+  font-weight:700;color:#fff;text-shadow:0 0 18px var(--projo),4px 4px 0 #000;z-index:2}
+.vs .reel{position:absolute;left:50%;top:140px;translate:-50% 0;z-index:2;background:rgba(0,0,0,.72);border-radius:6px;
+  padding:3px 9px;font-family:var(--banner);font-size:12px;letter-spacing:.08em;white-space:nowrap}
+.vs .reel.live{color:#ff8a7a}
+
+/* ---------------------------------------------------------- le score TBFO */
+.score{position:relative;z-index:3;margin:-58px 4px 0;background:#07090cf0;border:2px solid var(--projo);border-radius:12px;
+  padding:10px 14px;box-shadow:0 0 24px rgba(245,195,59,.33)}
+.score.vide{border-color:#6f8fb8;box-shadow:0 0 22px rgba(111,143,184,.3)}
+.score.direct{border-color:#ff6a5a;box-shadow:0 0 22px rgba(255,106,90,.35)}
+.score .l{display:flex;justify-content:space-between;align-items:center;font-family:var(--banner)}
+.score .l b{font-size:44px;letter-spacing:.04em;line-height:1}
+.score.vide .l b{color:#9fb7d8}
+.score .l span{text-align:center;font-size:11px;letter-spacing:.14em;color:#ccc;line-height:1.35}
+.score .l span em{font-style:normal;display:block;color:var(--projo);font-size:13px}
+.score.vide .l span em{color:#9fb7d8}
+.jauge{height:10px;border-radius:5px;margin:8px 0 6px;background:var(--b1);overflow:hidden}
+.jauge i{display:block;height:100%;background:repeating-linear-gradient(45deg,var(--a1) 0 8px,color-mix(in srgb,var(--a1) 70%,#fff) 8px 16px)}
+.score.vide .jauge{background:#3a4556}
+.score.vide .jauge i{background:#6f8fb8}
+.score .mini{display:flex;justify-content:space-between;gap:8px;font-size:11.5px;color:#d6d0c4}
+.score .mini b{font-family:var(--banner);letter-spacing:.04em}
+
+.boutons{display:flex;gap:8px;margin-top:12px}
+.boutons a{flex:1;display:flex;align-items:center;justify-content:center;text-align:center;padding:4px 8px;line-height:1.1;
+  min-height:46px;text-decoration:none;font-family:var(--banner);font-size:clamp(12px,3.6vw,15px);letter-spacing:.06em;border-radius:6px}
+.boutons .pousser{background:var(--projo);color:#111;box-shadow:0 4px 0 #8a6a12;flex:1.5}
+.boutons .virage{background:var(--vert);color:#fff;box-shadow:0 4px 0 #0d4d33}
+
+.cousu{font-family:var(--banner);letter-spacing:.14em;font-size:12.5px;font-weight:600;color:#d8d2c6;display:flex;
+  align-items:center;gap:8px;margin:18px 0 8px}
+.cousu::after{content:"";flex:1;border-top:2px dashed rgba(242,238,228,.25);order:2}
+.cousu i{font-style:normal;opacity:.7;font-size:10.5px;order:3}
+.pan{background:#151a20;border:1px solid rgba(242,238,228,.09);border-radius:8px;padding:9px 11px}
+.deux{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.cote{min-width:0}
+.cote h3{margin:0 0 6px;font-family:var(--banner);font-size:12px;letter-spacing:.1em;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap;padding-bottom:4px;border-bottom:3px solid var(--k)}
+
+/* ----------------------------------------------------------- les écharpes */
+.ech{display:flex;align-items:center;gap:8px;font-size:12.5px}
+.ech img{width:30px;height:30px;object-fit:contain;flex:none}
+.ech b{font-family:var(--banner);font-size:22px;color:var(--projo)}
+.ech.zero b{color:#7c8594}
+
+/* -------------------------------------------------------------- le Virage */
+.corde{display:flex;align-items:center;justify-content:center;gap:14px;font-family:var(--banner);font-size:28px;margin-bottom:6px}
+.corde small{font-size:11px;letter-spacing:.14em;color:#ccc}
+.present{display:flex;align-items:center;gap:6px;font-size:12px;padding:3px 0;min-width:0}
+.present span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.present i{display:block;height:5px;border-radius:3px;background:var(--k);flex:none}
+.present b{font-family:var(--banner);font-size:12px;flex:none}
+.rien{font-size:12px;opacity:.65;padding:2px 0}
+
+/* -------------------------------------------------------------- les duels */
+.duel{display:grid;grid-template-columns:44px 1fr auto 1fr;align-items:center;gap:6px;padding:7px 0;
+  border-bottom:1px solid rgba(242,238,228,.07);font-size:12px}
+.duel:last-child{border-bottom:0}
+.duel .h{font-family:var(--banner);font-size:11px;opacity:.75;text-align:center;line-height:1.2}
+.duel .h em{display:block;font-style:normal;font-size:10px;padding:0 3px;border-radius:3px;background:#2a303a;margin-top:2px}
+.duel .j{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:3px 6px;border-radius:5px}
+.duel .j.b{text-align:right}
+.duel .j.gagne{background:color-mix(in srgb,var(--k) 38%,transparent);font-weight:700}
+.duel .sc{font-family:var(--banner);font-size:15px;white-space:nowrap;text-align:center}
+.duel.horscompte{opacity:.55}
+.duel .pq{grid-column:2 / -1;font-size:10.5px;color:#ffb3a8;margin-top:-3px}
+.mene{display:flex;align-items:center;gap:6px;font-size:12.5px;padding:3px 0}
+.mene em{font-style:normal;font-family:var(--banner);width:18px;text-align:center;color:var(--projo)}
+.mene span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mene b{font-family:var(--banner)}
+.vide-msg{text-align:center;padding:14px 8px;font-size:13px;line-height:1.5}
+.vide-msg b{display:block;font-family:var(--banner);font-size:18px;letter-spacing:.06em;color:#9fb7d8;margin-bottom:4px}
+.note{font-size:12px;opacity:.75;line-height:1.45;margin:16px 2px 0}
+.note a{color:inherit}
+</style>
+</head>
+<body>
+<main id="app"><div class="colonne" id="page"><div class="chargement">Chargement du match TBFO…</div></div></main>
+<script>
+/* =======================================================================
+   La page d'un match TBFO, lue d'un trait sur `/api/club/match/<id>`
+   (`src/server/classements/resume.js`). Rien n'y est calculé.
+   ======================================================================= */
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g,
+  (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const nombre = (n) => Number(n ?? 0).toLocaleString('fr-CH').replace(/ | /g, ' ');
+const ID = Number(location.pathname.split('/').filter(Boolean)[1]);
+const EN_JEU = new Set(['1H', 'HT', '2H', 'ET', 'BT', 'P', 'LIVE', 'INT', 'SUSP']);
+const PAS_JOUE = new Set(['TBD', 'NS']);
+function quand(iso, court) {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '';
+  return d.toLocaleString(document.documentElement.lang || 'fr', court
+    ? { hour: '2-digit', minute: '2-digit' }
+    : { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+}
+const coul = (c, i, def) => (Array.isArray(c) && /^#[0-9a-f]{3,8}$/i.test(c[i] ?? '') ? c[i] : def);
+
+function versus(d) {
+  const m = d.match, t = d.tbfo;
+  const vide = !t || t.vide;
+  const st = m.statut;
+  const reel = EN_JEU.has(st)
+    ? `<span class="reel live">VRAI SCORE ${m.buts ? `${m.buts[0]}–${m.buts[1]}` : '0–0'} · ${m.minute ?? ''}’</span>`
+    : m.fini ? `<span class="reel">VRAI SCORE ${m.buts ? `${m.buts[0]}–${m.buts[1]}` : ''} · TERMINÉ</span>`
+    : `<span class="reel">${esc(quand(m.coup))}</span>`;
+  const style = `--a1:${coul(m.home.couleurs, 0, '#E0402C')};--a2:${coul(m.home.couleurs, 1, '#5a0d06')};`
+    + `--b1:${coul(m.away.couleurs, 0, '#2f6fd0')};--b2:${coul(m.away.couleurs, 1, '#0e2a55')}`;
+  /* Les couleurs des deux clubs servent à toute la page (jauge, tribunes). */
+  $('page').setAttribute('style', style);
+  return `<section class="vs${vide ? ' vide' : ''}">
+    <div class="g"></div><div class="d"></div>
+    ${m.ligue ? `<a class="ligue" href="/teletext?ligue=${Number(m.ligue.id)}">${esc(String(m.ligue.name).toUpperCase())} · MATCH TBFO</a>` : ''}
+    ${m.home.logo ? `<img class="ecu a" src="${esc(m.home.logo)}" alt="">` : ''}
+    ${m.away.logo ? `<img class="ecu b" src="${esc(m.away.logo)}" alt="">` : ''}
+    <div class="eclair">VS</div>${reel}
+    <a class="nom a" href="/club/${Number(m.home.id)}">${esc(m.home.name)}</a>
+    <a class="nom b" href="/club/${Number(m.away.id)}">${esc(m.away.name)}</a>
+  </section>`;
+}
+
+function tableauScore(d) {
+  const m = d.match, t = d.tbfo;
+  const vide = !t || t.vide;
+  const sc = t?.score ?? [0, 0];
+  const total = sc[0] + sc[1];
+  const part = total ? Math.round((sc[0] / total) * 100) : 50;
+  const direct = t?.direct || EN_JEU.has(m.statut);
+  const pts = t?.points ?? (m.fini || direct ? [1, 1] : [0, 0]);
+  const etat = vide ? (m.fini ? 'PERSONNE N’A JOUÉ' : direct ? 'PERSONNE N’A ENCORE JOUÉ' : 'PAS ENCORE COMMENCÉ')
+    : direct ? 'EN DIRECT · POINTS PROVISOIRES' : m.fini ? 'POINTS ACQUIS' : '';
+  const vir = t?.virage ? `Virage ${t.virage[0]}–${t.virage[1]}` : 'Pas de Virage classé';
+  const jouable = !m.fini && (direct || PAS_JOUE.has(m.statut));
+  return `<div class="score${vide ? ' vide' : ''}${direct && !vide ? ' direct' : ''}">
+    <div class="l"><b>${sc[0]}</b><span><em>SCORE TBFO</em>DUELS GAGNÉS<br>${esc(etat)}</span><b>${sc[1]}</b></div>
+    <div class="jauge"><i style="width:${part}%"></i></div>
+    <div class="mini"><span>${esc(vir)}</span><span>${t?.duels ?? 0} duel${(t?.duels ?? 0) > 1 ? 's' : ''} classé${(t?.duels ?? 0) > 1 ? 's' : ''}</span>
+      <b>+${pts[0]} · +${pts[1]}</b></div>
+    ${jouable ? `<div class="boutons">
+      <a class="pousser" href="/duel-nvn?${new URLSearchParams({ match: String(m.id) })}">⚡ FAIS PENCHER LA BALANCE</a>
+      ${direct ? `<a class="virage" href="/virage?match=${Number(m.id)}">VIRAGE</a>` : ''}</div>` : ''}
+  </div>`;
+}
+
+function echarpes(d) {
+  const m = d.match;
+  if (!m.fini) {
+    const b = d.bareme ?? {};
+    return `<div class="cousu">CE QUE LA TRIBUNE GAGNE</div><div class="pan" style="font-size:12.5px;line-height:1.5">
+      À la fin du match, chaque joueur de la tribune gagnante reçoit <b>${b.victoire ?? 20}</b> écharpes
+      (<b>${b.nul ?? 5}</b> au nul), et <b>${b.virage ?? 10}</b> de plus si elle gagne le Virage.</div>`;
+  }
+  const e = d.echarpes ?? [0, 0];
+  const c = (club, n, k) => `<div class="cote" style="--k:${k}"><h3>${esc(club.name.toUpperCase())}</h3>
+    <div class="ech${n ? '' : ' zero'}"><img src="/img/gains/echarpes.webp" alt=""><b>+${n}</b>
+    <span>par supporter</span></div></div>`;
+  return `<div class="cousu">LES ÉCHARPES <i>CHAQUE SUPPORTER</i></div><div class="pan deux">
+    ${c(m.home, e[0], coul(m.home.couleurs, 0, '#E0402C'))}${c(m.away, e[1], coul(m.away.couleurs, 0, '#2f6fd0'))}</div>`;
+}
+
+function virage(d) {
+  const v = d.virage ?? {};
+  const m = d.match;
+  const ka = coul(m.home.couleurs, 0, '#E0402C'), kb = coul(m.away.couleurs, 0, '#2f6fd0');
+  if (!v.corde && !(v.total?.[0] || v.total?.[1])) {
+    return `<div class="cousu">LE VIRAGE</div><div class="pan rien">Pas de Virage classé sur ce match.</div>`;
+  }
+  const max = Math.max(1, ...(v.presents ?? [[], []]).flat().map((p) => p.ferveur));
+  const col = (l, k, club, n, f) => `<div class="cote" style="--k:${k}"><h3>${esc(club.name.toUpperCase())} · ${n}</h3>
+    ${l.length ? l.map((p) => `<div class="present"><span>${esc(p.pseudo)}</span>
+      <i style="width:${Math.max(4, Math.round((p.ferveur / max) * 46))}px"></i><b>${nombre(p.ferveur)}</b></div>`).join('')
+      : '<div class="rien">Personne.</div>'}
+    ${n > l.length ? `<div class="rien">et ${n - l.length} de plus</div>` : ''}
+    <div class="rien">Ferveur : ${nombre(f)}</div></div>`;
+  return `<div class="cousu">LE VIRAGE <i>LA CORDE</i></div><div class="pan">
+    ${v.corde ? `<div class="corde"><span style="color:${ka}">${v.corde[0]}</span><small>CORDE</small><span style="color:${kb}">${v.corde[1]}</span></div>` : ''}
+    <div class="deux">${col(v.presents?.[0] ?? [], ka, m.home, v.total?.[0] ?? 0, v.ferveur?.[0] ?? 0)}
+      ${col(v.presents?.[1] ?? [], kb, m.away, v.total?.[1] ?? 0, v.ferveur?.[1] ?? 0)}</div></div>`;
+}
+
+function meneurs(d) {
+  const m = d.match;
+  if (!(d.meneurs?.[0]?.length || d.meneurs?.[1]?.length)) return '';
+  const col = (l, k, club) => `<div class="cote" style="--k:${k}"><h3>${esc(club.name.toUpperCase())}</h3>
+    ${l.length ? l.map((p, i) => `<div class="mene"><em>${i + 1}</em><span>${esc(p.pseudo)}</span><b>${p.gagnes} V</b></div>`).join('')
+      : '<div class="rien">Aucun duel gagné.</div>'}</div>`;
+  return `<div class="cousu">LES MENEURS <i>DUELS GAGNÉS</i></div><div class="pan deux">
+    ${col(d.meneurs[0], coul(m.home.couleurs, 0, '#E0402C'), m.home)}${col(d.meneurs[1], coul(m.away.couleurs, 0, '#2f6fd0'), m.away)}</div>`;
+}
+
+function duels(d) {
+  const m = d.match;
+  const ka = coul(m.home.couleurs, 0, '#E0402C'), kb = coul(m.away.couleurs, 0, '#2f6fd0');
+  const l = d.duels ?? [];
+  const entr = d.entrainements ? `<i>+ ${d.entrainements} ENTRAÎNEMENT${d.entrainements > 1 ? 'S' : ''}</i>` : '';
+  if (!l.length) {
+    return `<div class="cousu">LES DUELS ${entr}</div><div class="pan rien">Aucun duel classé sur ce match.</div>`;
+  }
+  const lignes = l.map((x) => {
+    const b = x.buts ?? [null, null];
+    const sc = b[0] == null ? (x.nul ? 'NUL' : '–') : `${b[0]}–${b[1]}`;
+    const pourquoi = x.compte ? '' : x.apres ? 'joué après le coup de sifflet : ne compte pas'
+      : 'au-delà des duels comptés du jour : ne compte pas pour le club';
+    return `<div class="duel${x.compte ? '' : ' horscompte'}">
+      <div class="h">${esc(quand(x.fin, true))}${x.format ? `<em>${esc(x.format)}</em>` : ''}</div>
+      <div class="j a${x.gagnant === 0 ? ' gagne' : ''}" style="--k:${ka}">${esc(x.joueurs[0].join(', ') || '–')}</div>
+      <div class="sc">${sc}</div>
+      <div class="j b${x.gagnant === 1 ? ' gagne' : ''}" style="--k:${kb}">${esc(x.joueurs[1].join(', ') || '–')}</div>
+      ${pourquoi ? `<div class="pq">${esc(pourquoi)}</div>` : ''}
+    </div>`;
+  }).join('');
+  return `<div class="cousu">LES DUELS <i>${l.length} CLASSÉ${l.length > 1 ? 'S' : ''}</i>${entr}</div><div class="pan">${lignes}</div>`;
+}
+
+function rendre(d) {
+  const m = d.match, t = d.tbfo;
+  document.title = `${m.home.name} – ${m.away.name} · Match TBFO — thebestfan`;
+  const vide = !t || t.vide;
+  const msg = vide ? `<div class="pan vide-msg"><b>0–0 D’OFFICE</b>${m.fini
+    ? 'Personne n’a joué de duel classé ni le Virage sur ce match : 1 point pour chaque club au championnat TBFO.'
+    : 'Personne n’a encore joué ce match. Le premier duel gagné fait pencher la balance.'}</div>` : '';
+  $('page').innerHTML = versus(d) + tableauScore(d) + msg + (vide && m.fini ? '' : echarpes(d)) + virage(d) + meneurs(d) + duels(d)
+    + `<p class="note">Chaque vrai match est un match TBFO : la tribune qui gagne le plus de duels classés marque
+      3 points, 1 à égalité, 0 sinon, et le Virage gagné donne 2 points de plus. Un match où personne n’a joué
+      compte 0–0. <a href="/comment-jouer#saisons">Les règles</a></p>`;
+}
+
+async function lire() {
+  try {
+    const r = await fetch(`/api/club/match/${ID}`, { credentials: 'same-origin' });
+    if (r.status === 404 || r.status === 400) {
+      $('page').innerHTML = '<div class="chargement">Ce match n’existe pas, ou n’est pas encore connu du jeu.</div>';
+      return null;
+    }
+    if (!r.ok) throw new Error(String(r.status));
+    const d = await r.json();
+    rendre(d);
+    return d;
+  } catch {
+    if (!$('page').querySelector('.vs')) $('page').innerHTML = '<div class="chargement">Impossible de lire ce match. Réessaie dans un instant.</div>';
+    return null;
+  }
+}
+
+(async () => {
+  const d = await lire();
+  /* Un match qui se joue se relit chaque demi-minute. */
+  if (d && !d.match.fini) {
+    setInterval(() => { if (!document.hidden) lire(); }, 30000);
+  }
+})();
+</script>
+<script src="/pays.js" defer></script>
+<script src="/son.js" defer></script>
+<script src="/fx.js" defer></script>
+<script src="/visite.js" defer></script>
+<script src="/menu.js" defer></script>
+<script src="/nav.js" defer></script>
+<script src="/pwa.js" defer></script>
+</body>
+</html>

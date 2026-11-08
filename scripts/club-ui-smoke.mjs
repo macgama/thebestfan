@@ -105,6 +105,7 @@ app.use((req, _res, next) => { if (moi) req.user = { id: moi }; next(); });
 app.use('/api/rank', classements.router);
 app.use('/api/club', createClub({ pool, classements }).router);
 app.get('/club/:id', (_req, res) => res.sendFile(path.join(RACINE, 'public', 'club.html')));
+app.get('/tbfo/:id', (_req, res) => res.sendFile(path.join(RACINE, 'public', 'tbfo.html')));
 app.use('/api', (_req, res) => res.status(404).json({ error: 'absent' }));
 app.use(express.static(path.join(RACINE, 'public')));
 const http = createServer(app);
@@ -283,6 +284,52 @@ check('un club inconnu : une phrase, pas une page vide',
   check('VOIR MON CLUB mène à la page du club', await p2.evaluate(() => window.__choix) === '/club/42');
   await p2.close();
   check('aucune erreur de page pendant la fête', erreurs.length === 0 || (console.log('        ', erreurs), false));
+}
+
+/* Le résumé d'un match TBFO (Gaël, 8 novembre 2026) : l'API, puis la page. */
+{
+  const res = await (await fetch(`${base}/api/club/match/9001`)).json();
+  check('résumé : le vrai match et son score TBFO',
+    res.match?.home?.name === 'Arsenal' && res.match.buts?.join() === '2,0' && res.tbfo?.score?.join() === '2,1'
+    && res.tbfo.points?.join() === '5,0' && res.match.fini === true
+    || (console.log('        résumé :', JSON.stringify(res).slice(0, 400)), false));
+  check('résumé : les trois duels, dans l’ordre, qui les a gagnés',
+    res.duels?.length === 3 && res.duels.every((x) => x.compte)
+    && res.duels.map((x) => x.gagnant).join() === '0,0,1' && res.duels[0].joueurs[0].join() === 'Gael'
+    || (console.log('        duels :', JSON.stringify(res.duels)), false));
+  check('résumé : le Virage, la corde et ses présents', res.virage?.corde?.join() === '3,1'
+    && res.virage.presents[0][0]?.pseudo === 'Gael' && res.virage.total.join() === '1,0');
+  check('résumé : les meneurs et les écharpes', res.meneurs?.[0]?.length === 2 && res.echarpes?.join() === '30,0'
+    || (console.log('        :', JSON.stringify(res.meneurs), res.echarpes), false));
+  const ancien = await (await fetch(`${base}/api/club/match/9006`)).json();
+  check('résumé : un vieux match garde ses duels', ancien.duels?.length === 1);
+  const inconnu = (await fetch(`${base}/api/club/match/123456`)).status;
+  check('résumé : un match inconnu, 404', inconnu === 404);
+
+  const p3 = await nav.newPage();
+  p3.on('pageerror', (e) => erreurs.push(e.message));
+  await p3.setViewport({ width: 400, height: 860, deviceScaleFactor: process.env.CAPTURES ? 2 : 1 });
+  await p3.goto(`${base}/tbfo/9001`, { waitUntil: 'domcontentloaded' });
+  const t3 = async (sel) => p3.$eval(sel, (n) => n.textContent.replace(/\s+/g, ' ').trim()).catch(() => '');
+  check('la page du match TBFO se dessine', await jusqua(async () => /SCORE TBFO/.test(await t3('.score'))));
+  check('le vrai score en petit, le score TBFO en grand', /VRAI SCORE 2–0/.test(await t3('.vs'))
+    && /^2\s*SCORE TBFO/.test(await t3('.score .l')));
+  check('les duels et le Virage', (await p3.$$('.duel')).length === 3 && /CORDE/.test(await t3('.corde')));
+  check('les écharpes de chaque tribune', /\+30/.test(await t3('.ech')));
+  check('les clubs mènent à leur page', await p3.$eval('.vs .nom.a', (a) => a.getAttribute('href')) === '/club/42');
+  if (process.env.CAPTURES) {
+    await p3.screenshot({ path: path.join(process.env.CAPTURES, 'match-tbfo.png'), fullPage: true });
+  }
+  /* Un match fini où personne n'a joué : son 0–0 d'office. */
+  await pool.query(`INSERT INTO fixtures (id,league_id,season,home_id,away_id,home_goals,away_goals,status_short,elapsed,kickoff_at)
+    VALUES (9007,39,2026,49,42,1,1,'FT',90,UTC_TIMESTAMP() - INTERVAL 3 HOUR)`);
+  await p3.goto(`${base}/tbfo/9007`, { waitUntil: 'domcontentloaded' });
+  check('un match vide : 0–0 d’office, d’une autre couleur', await jusqua(async () => /0–0 D’OFFICE/.test(await t3('.vide-msg'))
+    && await p3.$('.score.vide') !== null));
+  if (process.env.CAPTURES) {
+    await p3.screenshot({ path: path.join(process.env.CAPTURES, 'match-tbfo-vide.png'), fullPage: true });
+  }
+  await p3.close();
 }
 
 await nav.close();

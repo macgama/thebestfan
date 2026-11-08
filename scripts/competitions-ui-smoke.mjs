@@ -500,6 +500,11 @@ await controlerColonne(page, check, { nom: 'la page des compétitions',
 
   await page.evaluate(() => document.querySelector('[data-t=ferveur]').click());
   await jusqua(async () => await page.$('.chips.ech') !== null);
+  /* Le championnat TBFO des clubs s'ouvre d'abord (Gaël, 8 novembre 2026). */
+  check('l’onglet TBFO s’ouvre sur le championnat des clubs',
+    await jusqua(async () => (await page.$eval('thead', (n) => n.textContent).catch(() => '')).includes('CLUB')));
+  await page.evaluate(() => document.querySelector('[data-e=joueurs]').click());
+  await jusqua(async () => (await page.$eval('thead', (n) => n.textContent).catch(() => '')).includes('SUPPORTER'));
 
   check('la saison du télétexte part avec la demande', derniereRang?.saison === '2026');
   check('et la compétition aussi', derniereRang?.id === '207');

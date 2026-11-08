@@ -13,8 +13,11 @@
        Virage nul : pas de bonus ;
      — **un duel compte 1**, quel que soit son format : un 5v5 ne pèse pas cinq
        fois un 1v1 (réglage 1) ;
-     — un match **sans aucun duel ni Virage ne compte pas** : sinon chaque
-       0–0 que personne n'a joué rapportait 1 point à deux clubs (réglage 2) ;
+     — un match **sans aucun duel ni Virage** : d'abord ne comptait pas
+       (réglage 2). Gaël l'a changé le 8 novembre 2026 : « ajouter des matchs
+       nuls pour tous les matchs jusqu'à maintenant » — chaque vrai match fini
+       (ou qui se joue) sans rien est un **0–0**, 1 point à chaque club.
+       Réglage `tribune.match_vide_nul` (éteint : l'ancienne règle) ;
      — le score se **fige à la fin du vrai match** : un duel joué sur un match
        déjà fini, après le coup de sifflet, ne change plus rien (réglage 3) ;
      — seuls les `tribune.duels_jour` premiers duels classés du jour d'un
@@ -62,7 +65,7 @@ export const finDuMatch = (f) => `(${coupEnvoiLocal(f)} + INTERVAL (CASE WHEN ${
 
 /* Le plafond du jour (réglage 4) : la ligne `dr` est-elle parmi les `n`
    premiers duels classés du jour de son joueur ? Zéro désarme. */
-const dansLePlafond = (n) => (n > 0
+export const dansLePlafond = (n) => (n > 0
   ? `(SELECT COUNT(*) FROM duel_results dj
        WHERE dj.user_id = dr.user_id AND dj.mode = 'classe'
          AND dj.ended_at >= DATE(dr.ended_at)
@@ -106,11 +109,15 @@ const VIRAGE_PAR_MATCH = (filtre) => `
                    JOIN users u ON u.public_id = vp.user_id AND u.status = 'active'
                   WHERE vp.fixture_id = vt.fixture_id AND vp.classe = 1 AND vp.ferveur > 0)`;
 
+const SQL_JOUES = liste([...FINIS, ...EN_COURS_DE_JEU]);
+
 /**
- * Les matchs TBFO joués (au moins un duel ou un Virage), du filtre.
- * `virage` faux : sans la table de la corde (schéma pas encore appliqué).
+ * Les matchs TBFO du filtre : ceux où l'on a joué (au moins un duel ou un
+ * Virage), et avec `vides`, aussi les vrais matchs finis ou qui se jouent
+ * sans rien (0–0). `virage` faux : sans la table de la corde (schéma pas
+ * encore appliqué).
  */
-export const MATCHS_TBFO = (filtre, { plafond = 5, virage = true } = {}) => `
+export const MATCHS_TBFO = (filtre, { plafond = 5, virage = true, vides = false } = {}) => `
   SELECT f.id, f.league_id, f.season, f.home_id, f.away_id, f.status_short, f.elapsed,
          f.kickoff_at, f.home_goals, f.away_goals,
          COALESCE(d.dom, 0) AS dom, COALESCE(d.ext, 0) AS ext, COALESCE(d.duels, 0) AS duels,
@@ -119,7 +126,8 @@ export const MATCHS_TBFO = (filtre, { plafond = 5, virage = true } = {}) => `
     LEFT JOIN (${DUELS_PAR_MATCH(filtre, plafond)}) d ON d.fixture_id = f.id
     ${virage ? `LEFT JOIN (${VIRAGE_PAR_MATCH(filtre)}) v ON v.fixture_id = f.id` : ''}
    WHERE (${filtre})
-     AND (d.fixture_id IS NOT NULL ${virage ? 'OR v.fixture_id IS NOT NULL' : ''})`;
+     AND (d.fixture_id IS NOT NULL ${virage ? 'OR v.fixture_id IS NOT NULL' : ''}
+          ${vides ? `OR f.status_short IN (${SQL_JOUES})` : ''})`;
 
 /** Les points d'un camp : 3 / 1 / 0 aux duels, +2 au Virage gagné. */
 export function pointsDe(pour, contre, vPour, vContre) {
@@ -143,6 +151,8 @@ export function lireMatch(m) {
     points: [pointsDe(dom, ext, virage?.[0], virage?.[1]), pointsDe(ext, dom, virage?.[1], virage?.[0])],
     fini,
     direct: !fini && EN_COURS_DE_JEU.includes(m.status_short),
+    /* Personne n'y a joué : le 0–0 d'office (Gaël, 8 novembre 2026). */
+    vide: Number(m.duels ?? 0) === 0 && virage == null,
   };
 }
 

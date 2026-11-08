@@ -1,5 +1,24 @@
 # À déposer sur Infomaniak
 
+**0–0 d'office, et la page d'un match TBFO** (branche
+`claude/project-thread-9zc9fe`, 8 novembre 2026, demande de Gaël). Code seul,
+sans schéma. Chaque vrai match fini (ou qui se joue) sans duel classé ni
+Virage compte 0–0 au championnat TBFO (1 point chacun) : les classements par
+compétition le comptent pour tous les matchs déjà joués. Réglage
+`tribune.match_vide_nul` (LE GRAND VIRAGE, allumé). Le 0–0 s'affiche en
+bleu-gris sous chaque match (MATCHS, compétitions) et à côté des vrais
+résultats sur la page du club. Nouvelle page `/tbfo/:id` (API
+`/api/club/match/:id`) : score TBFO, duels un par un, Virage, meneurs,
+écharpes ; on l'ouvre en touchant un score TBFO. Aussi : le score TBFO dans
+la fiche d'un match (MATCHS), les noms des clubs cliquables dans les listes de
+matchs, la fiche et les résultats des compétitions ; l'onglet ⚡ TBFO en
+deuxième place (doré, ouvert sur le championnat des clubs) avec un rappel en
+tête du vrai classement ; sur la page du club, toutes ses compétitions (TBFO
+et réelles) et le Fanzzy choisi par le joueur au milieu du stade.
+**Redémarrer**.
+
+---
+
 **Mes pronostics dans le vestiaire** (branche `claude/project-thread-5g4z94`,
 8 novembre 2026, demande de Gaël). Code seul, sans schéma. Une tuile blanche
 PRONOS dans /profil (à gauche, sous PARCOURS) ouvre le tiroir « Mes

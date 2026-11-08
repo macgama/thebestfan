@@ -188,6 +188,21 @@ html[data-calme~="animations"] .spin{animation-duration:3s}
 .f .aff .sc img{width:46px;height:46px;object-fit:contain}
 .f .aff .sc .n{font-family:var(--banner);font-size:38px;letter-spacing:.02em}
 .f .aff .nom{display:flex;justify-content:space-between;margin-top:10px;font-size:12.5px;opacity:.9}
+a.vers-club{color:inherit;text-decoration:none;min-width:0;display:flex}
+a.vers-club:hover span,a.vers-club:focus-visible span{text-decoration:underline}
+.m .r a.vers-club{flex:1}
+.f .aff .nom a.vers-club{max-width:48%}
+.f .aff .nom a.vers-club span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ftbfo{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:4px 10px;margin:12px auto 0;max-width:420px;
+  padding:8px 12px;border-radius:10px;border:2px solid var(--projo);background:rgba(245,195,59,.1);color:var(--craie);
+  text-decoration:none;font-size:12px}
+.ftbfo b{font-family:var(--banner);letter-spacing:.14em;font-size:11.5px;color:var(--projo)}
+.ftbfo strong{font-family:var(--banner);font-size:22px;letter-spacing:.05em}
+.ftbfo span{opacity:.92}
+.ftbfo i{font-style:normal;font-family:var(--banner);font-size:11px;letter-spacing:.1em;color:var(--projo)}
+.ftbfo.vide,.ftbfo.attente{border-color:#6f8fb8;background:rgba(111,143,184,.12)}
+.ftbfo.vide b,.ftbfo.vide i,.ftbfo.attente b,.ftbfo.attente i,.ftbfo.vide strong{color:#9fb7d8}
+.ftbfo.direct{border-color:#ff6a5a}
 .f .etat{text-align:center;font-family:var(--banner);font-size:13px;letter-spacing:.1em;
   margin-top:6px;color:var(--flare)}
 .f .etat.calme{color:inherit;opacity:.88}
@@ -616,10 +631,10 @@ function rendre() {
             : `<div class="heure">${heure(m.date)}</div>`}</div>
           <div class="eq">
             <div class="r ${m.fini && m.away.vainqueur ? 'perd' : ''}">
-              <img src="${esc(m.home.logo)}" alt=""><span>${esc(eqNom(m.home.name))}</span>
+              <img src="${esc(m.home.logo)}" alt="">${nomClub(m.home)}
               <b>${m.home.goals ?? ''}</b></div>
             <div class="r ${m.fini && m.home.vainqueur ? 'perd' : ''}">
-              <img src="${esc(m.away.logo)}" alt=""><span>${esc(eqNom(m.away.name))}</span>
+              <img src="${esc(m.away.logo)}" alt="">${nomClub(m.away)}
               <b>${m.away.goals ?? ''}</b></div>
             ${m.home.cri || m.away.cri ? `<div class="cris">${[m.home.cri, m.away.cri].filter(Boolean)
               .map((c) => `<span>${esc(c)}</span>`).join('')}</div>` : ''}
@@ -698,7 +713,7 @@ window.addEventListener('tbf:a-jouer', () => { if (filtre === 'jouer') rendre();
 $('liste').addEventListener('click', (e) => {
   /* Une pastille VIRAGE ou DUEL (`a-jouer.js`) suit son lien : elle est là
      pour aller jouer tout de suite, pas pour ouvrir la fiche. */
-  if (e.target.closest('.tbf-jeu a')) return;
+  if (e.target.closest('.tbf-jeu a, a.vers-club')) return;
   const m = e.target.closest('[data-m]');
   if (m) ouvrirFiche(Number(m.dataset.m));
 });
@@ -720,6 +735,41 @@ $('liste').addEventListener('click', (e) => {
 const ICONES = { Goal:'⚽', Card:'▮', subst:'⇄', Var:'▣' };
 
 /** Tout ce que la fiche tient entre deux relectures. */
+/* Le nom d'un club mène à sa page (Gaël, 8 novembre 2026). */
+function nomClub(c) {
+  const id = Number(c?.id);
+  return Number.isInteger(id) && id > 0
+    ? `<a class="vers-club" href="/club/${id}"><span>${esc(eqNom(c.name))}</span></a>`
+    : `<span>${esc(eqNom(c?.name))}</span>`;
+}
+
+/* Le match TBFO de la fiche (Gaël, 8 novembre 2026) : son score à côté du
+   vrai, et le chemin vers tout ce qui s'y est joué. */
+const TBFO_FICHE = new Map();
+async function lireTbfoFiche(id) {
+  try {
+    const r = await fetch(`/api/rank/score-tbfo?ids=${Number(id)}`, { credentials: 'same-origin', cache: 'no-store' });
+    if (!r.ok) return;
+    const d = await r.json();
+    TBFO_FICHE.set(Number(id), (d.matchs ?? []).find((m) => Number(m.id) === Number(id)) ?? null);
+    const el = document.querySelector("[data-ftbfo]");
+    if (el && FICHE.id === id) el.outerHTML = tbfoFiche(id);
+  } catch { /* hors ligne : la fiche s'en passe */ }
+}
+function tbfoFiche(id) {
+  const m = TBFO_FICHE.get(Number(id));
+  const lien = `/tbfo/${Number(id)}`;
+  if (!m) {
+    return `<a class="ftbfo attente" data-ftbfo href="${lien}"><b>MATCH TBFO</b>
+      <span>Il commence au coup d’envoi : chaque duel classé gagné fait pencher la balance.</span><i>›</i></a>`;
+  }
+  const v = Array.isArray(m.virage) ? ` · VIRAGE ${m.virage[0]}–${m.virage[1]}` : '';
+  return `<a class="ftbfo${m.vide ? ' vide' : ''}${m.direct ? ' direct' : ''}" data-ftbfo href="${lien}">
+    <b>MATCH TBFO</b><strong>${m.score[0]} – ${m.score[1]}</strong>
+    <span>${m.vide ? (m.direct ? 'Personne n’a encore joué' : 'Personne n’a joué : 0–0') : `${m.duels} duel${m.duels > 1 ? 's' : ''}${v}`}
+      · ${m.fini ? '' : 'EN JEU '}+${m.points[0]} · +${m.points[1]}</span><i>TOUT LE MATCH ›</i></a>`;
+}
+
 const FICHE = {
   id: null, d: null, minuterie: null, chrono: null,
   volet: 'fil', scene: null, vus: null, cote: null, finVue: false,
@@ -836,6 +886,7 @@ async function relire({ premier = false } = {}) {
     return planifierFiche();
   }
   FICHE.d = d;
+  lireTbfoFiche(FICHE.id);
   /* **Dessiner peut lever, et la relance ne doit pas en dépendre.**
 
      `dessinerFiche` et `reagir` lisent une trentaine de champs du relevé. Il
@@ -1030,9 +1081,10 @@ function dessinerFiche() {
           : heure(f.date)}</span>
         <img src="${esc(e.away.logo)}" alt="">
       </div>
-      <div class="nom"><span>${esc(eqNom(e.home.name))}</span><span>${esc(eqNom(e.away.name))}</span></div>
+      <div class="nom">${nomClub(e.home)}${nomClub(e.away)}</div>
       <div class="etat ${f.live ? '' : 'calme'}" id="fetat">${f.live ? (min ?? 'EN COURS')
         : f.fini ? 'TERMINÉ' : esc(f.statusLong ?? 'À VENIR')}</div>
+      ${tbfoFiche(FICHE.id)}
     </div>
     <div class="infos">
       <!-- La date **et l'heure**. L'heure manquait : sur un match à venir elle

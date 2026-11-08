@@ -1366,6 +1366,7 @@ app.get('/compte', (_req, res) => page(res, 'compte.html'));
 app.get('/diagnostic', (_req, res) => page(res, 'diagnostic.html'));
 app.get('/equipes', (_req, res) => page(res, 'equipes.html'));
 app.get('/club/:id', (_req, res) => page(res, 'club.html'));
+app.get('/tbfo/:id', (_req, res) => page(res, 'tbfo.html'));
 app.get('/kop', (_req, res) => page(res, 'kop.html'));
 app.get('/amis', (_req, res) => page(res, 'amis.html'));
 // Qui est en ligne, pour tous (choix de Gaël du 6 novembre 2026).

@@ -144,6 +144,11 @@ td img{width:18px;height:18px;object-fit:contain;vertical-align:-4px;margin-righ
 .mtbfo:last-child{border-bottom:0}
 .mtbfo em{font-style:normal;font-family:var(--banner);font-size:11px;padding:1px 6px;border-radius:3px;color:#fff}
 .mtbfo b{margin-left:auto;font-family:var(--banner);font-size:14px;white-space:nowrap}
+a.mtbfo{color:inherit;text-decoration:none}
+.mtbfo .pt{font-style:normal;flex:none;font-family:var(--banner);font-size:11px;letter-spacing:.05em;padding:2px 6px;
+  border-radius:4px;border:1px solid rgba(245,195,59,.6);color:var(--projo)}
+.mtbfo .pt.vide{border-color:rgba(140,170,210,.55);color:#9fb7d8}
+.mtbfo.vide span{opacity:.8}
 .fanzzys{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
 .fzc{position:relative;height:150px;border-radius:9px;overflow:hidden;border:2px solid var(--projo);
   background:linear-gradient(color-mix(in srgb,var(--c1) 45%,transparent),#14181e);display:block;color:inherit;text-decoration:none}
@@ -155,6 +160,12 @@ td img{width:18px;height:18px;object-fit:contain;vertical-align:-4px;margin-righ
 .ligne{display:flex;justify-content:space-between;gap:10px;font-size:13px;padding:4px 0}
 .ligne b{font-family:var(--banner);font-size:14.5px;letter-spacing:.03em;text-align:right}
 .note{font-size:12px;opacity:.75;line-height:1.45;margin:14px 2px 0}
+.tete-champ{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:10px 2px 5px;color:inherit;text-decoration:none;
+  font-family:var(--banner);font-size:12px;letter-spacing:.08em}
+.tete-champ span{display:flex;align-items:center;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tete-champ img{width:18px;height:18px;object-fit:contain;margin-right:6px}
+.tete-champ b{color:var(--projo);white-space:nowrap}
+.tete-champ b sup{font-size:.7em}
 .chargement{padding:60px 0;text-align:center;opacity:.8}
 </style>
 </head>
@@ -193,7 +204,7 @@ function stade(d) {
   const r = d.tbfo?.rang;
   const ligue = d.vrai?.ligue;
   const rang = r?.position
-    ? `<a class="rang" href="/teletext?league=${Number(r.ligue.id)}" aria-label="Rang au championnat TBFO">
+    ? `<a class="rang" href="/teletext?ligue=${Number(r.ligue.id)}" aria-label="Rang au championnat TBFO">
          <b>${ordinal(r.position)}</b><small>CHAMPIONNAT<br>TBFO</small></a>`
     : `<span class="rang"><b>–</b><small>CHAMPIONNAT<br>TBFO</small></span>`;
   const toi = d.moi?.principal ? 'TON CLUB' : d.moi?.suit ? 'TU LE SUIS' : '';
@@ -243,7 +254,7 @@ function prochain(d) {
       <span class="${direct ? 'live' : ''}">${direct ? `● EN DIRECT${m.minute ? ` · ${m.minute}'` : ''}` : esc(quand(m.coup))}</span></div>
     <div class="vs">
       <a href="/club/${m.home.id}">${logo(m.home.logo)}<span>${esc(m.home.name)}</span></a>
-      <div class="sc"><b>${sc[0]} – ${sc[1]}</b><small>${direct ? 'TBFO EN DIRECT' : 'SCORE TBFO'}</small></div>
+      <a class="sc" href="/tbfo/${Number(m.id)}"><b>${sc[0]} – ${sc[1]}</b><small>${direct ? 'TBFO EN DIRECT' : 'SCORE TBFO'} ›</small></a>
       <a href="/club/${m.away.id}">${logo(m.away.logo)}<span>${esc(m.away.name)}</span></a>
     </div>
     <div class="jauge" aria-hidden="true"><i style="width:${part}%"></i></div>
@@ -267,11 +278,17 @@ function tribune(d) {
     ? `<div class="podium">${marche(f[1], 2)}${marche(f[0], 1)}${marche(f[2], 3)}</div>`
     : '<p class="vide">Personne n’a encore poussé pour ce club cette saison. La première place est à prendre.</p>';
   const r = d.tbfo?.rang;
-  const voisins = r?.voisins?.length
-    ? `<div class="pan"><table>${r.voisins.map((v) => `<tr class="${v.id === ID ? 'moi' : ''}">
+  /* Un championnat TBFO par compétition du club (Gaël, 8 novembre 2026). */
+  const rangs = d.tbfo?.rangs?.length ? d.tbfo.rangs : r ? [r] : [];
+  const tableTbfo = (x) => `<a class="tete-champ" href="/teletext?ligue=${Number(x.ligue.id)}">
+      <span>${logo(x.ligue.logo)}${esc(String(x.ligue.name ?? '').toUpperCase())}</span>
+      <b>${x.position ? ordinal(x.position) : '–'}${x.sur ? ` / ${x.sur}` : ''} ›</b></a>
+    <div class="pan"><table>${x.voisins.map((v) => `<tr class="${v.id === ID ? 'moi' : ''}">
         <td>${v.joues > 0 ? v.position : '–'}</td>
         <td><a href="/club/${v.id}">${logo(v.logo)}${v.id === ID ? `<b>${esc(v.name)}</b>` : esc(v.name)}</a></td>
-        <td class="n">${nombre(v.points)} PTS</td></tr>`).join('')}</table></div>`
+        <td class="n">${nombre(v.points)} PTS</td></tr>`).join('')}</table></div>`;
+  const voisins = rangs.some((x) => x.voisins?.length)
+    ? rangs.filter((x) => x.voisins?.length).map(tableTbfo).join('')
     : '<p class="vide">Le championnat TBFO de ce club n’a pas encore commencé.</p>';
   const kops = (d.kops ?? []).slice(0, 5).map((k) => `<a class="kop" href="/kop"><b>${esc(k.nom)}</b>${
     k.membres > 1 ? `${k.membres} membres` : `${k.membres} membre`}</a>`).join('')
@@ -282,11 +299,11 @@ function tribune(d) {
     const pour = m.score[c], contre = m.score[1 - c];
     const issue = pour > contre ? ['V', 'var(--vert)'] : pour === contre ? ['N', '#5b6270'] : ['D', 'var(--flare)'];
     const vir = m.virage && m.virage[c] > m.virage[1 - c] ? ' · +2 VIR.' : '';
-    return `<div class="mtbfo"><em style="background:${issue[1]}">${issue[0]}</em>
-      <span>${esc(quand(m.coup))}</span><b>${pour}–${contre}${vir} · +${m.points[c]}</b></div>`;
+    return `<a class="mtbfo${m.vide ? ' vide' : ''}" href="/tbfo/${Number(m.id)}"><em style="background:${m.vide ? '#4d6a8f' : issue[1]}">${issue[0]}</em>
+      <span>${esc(quand(m.coup))}${m.vide ? ' · personne n’a joué' : ''}</span><b>${pour}–${contre}${vir} · +${m.points[c]} ›</b></a>`;
   }).join('');
   return `<div class="cousu">MEILLEURS FANS <i>SAISON</i></div>${podium}
-    <div class="cousu">CHAMPIONNAT TBFO <i>${esc((r?.ligue?.name ?? '').toUpperCase())}</i></div>${voisins}
+    <div class="cousu">CHAMPIONNATS TBFO <i>${rangs.length > 1 ? `${rangs.length} COMPÉTITIONS` : esc((r?.ligue?.name ?? '').toUpperCase())}</i></div>${voisins}
     <div class="cousu">BILAN TBFO <i>SAISON</i></div>
     <div class="pan">
       <div class="ligne"><span>Matchs TBFO</span><b>${t.gagnes ?? 0} V · ${t.nuls ?? 0} N · ${t.perdus ?? 0} D</b></div>
@@ -303,14 +320,25 @@ function tribune(d) {
 function vraiClub(d) {
   const v = d.vrai ?? {};
   const c = v.classement;
+  /* Le score TBFO à côté du vrai (Gaël, 8 novembre 2026) : 0–0 d'une autre
+     couleur quand personne n'a joué. */
+  const tbfoDe = new Map((d.tbfo?.derniers ?? []).map((m) => [Number(m.id), m]));
   const resultat = (m) => {
     const c2 = m.home.id === ID ? 0 : 1;
     const b = m.buts ?? [0, 0];
-    return `<div class="mtbfo"><span>${logo((c2 ? m.home : m.away).logo)}${esc((c2 ? m.home : m.away).name)}</span>
-      <b>${b[0]}–${b[1]}</b></div>`;
+    const t = tbfoDe.get(Number(m.id));
+    const sc = t ? t.score : [0, 0];
+    const vide = !t || t.vide;
+    return `<a class="mtbfo" href="/tbfo/${Number(m.id)}"><span>${logo((c2 ? m.home : m.away).logo)}${esc((c2 ? m.home : m.away).name)}</span>
+      <b>${b[0]}–${b[1]}</b><i class="pt${vide ? ' vide' : ''}">TBFO ${sc[0]}–${sc[1]}</i></a>`;
   };
   const avenir = (m) => `<div class="mtbfo"><span>${logo((m.home.id === ID ? m.away : m.home).logo)}${
     esc(m.home.name)} – ${esc(m.away.name)}</span><b>${esc(quand(m.coup))}</b></div>`;
+  /* Les autres compétitions du club, avec leur classement réel quand il y
+     en a un (Gaël, 8 novembre 2026). */
+  const autres = (v.classements ?? []).filter((x) => x.ligue.id !== v.ligue?.id).map((x) => `
+    <a class="tete-champ" href="/teletext?ligue=${Number(x.ligue.id)}"><span>${logo(x.ligue.logo)}${esc(String(x.ligue.name).toUpperCase())}</span>
+      <b>${ordinal(x.classement.rang)}${x.classement.sur ? ` / ${x.classement.sur}` : ''} · ${x.classement.points} PTS ›</b></a>`).join('');
   return `<div class="cousu">${esc((v.ligue?.name ?? 'CHAMPIONNAT').toUpperCase())}</div>
     <div class="pan">${c ? `
       <div class="ligne"><span>Classement</span><b>${ordinal(c.rang)}${c.sur ? ` sur ${c.sur}` : ''} · ${c.points} PTS</b></div>
@@ -319,6 +347,7 @@ function vraiClub(d) {
       ${c.forme ? `<div class="ligne"><span>Forme</span>${forme(String(c.forme).slice(-5).split('').reverse()
         .map((x) => ({ W: 'V', D: 'N', L: 'D' }[x] ?? null)))}</div>` : ''}`
       : '<p class="vide">Le classement de ce championnat n’est pas encore chargé.</p>'}</div>
+    ${autres ? `<div class="cousu">SES AUTRES COMPÉTITIONS</div>${autres}` : ''}
     ${v.prochains?.length ? `<div class="cousu">PROCHAINS MATCHS</div><div class="pan">${v.prochains.map(avenir).join('')}</div>` : ''}
     ${v.derniers?.length ? `<div class="cousu">DERNIERS RÉSULTATS</div><div class="pan">${v.derniers.map(resultat).join('')}</div>` : ''}
     <div class="cousu">LE CLUB</div>
@@ -326,7 +355,7 @@ function vraiClub(d) {
       ${d.team.country ? `<div class="ligne"><span>Pays</span><b>${esc(window.TBF_PAYS?.nom?.(d.team.country) ?? d.team.country)}</b></div>` : ''}
       ${d.team.founded ? `<div class="ligne"><span>Fondé en</span><b>${Number(d.team.founded)}</b></div>` : ''}
       ${v.prochains?.[0]?.stade ? `<div class="ligne"><span>Stade</span><b>${esc(v.prochains[0].stade)}</b></div>` : ''}
-      ${(v.ligues ?? []).length ? `<div class="ligne"><span>Compétitions</span><b>${v.ligues.map((l) => esc(l.name)).join(', ')}</b></div>` : ''}
+      ${(v.ligues ?? []).length ? `<div class="ligne"><span>Compétitions</span><b>${v.ligues.map((l) => `<a href="/teletext?ligue=${Number(l.id)}" style="color:inherit">${esc(l.name)}</a>`).join(', ')}</b></div>` : ''}
     </div>`;
 }
 
@@ -378,13 +407,23 @@ function rendre() {
     </div>
     <div id="onglet"></div>`;
   rendreOnglet();
-  /* Le héros : le premier Fanzzy lié qui pousse, à son plus grand âge
-     possédé (sinon le dernier dessiné). */
-  const premier = d.fanzzy?.lies?.[0];
+  /* Le héros : le Fanzzy choisi par le joueur, qui pousse pour ce club
+     (Gaël, 8 novembre 2026). Sans compte ou sans Fanzzy : le premier Fanzzy
+     lié au club, à son plus grand âge possédé (sinon le dernier dessiné). */
   const img = $('heros');
-  const r = premier && window.TBF_ETATS?.resoudre?.(premier.id,
-    { evo: d.moi?.fanzzy?.[premier.id] ?? 3, etat: 'pousse' });
-  if (r?.src) { img.src = r.src; img.classList.remove('vide'); img.onerror = () => img.classList.add('vide'); }
+  let src = null;
+  const a = d.moi?.avatar;
+  if (a?.id) {
+    try {
+      src = window.FZART?.dessinAvatar?.(a, 'plein', { etat: 'pousse' })
+        ?? window.TBF_ETATS?.resoudre?.(a.id, { evo: a.evo, skin: a.skin, etat: 'pousse' })?.src ?? null;
+    } catch { src = null; }
+  }
+  const premier = d.fanzzy?.lies?.[0];
+  if (!src && premier) {
+    src = window.TBF_ETATS?.resoudre?.(premier.id, { evo: d.moi?.fanzzy?.[premier.id] ?? 3, etat: 'pousse' })?.src ?? null;
+  }
+  if (src) { img.src = src; img.classList.remove('vide'); img.onerror = () => img.classList.add('vide'); }
   window.TBF_SON?.clubs?.([ID]);
 }
 

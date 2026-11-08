@@ -23,8 +23,10 @@ import { CLUB_DE, criDuClub } from '../../shared/fanzzy/clubs.js';
 import { serieDeLigue } from '../../shared/fanzzy/series-ligues.js';
 import { parIdentifiant } from '../fanzzy/catalogue.js';
 import { couleursDuClub } from '../kop/index.js';
+import { habillerJoueurs } from '../fanzzy/avatar.js';
 import { lireMatch, tableau } from '../classements/championnat.js';
 import { createVictoires } from '../classements/victoires.js';
+import { createResume } from '../classements/resume.js';
 
 const TTL_MS = 60_000;
 
@@ -160,7 +162,11 @@ export function createClub({ pool, classements, store = null }) {
     const possedes = lignees.length ? await q(
       `SELECT fanzzy_id, stage FROM user_fanzzy WHERE user_id = ? AND fanzzy_id IN (?)`,
       [userId, lignees]) : [];
+    /* Le Fanzzy choisi par le joueur pousse au milieu du stade (Gaël,
+       8 novembre 2026). */
+    const habits = await facultatif('mon Fanzzy', () => habillerJoueurs(q, [userId]), null);
     return {
+      avatar: habits?.get(userId)?.avatar ?? null,
       suit: Boolean(suivi), principal: Boolean(suivi?.is_main),
       fanzzy: Object.fromEntries(possedes.map((p) => [p.fanzzy_id, Number(p.stage) || 1])),
     };
@@ -169,21 +175,28 @@ export function createClub({ pool, classements, store = null }) {
   /* Le championnat TBFO du club : sa saison (toutes compétitions), son rang
      dans le championnat TBFO de son vrai championnat, sa forme, ses derniers
      matchs TBFO, et le match qui se joue. */
-  async function tbfo(id, ligue) {
+  /* Son rang dans le championnat TBFO d'une compétition, et ses voisins. */
+  async function rangDans(id, ligue) {
+    if (!ligue?.saison) return null;
+    const t = await facultatif('rang TBFO', () => classements.tribunesDe(ligue.id, ligue.saison, 400), []);
+    const i = t.findIndex((x) => Number(x.id) === id);
+    if (i < 0) return null;
+    return { position: t[i].joues > 0 ? i + 1 : null, sur: t.filter((x) => x.joues > 0).length,
+      points: t[i].points, ligue: { id: ligue.id, name: ligue.name, logo: ligue.logo ?? null, type: ligue.type ?? null },
+      voisins: t.slice(Math.max(0, i - 1), i + 2).map((x, k) => ({
+        id: Number(x.id), name: x.name, logo: x.logo ?? null, points: x.points,
+        position: Math.max(0, i - 1) + k + 1, joues: x.joues })) };
+  }
+
+  async function tbfo(id, ligue, ligues = []) {
     const matchs = await classements.matchsDuClub(id, 'saison');
     const ligne = tableau(matchs).get(id) ?? null;
-    let rang = null;
-    if (ligue?.saison) {
-      const t = await facultatif('rang TBFO', () => classements.tribunesDe(ligue.id, ligue.saison, 400), []);
-      const i = t.findIndex((x) => Number(x.id) === id);
-      if (i >= 0) {
-        rang = { position: t[i].joues > 0 ? i + 1 : null, sur: t.filter((x) => x.joues > 0).length,
-          points: t[i].points, ligue: { id: ligue.id, name: ligue.name },
-          voisins: t.slice(Math.max(0, i - 1), i + 2).map((x, k) => ({
-            id: Number(x.id), name: x.name, logo: x.logo ?? null, points: x.points,
-            position: Math.max(0, i - 1) + k + 1, joues: x.joues })) };
-      }
-    }
+    /* Toutes ses compétitions (Gaël, 8 novembre 2026) : le championnat
+       d'abord, puis les coupes. */
+    const autres = ligues.filter((l) => l.id !== ligue?.id);
+    const rangs = (await Promise.all([ligue, ...autres].filter(Boolean).map((l) => rangDans(id, l))))
+      .filter(Boolean);
+    const rang = rangs.find((r) => r.ligue.id === ligue?.id) ?? null;
     const finis = matchs.filter((m) => m.fini).sort((a, b) => new Date(b.coup) - new Date(a.coup));
     return {
       joues: ligne?.joues ?? 0, gagnes: ligne?.gagnes ?? 0, nuls: ligne?.nuls ?? 0,
@@ -194,6 +207,7 @@ export function createClub({ pool, classements, store = null }) {
       forme: ligne?.forme ?? [],
       derniers: finis.slice(0, 5),
       rang,
+      rangs,
     };
   }
 
@@ -207,7 +221,9 @@ export function createClub({ pool, classements, store = null }) {
         { type: 'club', id, nom: team.name }), []),
     ]);
     const ligue = ligues.find((l) => l.type === 'League') ?? ligues[0] ?? null;
-    const [jeu, reel] = await Promise.all([tbfo(id, ligue), classementReel(id, ligue)]);
+    const [jeu, reel, reels2] = await Promise.all([tbfo(id, ligue, ligues), classementReel(id, ligue),
+      Promise.all(ligues.map(async (l) => ({ ligue: { id: l.id, name: l.name, logo: l.logo ?? null, type: l.type ?? null },
+        classement: await classementReel(id, l) })))]);
     /* Le prochain match (ou celui qui se joue) et son score TBFO en direct. */
     const prochain = reels.prochains[0] ?? null;
     const [score] = prochain ? await classements.scoresTbfo([prochain.id]) : [];
@@ -224,7 +240,8 @@ export function createClub({ pool, classements, store = null }) {
         avatar: x.avatar ?? null, niveau: x.niveau ?? null })),
       tbfo: jeu,
       prochain: prochain ? { ...prochain, tbfo: score ?? null } : null,
-      vrai: { ligues, ligue, classement: reel, derniers: reels.derniers, prochains: reels.prochains },
+      vrai: { ligues, ligue, classement: reel, classements: reels2.filter((x) => x.classement),
+        derniers: reels.derniers, prochains: reels.prochains },
       _pour: userId ?? null,
     };
   }
@@ -242,6 +259,32 @@ export function createClub({ pool, classements, store = null }) {
       res.json(await victoires.lire(req.user.id));
     } catch (e) {
       console.error('[club] victoires', e);
+      res.status(500).json({ error: 'club.error.lecture' });
+    }
+  });
+
+  /* Le résumé d'un vrai match côté jeu : duels, Virage, meneurs, écharpes
+     (Gaël, 8 novembre 2026). La page `/tbfo/:id`. */
+  const { resume } = createResume({ pool, classements });
+  const resumes = new Map();
+  router.get('/match/:id', async (req, res) => {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id) || id <= 0) return res.status(400).json({ error: 'club.error.match' });
+    try {
+      const hit = resumes.get(id);
+      let r;
+      if (hit && Date.now() < hit.expire) r = await hit.promesse;
+      else {
+        const promesse = resume(id);
+        resumes.set(id, { promesse, expire: Date.now() + 15_000 });
+        if (resumes.size > 300) resumes.delete(resumes.keys().next().value);
+        r = await promesse.catch((e) => { resumes.delete(id); throw e; });
+      }
+      if (!r) return res.status(404).json({ error: 'club.error.match' });
+      res.set('cache-control', 'public, max-age=15');
+      res.json(r);
+    } catch (e) {
+      console.error('[club] résumé', e);
       res.status(500).json({ error: 'club.error.lecture' });
     }
   });

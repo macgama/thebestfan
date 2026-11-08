@@ -206,6 +206,8 @@ td.pts{font-family:var(--banner);font-size:15px}
 .m .s{flex:1;display:flex;align-items:center;gap:6px;min-width:0}
 .m .s.a{justify-content:flex-end;text-align:right}
 .m .s span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.m .s a.lien-club{min-width:0;display:flex;border-bottom:0}
+.m .s a.lien-club:hover span{text-decoration:underline}
 .m img{width:17px;height:17px;object-fit:contain;flex:none}
 .m .sc{font-family:var(--banner);font-size:15px;min-width:46px;text-align:center}
 .m .when{font-size:11px;opacity:.88;min-width:46px;text-align:center;line-height:1.3}
@@ -253,6 +255,13 @@ td.pts{font-family:var(--banner);font-size:15px}
 .tabs.tbf-onglets{overflow-x:auto;scrollbar-width:none;scroll-behavior:smooth}
 .tabs.tbf-onglets::-webkit-scrollbar{display:none}
 .tabs .tbf-onglet{flex:1 0 auto;padding-left:13px;padding-right:13px}
+.tabs .tbf-onglet.jeu:not(.on){color:var(--projo);box-shadow:inset 0 0 0 2px rgba(245,195,59,.65)}
+.vers-tbfo{display:flex;align-items:center;gap:10px;width:100%;margin:0 0 10px;padding:10px 12px;border-radius:9px;cursor:pointer;
+  border:2px solid var(--projo);background:linear-gradient(100deg,rgba(245,195,59,.22),rgba(23,28,35,.7));color:var(--craie);
+  font:inherit;text-align:left}
+.vers-tbfo b{font-family:var(--banner);letter-spacing:.1em;font-size:13px;color:var(--projo);white-space:nowrap}
+.vers-tbfo span{flex:1;font-size:12px;opacity:.9;min-width:0}
+.vers-tbfo i{font-style:normal;font-family:var(--banner);font-size:18px;color:var(--projo)}
 
 .chips.ech{margin:8px 0 10px}
 .maplace{font-size:12px;padding:2px 6px 12px;opacity:.9;line-height:1.6}
@@ -619,7 +628,7 @@ async function ouvrir(id) {
   /* La saison et les classements appartiennent à la compétition qu'on
      quitte : les garder ferait afficher les siens sous le nom de l'autre,
      le temps d'un aller-retour au serveur. */
-  SAISON = null; SAISON_VOULUE = null; FERVEUR = null; echelle = 'joueurs';
+  SAISON = null; SAISON_VOULUE = null; FERVEUR = null; echelle = 'tribunes';
   $('back').classList.add('on');
   // La feuille : un seul panneau sous le tableau, la colonne étant rendue au décor.
   $('list').classList.add('feuille');
@@ -627,13 +636,15 @@ async function ouvrir(id) {
   // Le rail au vert du foot, le ton de cet écran sur l'accueil.
   $('head').innerHTML = `<div class="tabs tbf-onglets" data-ton="vert" id="tabs">
     <button data-t="classement" class="tbf-onglet on">CLASSEMENT</button>
+    <!-- Le seul onglet qui parle du jeu et non du football : le championnat
+         TBFO des clubs, ses supporters et ses KOP. En deuxième, et doré :
+         c'est l'un des endroits importants du jeu (Gaël, 8 novembre 2026),
+         il était le dernier du rail. -->
+    <button data-t="ferveur" class="tbf-onglet jeu">⚡ TBFO</button>
     <button data-t="resultats" class="tbf-onglet">RÉSULTATS</button>
     <button data-t="scorers" class="tbf-onglet">BUTEURS</button>
     <button data-t="assists" class="tbf-onglet">PASSEURS</button>
     <button data-t="cards" class="tbf-onglet">CARTONS</button>
-    <!-- Le seul onglet qui parle du jeu et non du football : ce que les
-         supporters ont donné dans cette compétition. -->
-    <button data-t="ferveur" class="tbf-onglet">FERVEUR</button>
   </div>`;
   bandeauSerie(id);
   $('tabs').onclick = (e) => {
@@ -704,9 +715,14 @@ async function charger() {
   }
 }
 
+/* Le chemin vers le championnat TBFO, en tête du vrai classement : on y
+   arrive presque toujours par ici (Gaël, 8 novembre 2026). */
+const VERS_TBFO = `<button type="button" class="vers-tbfo" data-vers-tbfo>
+  <b>⚡ CHAMPIONNAT TBFO</b><span>Le classement des tribunes de cette compétition</span><i>›</i></button>`;
+
 function rendreClassement(d) {
-  if (!d.groups.length) return $('list').innerHTML = '<div class="empty">Classement indisponible.</div>';
-  $('list').innerHTML = d.groups.map((g) => `
+  if (!d.groups.length) return $('list').innerHTML = VERS_TBFO + '<div class="empty">Classement indisponible.</div>';
+  $('list').innerHTML = VERS_TBFO + d.groups.map((g) => `
     ${g[0]?.group && d.groups.length > 1 ? `<div class="round">${esc(g[0].group)}</div>` : ''}
     <table>
       <thead><tr><th>#</th><th>ÉQUIPE</th><th>J</th><th>G</th><th>N</th><th>P</th><th>DIFF</th><th>PTS</th></tr></thead>
@@ -753,6 +769,14 @@ function minuteDe(m, luA) {
     { HT: 'MT', BT: 'PROL.' }) || null;
 }
 
+/* Le nom d'un club mène à sa page (Gaël, 8 novembre 2026). */
+function nomClub(c) {
+  const id = Number(c?.id);
+  return Number.isInteger(id) && id > 0
+    ? `<a class="lien-club" href="/club/${id}"><span>${esc(c.name)}</span></a>`
+    : `<span>${esc(c?.name)}</span>`;
+}
+
 function ligneMatch(m, luA) {
   const joue = m.home.goals !== null && m.home.goals !== undefined;
   const d2 = new Date(m.date);
@@ -761,11 +785,11 @@ function ligneMatch(m, luA) {
     : d2.toLocaleDateString(LANGUE, { day:'numeric', month:'short' }) + '<br>' +
       d2.toLocaleTimeString(LANGUE, { hour:'2-digit', minute:'2-digit' });
   return `<div class="m" data-m="${m.id}">
-    <div class="s"><img src="${esc(m.home.logo)}" alt=""><span>${esc(m.home.name)}</span></div>
+    <div class="s"><img src="${esc(m.home.logo)}" alt="">${nomClub(m.home)}</div>
     ${joue ? `<div class="sc">${m.home.goals} – ${m.away.goals}</div>`
            : `<div class="when">${quand}</div>`}
     ${joue && m.live ? `<div class="when">${quand}</div>` : ''}
-    <div class="s a"><span>${esc(m.away.name)}</span><img src="${esc(m.away.logo)}" alt=""></div>
+    <div class="s a">${nomClub(m.away)}<img src="${esc(m.away.logo)}" alt=""></div>
   </div>
   <div class="tbf-jeu" data-jeu="${m.id}" data-statut="${esc(m.status ?? '')}"
     data-coup="${esc(m.date ?? '')}"></div>`;
@@ -905,8 +929,9 @@ function rendreJoueurs(d) {
    sur ce que les joueurs ont fait. C'est la seule partie de cette page qui
    parle du jeu et non du football.                                          */
 
-const ECHELLES = [['joueurs', 'SUPPORTERS'], ['tribunes', 'TRIBUNES'], ['kops', 'KOP']];
-let echelle = 'joueurs';
+/* Le championnat TBFO des clubs d'abord (Gaël, 8 novembre 2026). */
+const ECHELLES = [['tribunes', 'CLUBS'], ['joueurs', 'SUPPORTERS'], ['kops', 'KOP']];
+let echelle = 'tribunes';
 /** La dernière réponse : changer d'échelle ne doit rien redemander. */
 let FERVEUR = null;
 /** La saison que le télétexte a retenue, transmise telle quelle au classement. */
@@ -1132,6 +1157,8 @@ $('list').addEventListener('click', (e) => {
      plutôt que de la recopier ici : c'est le même écran, avec le fil, les
      statistiques et les compositions — et un match de la quatrième journée
      n'est dans la journée de personne. */
+  if (e.target.closest('a.lien-club')) return;
+  if (e.target.closest('[data-vers-tbfo]')) { document.querySelector('#tabs [data-t=ferveur]')?.click(); return; }
   const m = e.target.closest('[data-m]');
   if (m) location.href = `/matchs?match=${m.dataset.m}`;
 });
