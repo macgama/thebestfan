@@ -264,6 +264,13 @@ export const REGLAGES = [
      20, nul 5, Virage +10 ») : chaque supporter qui a poussé la tribune d'un
      club sur un vrai match (un duel classé, ou le Virage classé) les reçoit
      une fois le match fini, avec une fête à sa visite suivante. */
+  /* Gaël, 8 novembre 2026 : « ajouter des matchs nuls pour tous les matchs
+     jusqu'à maintenant ». */
+  { cle: 'tribune.match_vide_nul', section: 'virage', type: 'booleen',
+    titre: 'Un vrai match où personne n’a joué compte 0–0', defaut: true,
+    aide: 'Allumé : chaque vrai match fini (ou qui se joue) sans duel classé ni ' +
+      'Virage est un match nul TBFO, 1 point à chaque club. Éteint : il ne compte ' +
+      'pas au championnat des clubs. Aucune écharpe pour un 0–0.' },
   { cle: 'tbfo.actif', section: 'virage', type: 'booleen',
     titre: 'Écharpes des matchs TBFO', defaut: true,
     aide: 'Éteint : plus aucune écharpe ni fête pour un match TBFO gagné, nul ou un ' +

@@ -119,7 +119,7 @@
   const TITRES = {
     '/fanzzy': 'Fanzzy', '/boosters': 'Boosters', '/deck': 'Deck',
     '/boutique': 'Boutique', '/virage': 'Virage', '/duel-nvn': 'Duel',
-    '/kop': 'KOP', '/amis': 'Amis', '/en-ligne': 'En ligne', '/equipes': 'Clubs', '/club': 'Équipe', '/matchs': 'Matchs',
+    '/kop': 'KOP', '/amis': 'Amis', '/en-ligne': 'En ligne', '/equipes': 'Clubs', '/club': 'Équipe', '/tbfo': 'Match TBFO', '/matchs': 'Matchs',
     '/teletext': 'Compétitions', '/classement': 'Classement', '/carnet': 'Carnet',
     /* `/aide` est devenu l'écran des MISSIONS (lot 5) : on y vient chercher
        ce qui se gagne aujourd'hui, et il garde les premiers pas et les

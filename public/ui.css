@@ -12103,6 +12103,13 @@ html[data-calme~="animations"] .tbf-jeu .virage::before{animation:none}
 .tbf-jeu .tbfo small{font-size:10px;opacity:.92;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .tbf-jeu .tbfo.direct{border-color:#ff6a5a}
 .tbf-jeu .tbfo.direct small{color:#ffb3a8}
+.tbf-jeu a.tbfo{text-decoration:none}
+.tbf-jeu a.tbfo:focus-visible{outline:2px solid var(--projo);outline-offset:2px}
+/* Le 0–0 d'office : personne n'a joué (Gaël, 8 novembre 2026), en bleu-gris. */
+.tbf-jeu .tbfo.vide{border-color:rgba(140,170,210,.55);background:linear-gradient(90deg,rgba(110,140,190,.16),rgba(23,28,35,.6));
+  color:#b9c6d8}
+.tbf-jeu .tbfo.vide b{color:#8fb0dc}
+.tbf-jeu .tbfo.vide.direct{border-color:#ff6a5a}
 
 /* ------------------------------------------- les deux tribunes face à face
 

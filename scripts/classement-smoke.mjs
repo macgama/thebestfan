@@ -448,8 +448,13 @@ check('et aucune équipe étrangère à la compétition ne s’y invite',
   check('autant de duels : 1 point chacun, et un Virage nul ne donne rien',
     m?.points?.[0] === 1 && m.points[1] === 1 || dit(m));
 
-  // 7103 : personne n'y a joué.
-  check('un match sans duel ni Virage n’a pas de match TBFO', (await score(7103)) === null);
+  // 7103 : personne n'y a joué. Depuis le 8 novembre 2026 (Gaël) : 0–0 d'office.
+  m = await score(7103);
+  check('un match fini sans duel ni Virage est un 0–0 : 1 point chacun, marqué vide',
+    m?.score?.join() === '0,0' && m.points.join() === '1,1' && m.vide === true && m.fini || dit(m));
+  poserReglages({ 'tribune.duels_jour': 0, 'tribune.match_vide_nul': false });
+  check('réglage éteint : le match vide ne compte pas', (await score(7103)) === null);
+  poserReglages({ 'tribune.duels_jour': 0 });
 
   // Un 2v2 : un seul duel, une seule unité au score.
   await duel(7105, 1, { camps: [[MOMO, SARAH], [KEVIN, LILA]] });

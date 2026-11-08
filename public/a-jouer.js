@@ -120,14 +120,22 @@
     const m = scores.get(id);
     if (!m) return '';
     const [a, b] = m.score ?? [0, 0];
+    const lien = `/tbfo/${Number(id)}`;
+    /* Personne n'y a joué : le 0–0 d'office (Gaël, 8 novembre 2026), d'une
+       autre couleur, et ce qu'il reste à prendre quand le match se joue. */
+    if (m.vide) {
+      return `<a class="tbfo vide${m.direct ? ' direct' : ''}" href="${lien}" title="Match TBFO : personne n’a encore joué">`
+        + `<b>TBFO</b><strong>0–0</strong>`
+        + `<small>${m.direct ? 'À PRENDRE · UN DUEL FAIT LA DIFFÉRENCE' : 'PERSONNE N’A JOUÉ · +1 · +1'}</small></a>`;
+    }
     const total = a + b;
     const part = total ? Math.round((a / total) * 100) : 50;
     const v = Array.isArray(m.virage) ? `VIRAGE ${m.virage[0]}–${m.virage[1]}` : '';
     const pts = `${m.fini ? '' : m.direct ? 'EN JEU ' : ''}+${m.points?.[0] ?? 0} · +${m.points?.[1] ?? 0}`;
-    return `<span class="tbfo${m.direct ? ' direct' : ''}" title="Match TBFO : duels classés gagnés par chaque tribune">`
+    return `<a class="tbfo${m.direct ? ' direct' : ''}" href="${lien}" title="Match TBFO : duels classés gagnés par chaque tribune">`
       + `<b>TBFO</b><strong>${a}–${b}</strong>`
       + `<i class="jauge" style="--part:${part}%"></i>`
-      + `<small>${v ? `${v} · ` : ''}${pts}</small></span>`;
+      + `<small>${v ? `${v} · ` : ''}${pts}</small></a>`;
   }
 
   /** Remplit chaque emplacement, et ne touche qu'à ceux qui changent. */
@@ -146,19 +154,32 @@
   }
   /* Les scores TBFO des matchs à l'écran : une lecture pour tous, et une
      page qui ne sert pas l'adresse (bancs, hors ligne) n'y perd rien. */
+  /* Les statuts d'un match qui a un score TBFO : fini ou qui se joue. Un
+     match à venir n'en a pas encore. */
+  const A_UN_SCORE = new Set(['FT', 'AET', 'PEN', '1H', 'HT', '2H', 'ET', 'BT', 'P', 'LIVE', 'INT', 'SUSP']);
   async function lireScores() {
-    const ids = [...new Set([...document.querySelectorAll('[data-jeu]')]
-      .map((el) => Number(el.dataset.jeu)).filter((x) => Number.isInteger(x) && x > 0))].slice(0, 120);
+    /* Une page de MATCHS en montre des centaines : depuis que chaque vrai
+       match a son score (0–0 d'office, Gaël, 8 novembre 2026), on les
+       demande par paquets de 120, ceux qui ont un score d'abord. */
+    const els = [...document.querySelectorAll('[data-jeu]')];
+    const ids = [...new Set(els.filter((el) => A_UN_SCORE.has(el.dataset.statut ?? ''))
+      .map((el) => Number(el.dataset.jeu)).filter((x) => Number.isInteger(x) && x > 0))].slice(0, 960);
     if (!ids.length) return;
+    const paquets = [];
+    for (let i = 0; i < ids.length; i += 120) paquets.push(ids.slice(i, i + 120));
     try {
-      const r = await fetch(`/api/rank/score-tbfo?ids=${ids.join(',')}`,
-        { credentials: 'same-origin', cache: 'no-store' });
-      if (!r.ok) return;
-      const d = await r.json();
-      if (!Array.isArray(d?.matchs)) return;
-      scores = new Map(d.matchs.map((m) => [Number(m.id), m]));
+      const lus = await Promise.all(paquets.map(async (p) => {
+        const r = await fetch(`/api/rank/score-tbfo?ids=${p.join(',')}`,
+          { credentials: 'same-origin', cache: 'no-store' });
+        if (!r.ok) return null;
+        const d = await r.json();
+        return Array.isArray(d?.matchs) ? d.matchs : null;
+      }));
+      if (lus.every((l) => l === null)) return;
+      scores = new Map(lus.flat().filter(Boolean).map((m) => [Number(m.id), m]));
     } catch { /* hors ligne : on garde ce qu'on a */ }
   }
+
 
   /** Peut-on jouer sur ce match maintenant ? Le filtre À JOUER de /matchs. */
   const jouable = (id, statut, coup) => pastilles(Number(id), statut ?? '', coup ?? '') !== '';

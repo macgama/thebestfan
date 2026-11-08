@@ -512,14 +512,23 @@ const RUBRIQUES = [
           + 'sur ce match (un duel compte 1, du 1v1 au 5v5). Le club qui en gagne le plus '
           + 'marque 3 points, à égalité 1 chacun, sinon 0. La tribune qui gagne le Virage '
           + 'donne 2 points de plus à son club, même s’il a perdu aux duels. Le score se '
-          + 'fige à la fin du vrai match, et un match où personne n’a joué ne compte pas. '
+          + 'fige à la fin du vrai match. '
+          + (reglage('tribune.match_vide_nul') !== false
+            ? 'Un vrai match où personne n’a joué compte 0–0 : 1 point chacun. '
+            : 'Un match où personne n’a joué ne compte pas. ')
           + 'Tu peux pousser n’importe quel club : ta victoire compte pour lui. '
           + (reglage('tribune.duels_jour') ? `Tes ${reglage('tribune.duels_jour')} premiers duels classés du jour comptent pour les clubs. ` : '')
           + 'Le classement repart à chaque saison.'],
       ['Où voir le score TBFO d’un match ?',
-        'Sous chaque match de MATCHS et des compétitions, dès qu’un duel ou un Virage y '
-          + 'a été joué : le score des duels, le Virage et les points en jeu. Pendant le '
-          + 'match, il bouge en direct : un duel de plus peut faire pencher la balance.'],
+        'Sous chaque match de MATCHS et des compétitions, à côté du vrai résultat : le '
+          + 'score des duels, le Virage et les points en jeu. Un 0–0 en bleu-gris veut dire '
+          + 'que personne n’a encore joué. Pendant le match, il bouge en direct : un duel '
+          + 'de plus peut faire pencher la balance.'],
+      ['Où voir tout ce qui s’est joué sur un match ?',
+        'Touche le score TBFO d’un match (ou un match TBFO sur la page d’un club) : la '
+          + 'page du match TBFO montre chaque duel classé, qui l’a gagné et s’il compte, le '
+          + 'Virage avec sa corde et ses présents, les meneurs de chaque tribune et les '
+          + 'écharpes de chaque supporter.'],
       ['C’est quoi, la page d’un club ?',
         'Touche le nom d’un club (classements, compétitions, mes équipes) : sa tribune, '
           + 'son Fanzzy, son cri, ses fans, ses Fanzzy liés, ses duels, ses Virages gagnés, '

@@ -386,8 +386,11 @@ export function createClassements({ pool, requireAuth,
   const plafondClubs = () => duelsDuJour();
   /* Les matchs TBFO d'un filtre (SQL sur `f`, sans paramètre), lus, avec et
      sans la table de la corde. */
+  /* Un vrai match sans duel ni Virage compte 0–0 (Gaël, 8 novembre 2026),
+     tant que `tribune.match_vide_nul` est allumé. */
+  const avecLesVides = () => reglage('tribune.match_vide_nul') !== false;
   const matchsTbfo = (filtre) => avecLeVirage((virage) =>
-    q(MATCHS_TBFO(filtre, { plafond: plafondClubs(), virage })))
+    q(MATCHS_TBFO(filtre, { plafond: plafondClubs(), virage, vides: avecLesVides() })))
     .then((l) => l.map(lireMatch));
   /* Une lecture qui compte le Virage, et sans lui si la table du score
      manque (`sql/virage-tribunes.sql` pas encore appliqué) : les duels
@@ -475,15 +478,18 @@ export function createClassements({ pool, requireAuth,
   async function tribunes(periode = 'saison', limite = 50) {
     const p = periodeDe(periode);
     const n = Number(limite) || 50;
-    return memo(`trib:${p}:${n}:${plafondClubs()}`, async () => {
+    return memo(`trib:${p}:${n}:${plafondClubs()}:${avecLesVides()}`, async () => {
       const matchs = await matchsDePeriode(p);
       const tab = tableau(matchs);
+      /* Tous les clubs ont leurs 0–0 : le classement de tout le jeu ne montre
+         que ceux qui ont des supporters ou un match où l'on a joué. */
+      const actifs = new Set(matchs.filter((m) => !m.vide).flatMap((m) => [m.home, m.away]));
       const equipes = await q(
         `SELECT t.id, t.name, t.logo, t.country, COALESCE(s.n, 0) AS supporters
            FROM teams t
            LEFT JOIN (${SUPPORTERS_ACTIFS}) s ON s.team_id = t.id
           WHERE COALESCE(s.n, 0) >= 1
-                ${tab.size ? `OR t.id IN (${[...tab.keys()].join(',')})` : ''}`);
+                ${actifs.size ? `OR t.id IN (${[...actifs].join(',')})` : ''}`);
       return equipes.map((t) => ligneClub(t, tab.get(Number(t.id)), t.supporters))
         .sort(ordreChampionnat).slice(0, n);
     });
@@ -497,7 +503,7 @@ export function createClassements({ pool, requireAuth,
   async function scoresTbfo(ids) {
     const propres = [...new Set(ids.map(Number).filter((x) => Number.isInteger(x) && x > 0))].slice(0, 120);
     if (!propres.length) return [];
-    return memo(`scores:${propres.join(',')}:${plafondClubs()}`,
+    return memo(`scores:${propres.join(',')}:${plafondClubs()}:${avecLesVides()}`,
       () => matchsTbfo(`f.id IN (${propres.join(',')})`), 15_000);
   }
 
