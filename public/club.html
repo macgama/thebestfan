@@ -34,8 +34,12 @@
 html,body{margin:0;min-height:100dvh}
 body{background:var(--beton);color:var(--craie);font-family:var(--ui);display:flex;justify-content:center;
   padding:0 0 calc(var(--nav-h,62px) + 26px)}
-main{width:100%;max-width:var(--colonne);padding:0 12px;--c1:#E0402C;--c2:#F2EEE4}
-.colonne{width:100%;max-width:620px;margin:0 auto}
+/* `min-width:0` : sans lui, une ligne trop large (un long nom de
+   compétition, une table) élargissait la colonne au-delà de l'écran, et le
+   centrage du corps la coupait des deux côtés, à gauche sans retour
+   possible (Gaël, 8 novembre 2026, Borussia Dortmund). */
+main{width:100%;min-width:0;max-width:var(--colonne);padding:0 12px;--c1:#E0402C;--c2:#F2EEE4;overflow-x:clip}
+.colonne{width:100%;min-width:0;max-width:620px;margin:0 auto}
 
 /* -------------------------------------------------------------- le stade */
 .stade{position:relative;height:388px;margin:0 -12px;overflow:hidden;isolation:isolate;
@@ -223,7 +227,7 @@ function stade(d) {
     ${rang}
     ${toi ? `<span class="toi tbf-sticker" data-ton="flare">${toi}</span>` : ''}
     <img class="fz vide" id="heros" alt="">
-    ${d.cri ? `<button type="button" class="cri" id="cri" aria-label="Le cri du club">« ${esc(d.cri)} »</button>` : ''}
+    ${d.cri ? `<button type="button" class="cri" id="cri" aria-label="Le cri du club">«&nbsp;${esc(d.cri)}&nbsp;»</button>` : ''}
   </section>
   <div class="stats">
     <div class="st or"><b>${nombre(d.fans)}</b><small>FANS</small></div>
