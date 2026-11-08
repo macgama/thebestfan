@@ -5,6 +5,7 @@ import { bientotDeSerie } from '../fanzzy/serie-bientot.js';
 // locale nommée jourISO, et deux noms identiques dans le même fichier se
 // lisent mal même quand la portée les sépare.
 import { jourISO as jourDeColonne } from '../../shared/jour.js';
+import { reparerTexte } from '../../shared/texte-repare.js';
 
 /**
  * Le télétexte : tous les championnats, leurs classements, leurs résultats et
@@ -423,14 +424,14 @@ export function createTeletext({ pool, client, footballStore = null }) {
       if (!e) return null;
       const joueur = (x) => ({
         numero: x.player?.number ?? null,
-        nom: x.player?.name ?? '',
+        nom: reparerTexte(x.player?.name ?? ''),
         poste: POSTE[x.player?.pos] ?? x.player?.pos ?? '',
       });
       return {
         dispositif: e.formation ?? '',
         titulaires: (e.startXI ?? []).map(joueur),
         remplacants: (e.substitutes ?? []).map(joueur),
-        entraineur: e.coach?.name ?? '',
+        entraineur: reparerTexte(e.coach?.name ?? ''),
       };
     };
     const home = cote(homeId);
@@ -529,7 +530,7 @@ export function createTeletext({ pool, client, footballStore = null }) {
         extra: f.fixture.status?.extra ?? null,
         luA: luA ?? Date.now(),
         venue: f.fixture.venue?.name, ville: f.fixture.venue?.city,
-        arbitre: f.fixture.referee,
+        arbitre: reparerTexte(f.fixture.referee),
         live, fini: fini(f.fixture.status?.short),
       },
       ligue: { id: f.league?.id, nom: f.league?.name, pays: f.league?.country,
@@ -548,7 +549,7 @@ export function createTeletext({ pool, client, footballStore = null }) {
         minute: e.time?.elapsed, extra: e.time?.extra,
         equipe: e.team?.id, equipeNom: e.team?.name,
         type: e.type, detail: e.detail,
-        joueur: e.player?.name, passeur: e.assist?.name,
+        joueur: reparerTexte(e.player?.name), passeur: reparerTexte(e.assist?.name),
       })).sort((a, b) => (a.minute ?? 0) - (b.minute ?? 0)),
       stale: Boolean(stale),
     };
