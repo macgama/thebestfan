@@ -499,6 +499,17 @@ html[data-calme~="animations"] .spin{animation-duration:3s}
    les arrondis). Sous 637 px de haut, le vestiaire garde ses 560 px et la
    page défile, comme avant. */
 html,body{overscroll-behavior-y:none}
+/* **Le cadre est figé** (Gaël, 8 novembre 2026 au soir : « tout le cadre
+   bouge, j'aimerais que le cadre soit figé »). Le compte au pixel ne suffisait
+   pas : un bandeau un peu plus haut, une fenêtre plus basse que 637 px, et la
+   page glissait encore. Le profil devient un écran de jeu : la page fait la
+   hauteur de l'écran et ne défile jamais ; le vestiaire prend ce qui reste
+   (flex), jusqu'à 780 px, et ses rails se resserrent sur un petit écran. Les
+   tiroirs défilent en eux-mêmes (`.vt-corps`). */
+html,body{height:100%;overflow:hidden}
+#app{height:var(--h-ecran,100dvh);min-height:0;overflow:hidden}
+#page{flex:1 1 auto;min-height:0;flex-direction:column}
+#carte.vestiaire{flex:1 1 auto;height:auto;min-height:0;max-height:780px}
 /* Le décor occupe toute la scène, et un voile en haut et en bas fait lire ce
    qui s'y écrit ; le milieu, où se tient le Fanzzy, reste clair. */
 #carte.vestiaire .carte-fond{inset:6.5px 0 0}
@@ -2605,7 +2616,7 @@ const domPret = new Promise((r) => (document.readyState === 'loading'
     rendre();
     pagePrete = true;
     $('spin').style.display = 'none';
-    $('page').style.display = 'block';
+    $('page').style.display = 'flex';
     const ancre = location.hash.slice(1);
     if (ancre && $(`tiroir-${ancre}`)) {
       history.replaceState(null, '', location.pathname + location.search);
@@ -2640,7 +2651,7 @@ const domPret = new Promise((r) => (document.readyState === 'loading'
   } catch (e) {
     if (e.message === 'auth') return;
     $('spin').style.display = 'none';
-    $('page').style.display = 'block';
+    $('page').style.display = 'flex';
     /* Dit là où l'on regarde, en haut, sous la carte. */
     $('stats').innerHTML = '<div class="pan" style="grid-column:1/-1"><div class="vide">Serveur injoignable.</div></div>';
   }
