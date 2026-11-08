@@ -346,6 +346,15 @@ check('une journée qui n’existe pas retombe sur celle du jour',
   const g = (j.groupes ?? [])[0];
   check('chaque compétition du jour porte son identifiant', g?.ligue?.id === 207);
   check('et le drapeau dont la page tire le nom du pays', g?.ligue && 'drapeau' in g.ligue);
+  /* Les matchs finis du jour sont gardés en base, avec leurs clubs : le
+     score TBFO (0–0 d'office) et la page du match TBFO en ont besoin
+     (Gaël, 8 novembre 2026). Un match à venir ne l'est pas. */
+  const [f] = await pool.query(`SELECT id, home_goals, status_short FROM fixtures WHERE id IN (1, 2, 3) ORDER BY id`);
+  check('les matchs finis du jour sont gardés, pas celui à venir',
+    f.map((x) => x.id).join() === '1,2' && f[1].home_goals === 2 && f[1].status_short === 'FT'
+    || (console.log('        fixtures :', JSON.stringify(f)), false));
+  const [t] = await pool.query(`SELECT name FROM teams WHERE id IN (85, 91) ORDER BY id`);
+  check('et leurs clubs', t.map((x) => x.name).join() === 'Sion,Bâle' || (console.log('        teams :', JSON.stringify(t)), false));
 }
 
 /* ------------------------------------------------------------- panne */
