@@ -310,7 +310,7 @@ export const REGLAGES = [
     aide: 'Victoire, nul et Virage gagné au derby valent autant de fois plus. 1 : ' +
       'le derby est montré, sans bonus.' },
   { cle: 'tbfo.derby_match', section: 'virage', type: 'entier',
-    titre: 'Derby de la semaine forcé (numéro du vrai match)',
+    titre: 'Derby de la semaine forcé (numéro du vrai match)', unite: 'n° de match',
     min: 0, max: 99999999, defaut: 0,
     aide: 'Zéro : le derby est choisi tout seul. Sinon, le numéro d’un vrai match ' +
       '(celui de l’adresse /tbfo/…) : il devient le derby de sa semaine.' },
