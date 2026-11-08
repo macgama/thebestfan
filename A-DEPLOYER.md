@@ -1,5 +1,14 @@
 # À déposer sur Infomaniak
 
+**Coupes d'Europe : deux tables TBFO** (branche `claude/project-thread-9zc9fe`,
+8 novembre 2026, Gaël, carte « Deux tables : qualifs et phase »). Code seul,
+sans schéma. Dans l'onglet ⚡ TBFO d'une compétition qui a des tours de
+qualification (Ligue des champions, Europa League, Conference League…), un
+second rail PHASE PRINCIPALE / QUALIFS : les qualifs et les barrages d'accès
+ont leur table, la phase principale part de zéro. **Redémarrer**.
+
+---
+
 **Fanzzy de championnat « BIENTÔT » avant leur PASS** (branche
 `claude/project-thread-31pr9n`, 8 novembre 2026, Gaël, option A). Code seul,
 sans schéma. Une série de championnat que les saisons de l'admin n'ont pas
