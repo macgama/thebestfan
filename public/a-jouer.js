@@ -133,7 +133,7 @@
       if (tag) return `<a class="tbfo derby-seul" href="/tbfo/${Number(id)}"><b>TBFO</b>${tag}`
         + '<small>LE DERBY DE LA SEMAINE · ÉCHARPES DOUBLÉES</small></a>';
       return lusOk() && A_UN_SCORE.has(statut) && !FINIS.has(statut) ? '<span class="tbfo vide direct"><b>TBFO</b>'
-        + '<strong>0–0</strong><small>À PRENDRE · UN DUEL FAIT LA DIFFÉRENCE</small></span>' : '';
+        + '<strong>0–0</strong><small>À PRENDRE</small></span>' : '';
     }
     const [a, b] = m.score ?? [0, 0];
     const lien = `/tbfo/${Number(id)}`;
@@ -142,7 +142,7 @@
     if (m.vide) {
       return `<a class="tbfo vide${m.direct ? ' direct' : ''}" href="${lien}" title="Match TBFO : personne n’a encore joué">`
         + `<b>TBFO</b><strong>0–0</strong>${tag}`
-        + `<small>${m.direct ? 'À PRENDRE · UN DUEL FAIT LA DIFFÉRENCE' : 'PERSONNE N’A JOUÉ · +1 · +1'}</small></a>`;
+        + `<small>${m.direct ? 'À PRENDRE' : 'PERSONNE N’A JOUÉ'}</small></a>`;
     }
     const total = a + b;
     const part = total ? Math.round((a / total) * 100) : 50;
