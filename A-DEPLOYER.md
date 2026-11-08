@@ -1,5 +1,17 @@
 # À déposer sur Infomaniak
 
+**Correctif MATCHS : score TBFO partout, et la case du match ouvre le match**
+(branche `claude/fix-tbfo-matchs`, 8 novembre 2026, Gaël). Code seul, sans
+schéma. Les matchs finis de la liste du jour sont maintenant gardés en base
+(table `fixtures`, avec leurs clubs) : chacun a son score TBFO (0–0 d'office),
+sa page de match TBFO et sa place au championnat TBFO de sa compétition. Un
+match en cours d'un club que personne ne suit montre son 0–0 sans lien. Dans
+la liste MATCHS, les noms des clubs ne sont plus des liens (toucher la case
+ouvre la fiche du match) ; dans la fiche, ils mènent toujours à la page du
+club. **Redémarrer**.
+
+---
+
 **0–0 d'office, et la page d'un match TBFO** (branche
 `claude/project-thread-9zc9fe`, 8 novembre 2026, demande de Gaël). Code seul,
 sans schéma. Chaque vrai match fini (ou qui se joue) sans duel classé ni

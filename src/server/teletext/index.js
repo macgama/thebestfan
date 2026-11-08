@@ -221,6 +221,53 @@ export function createTeletext({ pool, client, footballStore = null }) {
    * d'interroger chaque compétition. On ne garde que celles qui sont activées,
    * et on les regroupe pour que la page n'ait rien à trier.
    */
+  /**
+   * **Les résultats du jour, gardés en base** (Gaël, 8 novembre 2026 : « il
+   * n'y a pas les résultats tbfo partout »). La table `fixtures` ne gardait
+   * que les matchs des clubs suivis : tous les autres n'avaient ni score TBFO
+   * (le 0–0 d'office), ni page de match TBFO, ni place au championnat TBFO de
+   * leur compétition. On y écrit donc les matchs **finis** de la liste du
+   * jour (compétitions activées), et leurs clubs. Un match fini ne bouge
+   * plus et n'est jamais relevé en direct (`store.liveFixtureIds` ne lit que
+   * les clubs suivis) : aucun appel à l'API de plus. Une fois par état de la
+   * liste : la même liste relue n'écrit rien.
+   */
+  const dejaRetenus = new Map();
+  async function retenirLesFinis(jourISO, lignes, activees) {
+    const finis = lignes.filter((r) => activees.has(r.league?.id) && fini(r.fixture?.status?.short)
+      && Number.isInteger(r.fixture?.id) && r.teams?.home?.id && r.teams?.away?.id && r.league?.season);
+    if (!finis.length) return;
+    const sig = finis.map((r) => `${r.fixture.id}:${r.fixture.status.short}:${r.goals?.home}-${r.goals?.away}`).join(',');
+    if (dejaRetenus.get(jourISO) === sig) return;
+    try {
+      const equipes = new Map();
+      for (const r of finis) {
+        for (const t of [r.teams.home, r.teams.away]) equipes.set(t.id, [t.id, String(t.name ?? '').slice(0, 120), t.logo ?? null]);
+      }
+      const eq = [...equipes.values()];
+      for (let i = 0; i < eq.length; i += 200) {
+        const lot = eq.slice(i, i + 200);
+        await q(`INSERT IGNORE INTO teams (id, name, logo) VALUES ${lot.map(() => '(?, ?, ?)').join(',')}`, lot.flat());
+      }
+      for (let i = 0; i < finis.length; i += 200) {
+        const lot = finis.slice(i, i + 200);
+        const v = lot.map((r) => [r.fixture.id, r.league.id, r.league.season, r.league.round ?? null,
+          r.teams.home.id, r.teams.away.id, r.goals?.home ?? null, r.goals?.away ?? null,
+          r.fixture.status.short, r.fixture.status.elapsed ?? null, r.fixture.venue?.name ?? null,
+          new Date(r.fixture.date).toISOString().slice(0, 19).replace('T', ' ')]);
+        await q(`INSERT INTO fixtures (id, league_id, season, round, home_id, away_id, home_goals, away_goals,
+                   status_short, elapsed, venue, kickoff_at)
+                 VALUES ${v.map(() => '(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)').join(',')}
+                 ON DUPLICATE KEY UPDATE home_goals = VALUES(home_goals), away_goals = VALUES(away_goals),
+                   status_short = VALUES(status_short), elapsed = VALUES(elapsed)`, v.flat());
+      }
+      dejaRetenus.set(jourISO, sig);
+      if (dejaRetenus.size > 40) dejaRetenus.delete(dejaRetenus.keys().next().value);
+    } catch (e) {
+      console.warn('[teletext] résultats du jour non gardés :', e.message);
+    }
+  }
+
   async function jour(date, { userId = null } = {}) {
     const jourISO = /^\d{4}-\d{2}-\d{2}$/.test(String(date))
       ? date : new Date().toISOString().slice(0, 10);
@@ -277,6 +324,8 @@ export function createTeletext({ pool, client, footballStore = null }) {
       }
       parLigue.get(l.league_id).matchs.push(m);
     }
+
+    await retenirLesFinis(jourISO, data ?? [], activees);
 
     // Ordre : mes clubs d'abord, puis les matchs en cours, puis le palier.
     const groupes = [...parLigue.values()].map((g) => ({

@@ -631,10 +631,10 @@ function rendre() {
             : `<div class="heure">${heure(m.date)}</div>`}</div>
           <div class="eq">
             <div class="r ${m.fini && m.away.vainqueur ? 'perd' : ''}">
-              <img src="${esc(m.home.logo)}" alt="">${nomClub(m.home)}
+              <img src="${esc(m.home.logo)}" alt=""><span>${esc(eqNom(m.home.name))}</span>
               <b>${m.home.goals ?? ''}</b></div>
             <div class="r ${m.fini && m.home.vainqueur ? 'perd' : ''}">
-              <img src="${esc(m.away.logo)}" alt="">${nomClub(m.away)}
+              <img src="${esc(m.away.logo)}" alt=""><span>${esc(eqNom(m.away.name))}</span>
               <b>${m.away.goals ?? ''}</b></div>
             ${m.home.cri || m.away.cri ? `<div class="cris">${[m.home.cri, m.away.cri].filter(Boolean)
               .map((c) => `<span>${esc(c)}</span>`).join('')}</div>` : ''}
@@ -735,7 +735,10 @@ $('liste').addEventListener('click', (e) => {
 const ICONES = { Goal:'⚽', Card:'▮', subst:'⇄', Var:'▣' };
 
 /** Tout ce que la fiche tient entre deux relectures. */
-/* Le nom d'un club mène à sa page (Gaël, 8 novembre 2026). */
+/* Le nom d'un club mène à sa page (Gaël, 8 novembre 2026), dans la fiche
+   du match. Pas dans les lignes de la liste : sur un téléphone, les deux
+   noms couvraient presque toute la case, et toucher le match ouvrait la
+   page d'un club au lieu de sa fiche (Gaël, 8 novembre 2026, 10 h 28). */
 function nomClub(c) {
   const id = Number(c?.id);
   return Number.isInteger(id) && id > 0

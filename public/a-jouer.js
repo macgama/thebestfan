@@ -52,6 +52,8 @@
   let foules = new Map();   // fixtureId -> nombre de supporters qui poussent
   let duels = new Map();    // fixtureId -> { n, format, camp }
   let scores = new Map();   // fixtureId -> le match TBFO (`/api/rank/score-tbfo`)
+  let lus0 = false;          // une lecture des scores a répondu
+  const lusOk = () => lus0;
   let minuterie = null;
 
   /** La tribune de ce match est-elle ouverte maintenant ? */
@@ -116,9 +118,14 @@
    * sur les matchs pour que le user voie le résultat en cours et ait envie
    * de faire pencher la balance ». Rien tant que personne n'y a joué.
    */
-  function bandeau(id) {
+  function bandeau(id, statut = '') {
     const m = scores.get(id);
-    if (!m) return '';
+    /* Un match qui se joue et que le jeu ne garde pas encore en base (aucun
+       club suivi) : le 0–0 d'office quand même, sans lien. */
+    if (!m) {
+      return lusOk() && A_UN_SCORE.has(statut) && !FINIS.has(statut) ? '<span class="tbfo vide direct"><b>TBFO</b>'
+        + '<strong>0–0</strong><small>À PRENDRE · UN DUEL FAIT LA DIFFÉRENCE</small></span>' : '';
+    }
     const [a, b] = m.score ?? [0, 0];
     const lien = `/tbfo/${Number(id)}`;
     /* Personne n'y a joué : le 0–0 d'office (Gaël, 8 novembre 2026), d'une
@@ -143,7 +150,7 @@
     for (const el of racine.querySelectorAll('[data-jeu]')) {
       const id = Number(el.dataset.jeu);
       if (!Number.isInteger(id) || id <= 0) continue;
-      const html = bandeau(id) + pastilles(id, el.dataset.statut ?? '', el.dataset.coup ?? '');
+      const html = bandeau(id, el.dataset.statut ?? '') + pastilles(id, el.dataset.statut ?? '', el.dataset.coup ?? '');
       /* Comparé à ce qu'on a posé la dernière fois, pas au contenu : la
          traduction de `langue.js` réécrit le texte en place, et le comparer
          au français le ferait reposer à chaque tour, sans fin. */
@@ -176,6 +183,7 @@
         return Array.isArray(d?.matchs) ? d.matchs : null;
       }));
       if (lus.every((l) => l === null)) return;
+      lus0 = true;
       scores = new Map(lus.flat().filter(Boolean).map((m) => [Number(m.id), m]));
     } catch { /* hors ligne : on garde ce qu'on a */ }
   }
