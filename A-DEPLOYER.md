@@ -1,5 +1,14 @@
 # À déposer sur Infomaniak
 
+**Page du club : les vrais matchs en lignes de jeu** (branche
+`claude/project-thread-9zc9fe`, 8 novembre 2026, Gaël, capture d'Elche). Code
+seul. LE VRAI CLUB : PROCHAINS MATCHS et DERNIERS RÉSULTATS en lignes compactes
+(petits écussons, deux noms, score + score TBFO ou date ; bord vert/gris/rouge
+selon l'issue) ; FORME TBFO : « À JOUER » en pointillés au lieu de cases
+vides. **Redémarrer**.
+
+---
+
 **Coupes d'Europe : deux tables TBFO** (branche `claude/project-thread-9zc9fe`,
 8 novembre 2026, Gaël, carte « Deux tables : qualifs et phase »). Code seul,
 sans schéma. Dans l'onglet ⚡ TBFO d'une compétition qui a des tours de
