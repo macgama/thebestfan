@@ -10,6 +10,13 @@ le classeur (sa croix y rend la grille). Question dans l'aide et ligne dans
 
 ---
 
+**Page du club : la bulle du cri à côté du Fanzzy** (branche
+`claude/project-thread-9zc9fe`, 8 novembre 2026, Gaël, Elche). Code seul. La
+bulle ne cache plus la tête du Fanzzy : elle est à sa gauche, et le Fanzzy
+glisse un peu à droite. **Redémarrer**.
+
+---
+
 **Fiche d'un match : chaque nom sous son écusson** (branche
 `claude/project-thread-9zc9fe`, 8 novembre 2026, Gaël, Elche – Real Betis).
 Code seul. Les noms des clubs ne sont plus poussés aux bords de l'écran ;

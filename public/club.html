@@ -65,10 +65,13 @@ main{width:100%;min-width:0;max-width:var(--colonne);padding:0 12px;--c1:#E0402C
 .rang b sup{font-size:14px}
 .rang small{display:block;font-family:var(--banner);font-size:9px;letter-spacing:.12em;line-height:1.25}
 .toi{top:94px;left:16px}
-.fz{left:50%;bottom:4px;translate:-50% 0;height:268px;width:auto;max-width:none;pointer-events:none;
+.fz{left:58%;bottom:4px;translate:-50% 0;height:268px;width:auto;max-width:none;pointer-events:none;
   filter:drop-shadow(0 10px 18px #000)}
 .fz.vide{display:none}
-.cri{left:14px;top:178px;max-width:46%;background:#fff;color:#111;font-family:var(--marqueur);font-size:15px;
+/* La bulle du cri à gauche du Fanzzy, jamais devant lui (Gaël, 8 novembre
+   2026, Elche : elle lui cachait la tête). Le Fanzzy glisse un peu à droite
+   pour lui laisser la place. */
+.cri{left:10px;top:150px;max-width:calc(56% - 96px);background:#fff;color:#111;font-family:var(--marqueur);font-size:15px;
   line-height:1.15;padding:7px 11px;border-radius:12px;rotate:-6deg;box-shadow:3px 3px 0 #000;border:0;cursor:pointer;text-align:left}
 .cri::after{content:"";position:absolute;right:-9px;bottom:8px;border:8px solid transparent;border-left-color:#fff}
 .cri:active{scale:.96}
