@@ -1,5 +1,13 @@
 # À déposer sur Infomaniak
 
+**Mon vestiaire (Profil) : le cadre est figé** (branche
+`claude/project-thread-od4e3h`, 8 novembre 2026 au soir, Gaël : « tout le
+cadre bouge, j'aimerais que le cadre soit figé »). Code seul. La page Profil
+ne défile plus jamais, comme un écran de jeu : le vestiaire prend la hauteur
+qui reste, même sur une petite fenêtre. **Redémarrer**.
+
+---
+
 **Mon vestiaire (Profil) ne bouge plus** (branche
 `claude/project-thread-od4e3h`, 8 novembre 2026, Gaël : « je n'aime pas trop
 que cette page bouge »). Code seul. La page faisait 26 px de plus que l'écran :
