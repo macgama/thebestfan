@@ -22,6 +22,7 @@
     "bienvenue:smoke": "node scripts/onboarding-smoke.mjs",
     "foot:smoke": "node scripts/football-smoke.mjs",
     "tt:smoke": "node scripts/teletext-smoke.mjs",
+    "texte-repare:test": "node scripts/texte-repare-test.mjs",
     "inventaire:smoke": "node scripts/inventaire-smoke.mjs",
     "deck:smoke": "node scripts/deck-smoke.mjs",
     "stades:smoke": "node scripts/stades-smoke.mjs",

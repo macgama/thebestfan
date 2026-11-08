@@ -260,12 +260,39 @@ a.vers-club:hover span,a.vers-club:focus-visible span{text-decoration:underline}
    coin est le même. Le personnage reste dans son coin, le fil passe dessous.
    Le coin de la colonne, et non de l'écran : sur un ordinateur, la fiche a
    la largeur du téléphone au milieu, et le coin de l'écran est loin d'elle. */
-#fwatch{position:fixed;left:max(6px,calc(50% - var(--colonne) / 2 + 6px));bottom:calc(var(--nav-h,62px) + 6px);
-  width:96px;height:150px;z-index:3;pointer-events:none}
-/* Sur un écran étroit, cent pixels de personnage au-dessus d'une liste pleine
-   largeur couvrent une ligne entière. Il rétrécit plutôt que de cacher. */
-@media (max-width:430px){#fwatch{width:74px;height:116px}}
-#fwatch[hidden]{display:none}
+/* **La loge du bas** (choix de Gaël, 8 novembre 2026, proposition 3 sur 4).
+   Le Fanzzy flottait au coin, par-dessus la fiche : sur COMPOSITIONS, il
+   cachait la fin des remplaçants (« le fanzzy est par dessus les
+   informations »). Il a maintenant sa place à lui : une bande réservée en bas
+   de la colonne, sur les trois onglets, où il se tient en pied avec le score,
+   la minute et ce qu'il ressent. La fiche garde sous son dernier mot la
+   hauteur de la bande (`.f::after`) : on peut toujours faire remonter la
+   dernière ligne au-dessus d'elle. Un `padding-bottom` n'y suffirait pas :
+   `.f` est un enfant flex de #fiche, à la hauteur de l'écran, et c'est son
+   contenu qui déborde, pas sa marge.
+   Le coin de la colonne, et non de l'écran : sur un ordinateur, la fiche a la
+   largeur du téléphone au milieu. */
+#floge{position:fixed;z-index:3;left:max(0px,calc(50% - var(--colonne) / 2));
+  right:max(0px,calc(50% - var(--colonne) / 2));bottom:0;height:calc(var(--loge-h) + var(--bas,0px));
+  padding:0 14px var(--bas,0px) 136px;display:flex;align-items:center;
+  background:linear-gradient(180deg,#0c121b,#06090e);border-top:2px solid var(--lc,#1f6b45);
+  box-shadow:0 -12px 26px rgba(0,0,0,.75);transition:border-color .4s,background .4s}
+#fiche{--loge-h:136px}
+#floge[hidden]{display:none}
+#fiche.avec-loge .f::after{content:'';display:block;height:calc(var(--loge-h) + var(--bas,0px) + 8px)}
+/* Le Fanzzy dépasse de la bande par le haut, comme accoudé à la rambarde :
+   plus grand que dans son ancien coin, sans rien prendre de plus à la liste. */
+#fwatch{position:absolute;left:6px;bottom:calc(var(--bas,0px) + 2px);width:122px;height:190px;pointer-events:none}
+#floge .lg-txt{min-width:0;flex:1;display:flex;flex-direction:column;gap:3px}
+#floge .lg-eq{font-family:var(--banner);font-size:11px;letter-spacing:.14em;opacity:.78;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-transform:uppercase}
+#floge .lg-sc{font-family:var(--banner);font-size:30px;line-height:1.05;letter-spacing:.04em;color:var(--lc2,var(--craie));
+  display:flex;align-items:baseline;gap:10px}
+#floge .lg-min{font-size:13px;letter-spacing:.1em;color:var(--flare)}
+#floge .lg-min.calme{color:var(--gris)}
+#floge .lg-dit{font-size:12.5px;line-height:1.35;opacity:.9;display:-webkit-box;-webkit-line-clamp:2;
+  -webkit-box-orient:vertical;overflow:hidden}
+#floge.fort{background:linear-gradient(180deg,color-mix(in srgb,var(--lc) 26%,#0c121b),#06090e)}
 
 /* **Le pronostic.** Sur la fiche d'un match d'un club suivi : le score qu'on
    attend, donné avant le coup d'envoi. Gratuit, sans mise : un pronostic juste
@@ -400,7 +427,14 @@ a.vers-club:hover span,a.vers-club:focus-visible span{text-decoration:underline}
   <!-- Le Fanzzy qui regarde le match. Hors du corps, qui se redessine à
        chaque relecture : dedans, il rechargerait son dessin toutes les
        trente secondes. -->
-  <div id="fwatch" hidden></div>
+  <div id="floge" hidden>
+    <div id="fwatch"></div>
+    <div class="lg-txt" aria-live="polite">
+      <div class="lg-eq" id="floge-eq"></div>
+      <div class="lg-sc"><span id="floge-sc"></span><span class="lg-min" id="floge-min"></span></div>
+      <div class="lg-dit" id="floge-dit"></div>
+    </div>
+  </div>
 </div>
 <!-- L’horloge du match, la même que dans le Grand Virage : elle fait courir
      la minute entre deux relevés, sans un appel de plus. -->
@@ -880,6 +914,8 @@ async function ouvrirFiche(id) {
   // rejouer cinq buts d'affilée.
   FICHE.vus = null;
   FICHE.prono = null;
+  FICHE.loge = null;
+  clearTimeout(FICHE.logeT);
 
   const [clubs, perso] = await Promise.all([clubsSuivis(), persoEquipe()]);
   if (FICHE.id !== id) return;
@@ -891,7 +927,8 @@ async function ouvrirFiche(id) {
     }) ?? null;
   }
   if (FICHE.scene && perso) FICHE.scene.definir(perso);
-  $('fwatch').hidden = !FICHE.scene;
+  $('floge').hidden = !FICHE.scene;
+  $('fiche').classList.toggle('avec-loge', Boolean(FICHE.scene));
 
   await relire({ premier: true });
 }
@@ -996,6 +1033,7 @@ function minuteFiche() {
 function majChrono() {
   const n = document.getElementById('fetat');
   if (n) n.textContent = minuteFiche() ?? 'EN COURS';
+  majLoge();
 }
 
 /**
@@ -1057,14 +1095,14 @@ function reagir(d) {
     if (e.type === 'Goal') {
       if (pasUnBut(e)) continue;
       const sous = [e.joueur, e.minute != null ? `${e.minute}′` : ''].filter(Boolean).join(' · ');
-      if (contreMoi) scene.moment('encaisse', 'ON ENCAISSE', { couleur: 'var(--flare)', sous });
-      else scene.moment('but', aMoi ? 'GOAL !' : 'BUT',
+      if (contreMoi) momentFiche('encaisse', 'ON ENCAISSE', { couleur: 'var(--flare)', sous });
+      else momentFiche('but', aMoi ? 'GOAL !' : 'BUT',
         { couleur: aMoi ? couleurDe(e.equipe) : 'var(--craie)', sous });
     } else if (e.type === 'Var') {
-      scene.moment('decision', 'ARBITRAGE VIDÉO',
+      momentFiche('decision', 'ARBITRAGE VIDÉO',
         { couleur: 'var(--flare)', sous: e.detail ?? '' });
     } else if (e.type === 'Card' && /red/i.test(e.detail ?? '')) {
-      scene.moment(contreMoi ? 'progression' : 'decision', 'CARTON ROUGE',
+      momentFiche(contreMoi ? 'progression' : 'decision', 'CARTON ROUGE',
         { couleur: 'var(--flare)', sous: e.joueur ?? '' });
     }
   }
@@ -1090,11 +1128,76 @@ function reagir(d) {
     const [a, b] = !auxTirs ? [nous, eux]
       : mien(d.equipes.home.id) ? [tab.home, tab.away] : [tab.away, tab.home];
     const gagne = a > b, perdu = a < b;
-    scene.moment(gagne ? 'victoire' : perdu ? 'defaite' : 'neutre',
+    momentFiche(gagne ? 'victoire' : perdu ? 'defaite' : 'neutre',
       gagne ? 'VICTOIRE' : perdu ? 'DÉFAITE' : 'MATCH NUL',
       { couleur: gagne ? 'var(--vert)' : perdu ? 'var(--flare)' : 'var(--gris)',
         sous: auxTirs ? `aux tirs au but · ${a} – ${b}` : 'coup de sifflet final' });
   }
+}
+
+/**
+ * La loge du bas : le score, la minute, et ce que le Fanzzy ressent.
+ *
+ * Hors d'un moment fort, son ressenti se lit sur le match et sur le club
+ * qu'on suit ; pendant un moment (but, carton rouge, arbitrage vidéo, coup de
+ * sifflet final), il dit le moment, le temps que la scène le tient. La bande
+ * prend alors la couleur du moment.
+ */
+const MOMENT_DIT = {
+  but: (o, aMoi) => (aMoi ? 'Il exulte !' : 'Il applaudit le but.'),
+  encaisse: () => 'Il encaisse… et il y croit encore.',
+  decision: () => 'Il retient son souffle.',
+  progression: () => 'L’adversaire est à dix : il pousse !',
+  victoire: () => 'Victoire : il fait la fête.',
+  defaite: () => 'Défaite : il range son écharpe.',
+  neutre: () => 'Match nul : un point chacun.',
+};
+function momentFiche(etat, titre, o = {}) {
+  FICHE.scene?.moment(etat, titre, o);
+  const ms = o.ms ?? window.FX?.MOMENT ?? 15000;
+  const aMoi = titre === 'GOAL !';
+  const quoi = titre === 'CARTON ROUGE' && etat === 'decision' ? 'Carton rouge : il n’en revient pas.'
+    : (MOMENT_DIT[etat]?.(o, aMoi) ?? '');
+  const dit = quoi + (o.sous ? ` ${o.sous}` : '');
+  FICHE.loge = { dit: dit.trim(), couleur: o.couleur ?? 'var(--projo)', jusqua: Date.now() + ms };
+  clearTimeout(FICHE.logeT);
+  FICHE.logeT = setTimeout(() => { FICHE.loge = null; majLoge(); }, ms);
+  majLoge();
+}
+
+function ressentiFiche(d) {
+  const f = d.fixture, e = d.equipes;
+  const mien = (id) => mesClubs?.has(Number(id)) ?? false;
+  const nous = mien(e.home.id) ? 'home' : mien(e.away.id) ? 'away' : null;
+  if (!f.live && !f.fini) return 'Il attend le coup d’envoi.';
+  if (f.status === 'HT') return 'Mi-temps : il reprend son souffle.';
+  const ecart = nous ? (e[nous].goals ?? 0) - (e[nous === 'home' ? 'away' : 'home'].goals ?? 0) : null;
+  if (f.fini) {
+    if (ecart == null) return 'Coup de sifflet final.';
+    return ecart > 0 ? 'Victoire : il savoure.' : ecart < 0 ? 'Défaite : la prochaine sera la bonne.'
+      : 'Match nul : un point chacun.';
+  }
+  if (ecart == null) return 'Il regarde le match, sans parti pris.';
+  return ecart > 0 ? 'On mène : il savoure.'
+    : ecart < 0 ? 'On est menés : il pousse et il y croit !'
+      : 'Tout est encore possible : il pousse avec la tribune.';
+}
+
+function majLoge() {
+  const d = FICHE.d;
+  if (!d || $('floge').hidden) return;
+  const f = d.fixture, e = d.equipes;
+  $('floge-eq').textContent = `${eqNom(e.home.name)} – ${eqNom(e.away.name)}`;
+  $('floge-sc').textContent = f.live || f.fini ? `${e.home.goals ?? 0} – ${e.away.goals ?? 0}` : heure(f.date);
+  const min = $('floge-min');
+  min.textContent = f.live ? `● ${minuteFiche() ?? 'EN COURS'}` : f.fini ? 'TERMINÉ' : 'À VENIR';
+  min.classList.toggle('calme', !f.live);
+  const m = FICHE.loge && FICHE.loge.jusqua > Date.now() ? FICHE.loge : null;
+  $('floge-dit').textContent = m?.dit || ressentiFiche(d);
+  const loge = $('floge');
+  loge.classList.toggle('fort', Boolean(m));
+  if (m) { loge.style.setProperty('--lc', m.couleur); loge.style.setProperty('--lc2', m.couleur); }
+  else { loge.style.removeProperty('--lc'); loge.style.removeProperty('--lc2'); }
 }
 
 function dessinerFiche() {
@@ -1189,6 +1292,7 @@ function dessinerFiche() {
 
   dessinerVolet();
   dessinerProno();
+  majLoge();
   $('fcorps').scrollTop = defile;
 
   $('souspage').onclick = (ev) => {

@@ -367,6 +367,32 @@ await jusqua(async () => await page.$('#fcorps .aff') !== null);
   check('et le score de la fiche a suivi', moment.score === '1 – 1'
     || (console.log('        il dit :', moment.score), false));
 
+  /* **La loge du bas** (choix de Gaël, 8 novembre 2026) : le Fanzzy n'est
+     plus posé par-dessus la fiche. Il se tient dans une bande à lui, avec le
+     score, la minute et ce qu'il ressent ; la fiche garde sous son dernier
+     mot la hauteur de la bande, pour que rien ne reste caché dessous. */
+  const loge = await page.evaluate(() => {
+    const l = document.getElementById('floge');
+    const fiche = document.getElementById('fiche');
+    fiche.scrollTop = fiche.scrollHeight;
+    const r = l.getBoundingClientRect();
+    const tout = [...document.querySelectorAll('#souscontenu *')]
+      .filter((n) => n.children.length === 0 && n.textContent.trim());
+    const dernier = tout.length ? tout[tout.length - 1].getBoundingClientRect().bottom : 0;
+    const w = document.getElementById('fwatch');
+    return { visible: !l.hidden && r.height > 100, dans: l.contains(w),
+      sc: document.getElementById('floge-sc').textContent.trim(),
+      dit: document.getElementById('floge-dit').textContent.trim(),
+      haut: r.top, dernier };
+  });
+  check('le Fanzzy se tient dans sa loge, en bas de la fiche', loge.visible && loge.dans
+    || (console.log('        ', loge), false));
+  check('la loge suit le score', loge.sc === '1 – 1' || (console.log('        ', loge), false));
+  check('et dit ce qu’il ressent pendant le but', /exulte/.test(loge.dit) && /Diallo/.test(loge.dit)
+    || (console.log('        ', loge), false));
+  check('la dernière ligne de la fiche remonte au-dessus de la loge', loge.dernier <= loge.haut
+    || (console.log('        ', loge), false));
+
   /* **Un penalty manqué n'est pas un but.** L'API le range sous « Goal »
      (`Missed Penalty`), et le personnage exultait sur le penalty que son club
      venait de rater (`pasUnBut`, dans aujourdhui.html). Le score ne bouge
@@ -856,7 +882,7 @@ await controlerColonne(page, check, { nom: 'la page des matchs',
     const w = document.getElementById('fwatch');
     const r = w.getBoundingClientRect();
     return { l: f.left, r: f.right, w: f.width, milieu: innerWidth / 2,
-      fanzzy: w.hidden ? null : r.left - f.left };
+      fanzzy: document.getElementById('floge').hidden ? null : r.left - f.left };
   });
   check('à 1 366 px, la fiche du match garde la largeur du téléphone, au milieu',
     g.w <= 480 && Math.abs((g.l + g.r) / 2 - g.milieu) <= 2 || (console.log('        ', g), false));

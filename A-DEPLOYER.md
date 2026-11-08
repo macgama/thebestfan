@@ -1,5 +1,15 @@
 # À déposer sur Infomaniak
 
+**Fiche d'un match : le Fanzzy dans sa loge du bas** (branche
+`claude/project-thread-qlorwe`, 8 novembre 2026, Gaël : « le fanzzy est par
+dessus les informations », proposition 3 sur 4). Code seul, sans schéma. Le
+Fanzzy ne flotte plus par-dessus la fiche : une bande en bas, sur les trois
+onglets, le montre en pied avec le score, la minute et ce qu'il ressent (aux
+couleurs du moment sur un but). Les noms abîmés par l'API (« MartÃ­nez ») sont
+réparés côté serveur. **Redémarrer**.
+
+---
+
 **Mon vestiaire (Profil) : le cadre est figé** (branche
 `claude/project-thread-od4e3h`, 8 novembre 2026 au soir, Gaël : « tout le
 cadre bouge, j'aimerais que le cadre soit figé »). Code seul. La page Profil
