@@ -21,6 +21,7 @@
 import express from 'express';
 import { CLUB_DE, criDuClub } from '../../shared/fanzzy/clubs.js';
 import { serieDeLigue } from '../../shared/fanzzy/series-ligues.js';
+import { bientotDeSerie } from '../fanzzy/serie-bientot.js';
 import { parIdentifiant } from '../fanzzy/catalogue.js';
 import { couleursDuClub } from '../kop/index.js';
 import { habillerJoueurs } from '../fanzzy/avatar.js';
@@ -237,7 +238,8 @@ export function createClub({ pool, classements, store = null }) {
     return {
       team,
       cri: criDuClub(id),
-      serie: serie ? { code: serie.code, nom: serie.nom } : null,
+      serie: serie ? { code: serie.code, nom: serie.nom,
+        ...(bientotDeSerie(serie.code) ? { bientot: bientotDeSerie(serie.code) } : {}) } : null,
       fans: nbFans,
       fanzzy: { lies: fanzzyLies(id), achetes },
       kops: lesKops,
