@@ -59,7 +59,10 @@ await raw.query(`INSERT INTO leagues (id,name,country,type,current_season) VALUE
 await raw.query(`INSERT INTO teams (id,name,country,logo,founded,color1,color2) VALUES
   (42,'Arsenal','England','',1886,'#ef0107','#ffffff'),(66,'Aston Villa','England','',1874,'#670e36','#95bfe5'),
   (49,'Chelsea','England','',1905,NULL,NULL)`);
-await raw.query(`INSERT INTO team_leagues (team_id,league_id,season) VALUES (42,39,2026),(66,39,2026),(49,39,2026)`);
+/* La Ligue des champions, parfois typée League par l'API : elle ne doit pas
+   passer devant le championnat du pays du club (Gaël, 8 novembre 2026). */
+await raw.query(`INSERT INTO leagues (id,name,country,type,current_season) VALUES (2,'UEFA Champions League','World','League',2026)`);
+await raw.query(`INSERT INTO team_leagues (team_id,league_id,season) VALUES (42,2,2026),(42,39,2026),(66,39,2026),(49,39,2026)`);
 await raw.query(`INSERT INTO leagues (id,name,country,type,current_season) VALUES (207,'Super League','Switzerland','League',2026)`);
 await raw.query(`INSERT INTO teams (id,name,country,logo,founded,color1,color2) VALUES (551,'FC Basel','Switzerland','',1893,'#e2001a','#0033a0')`);
 await raw.query(`INSERT INTO team_leagues (team_id,league_id,season) VALUES (551,207,2026)`);
@@ -142,6 +145,8 @@ check('ses meilleurs fans de la saison', r.meilleursFans?.length >= 1 && r.meill
 check('ses KOP', r.kops?.[0]?.nom === 'North Bank 88' && r.kops[0].membres === 2);
 check('le vrai club : classement et forme réels',
   r.vrai?.classement?.rang === 2 && r.vrai.classement.sur === 3 && r.vrai.classement.forme === 'WWDWL');
+check('le championnat du club est celui de son pays, pas la Ligue des champions',
+  r.vrai?.ligue?.id === 39 && r.vrai.ligues?.[0]?.id === 39 || (console.log('        ligues :', JSON.stringify(r.vrai?.ligues)), false));
 check('le cri du club', typeof r.cri === 'string' && r.cri.length > 0);
 let st = (await fetch(`${base}/api/club/4242`)).status;
 check('un club inconnu : 404', st === 404);
