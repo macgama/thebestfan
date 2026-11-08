@@ -323,6 +323,32 @@ check('FANZZY d’une série fermée : silhouettes, BIENTÔT · PASS 1, lien ver
 check('aucune erreur de page', erreurs.length === 0 || (console.log('        ', erreurs.join(' | ')), false));
 const large = await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1);
 check('rien ne dépasse en largeur au téléphone', large);
+/* La bulle du cri ne cache pas le Fanzzy (Gaël, 8 novembre 2026, Elche).
+   Les dessins ne sont pas dans le dépôt : sans eux (un clone de travail
+   sans les images du PC), le héros reste vide et le contrôle se tait. */
+{
+  const p2 = await nav.newPage();
+  for (const w of [360, 400, 620]) {
+    await p2.setViewport({ width: w, height: 900, deviceScaleFactor: w === 400 ? 2 : 1 });
+    await p2.goto(`${base}/club/42`, { waitUntil: 'networkidle0' });
+    await dodo(300);
+    const r = await p2.evaluate(() => {
+      const h = document.getElementById('heros'), c = document.getElementById('cri');
+      if (!h || h.classList.contains('vide') || !h.naturalWidth || !c) return null;
+      const a = h.getBoundingClientRect(), b = c.getBoundingClientRect();
+      /* Le dessin ne remplit pas son image : 12 % de marge de chaque côté. */
+      return { cri: Math.round(b.right), fz: Math.round(a.left + a.width * 0.12) };
+    });
+    if (r) {
+      check(`à ${w} px, la bulle du cri reste à côté du Fanzzy`, r.cri <= r.fz
+        || (console.log('        ', JSON.stringify(r)), false));
+    }
+    if (r && process.env.CAPTURES && w === 400) {
+      await (await p2.$('.stade')).screenshot({ path: path.join(process.env.CAPTURES, 'club-bulle.png') });
+    }
+  }
+  await p2.close();
+}
 
 if (process.env.CAPTURES) {
   mkdirSync(process.env.CAPTURES, { recursive: true });
