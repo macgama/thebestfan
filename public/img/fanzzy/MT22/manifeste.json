@@ -1,6 +1,6 @@
 {
   "id": "MT22",
-  "rev": 6,
+  "rev": 9,
   "evolutions": {
     "e1": {
       "skins": {
@@ -13,7 +13,8 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "ead709b1c542"
+          "sha": "ead709b1c542",
+          "cligne": true
         },
         "apocalyptique": {
           "etats": [
@@ -64,7 +65,8 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "8e8e00778679"
+          "sha": "8e8e00778679",
+          "cligne": true
         },
         "prehistorique": {
           "etats": [
@@ -115,7 +117,8 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "81d479ce50a8"
+          "sha": "81d479ce50a8",
+          "cligne": true
         },
         "apocalyptique": {
           "etats": [

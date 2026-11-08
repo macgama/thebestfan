@@ -1,6 +1,6 @@
 {
   "id": "MT35",
-  "rev": 8,
+  "rev": 13,
   "evolutions": {
     "e1": {
       "skins": {
@@ -13,7 +13,8 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "1efc445f8005"
+          "sha": "1efc445f8005",
+          "cligne": true
         },
         "apocalyptique": {
           "etats": [
@@ -64,7 +65,8 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "2f07467a8a24"
+          "sha": "2f07467a8a24",
+          "cligne": true
         },
         "apocalyptique": {
           "etats": [
@@ -115,7 +117,8 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "1134fea5f54e"
+          "sha": "1134fea5f54e",
+          "cligne": true
         },
         "apocalyptique": {
           "etats": [

@@ -1,6 +1,6 @@
 {
   "id": "MT10",
-  "rev": 5,
+  "rev": 7,
   "evolutions": {
     "e1": {
       "skins": {
@@ -13,7 +13,8 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "88aa19923336"
+          "sha": "88aa19923336",
+          "cligne": true
         },
         "prehistorique": {
           "etats": [

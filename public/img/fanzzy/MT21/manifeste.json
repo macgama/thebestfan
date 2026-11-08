@@ -1,6 +1,6 @@
 {
   "id": "MT21",
-  "rev": 7,
+  "rev": 10,
   "evolutions": {
     "e1": {
       "skins": {
@@ -13,7 +13,8 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "41686bc4ce94"
+          "sha": "41686bc4ce94",
+          "cligne": true
         },
         "apocalyptique": {
           "etats": [
@@ -64,7 +65,8 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "544cf06d73dd"
+          "sha": "544cf06d73dd",
+          "cligne": true
         },
         "halloween": {
           "etats": [
@@ -115,7 +117,8 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "f35855fbb102"
+          "sha": "f35855fbb102",
+          "cligne": true
         },
         "prehistorique": {
           "etats": [

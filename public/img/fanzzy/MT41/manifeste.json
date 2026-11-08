@@ -1,6 +1,6 @@
 {
   "id": "MT41",
-  "rev": 4,
+  "rev": 7,
   "evolutions": {
     "e1": {
       "skins": {
@@ -13,7 +13,8 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "3f98c9583d76"
+          "sha": "3f98c9583d76",
+          "cligne": true
         },
         "apocalyptique": {
           "etats": [
@@ -64,7 +65,8 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "a2b76f0b0b68"
+          "sha": "a2b76f0b0b68",
+          "cligne": true
         },
         "apocalyptique": {
           "etats": [
@@ -115,7 +117,8 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "91e26bea3151"
+          "sha": "91e26bea3151",
+          "cligne": true
         },
         "apocalyptique": {
           "etats": [

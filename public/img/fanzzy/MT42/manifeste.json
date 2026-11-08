@@ -1,6 +1,6 @@
 {
   "id": "MT42",
-  "rev": 5,
+  "rev": 8,
   "evolutions": {
     "e1": {
       "skins": {
@@ -13,7 +13,8 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "6ef9764c2eaf"
+          "sha": "6ef9764c2eaf",
+          "cligne": true
         },
         "apocalyptique": {
           "etats": [
@@ -64,7 +65,8 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "d95102744b4c"
+          "sha": "d95102744b4c",
+          "cligne": true
         },
         "apocalyptique": {
           "etats": [
@@ -115,7 +117,8 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "d2dc6284ad47"
+          "sha": "d2dc6284ad47",
+          "cligne": true
         },
         "apocalyptique": {
           "etats": [

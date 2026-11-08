@@ -1,6 +1,6 @@
 {
   "id": "MT33",
-  "rev": 6,
+  "rev": 8,
   "evolutions": {
     "e1": {
       "skins": {
@@ -13,7 +13,8 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "3cb87e5df0d0"
+          "sha": "3cb87e5df0d0",
+          "cligne": true
         },
         "apocalyptique": {
           "etats": [
@@ -115,7 +116,8 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "7298c95c3f86"
+          "sha": "7298c95c3f86",
+          "cligne": true
         },
         "prehistorique": {
           "etats": [

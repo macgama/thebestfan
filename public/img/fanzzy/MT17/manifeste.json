@@ -1,6 +1,6 @@
 {
   "id": "MT17",
-  "rev": 9,
+  "rev": 15,
   "evolutions": {
     "e1": {
       "skins": {
@@ -13,7 +13,8 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "68e91c631872"
+          "sha": "68e91c631872",
+          "cligne": true
         },
         "halloween": {
           "etats": [
@@ -64,7 +65,8 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "0112d0a0ad5a"
+          "sha": "0112d0a0ad5a",
+          "cligne": true
         },
         "halloween": {
           "etats": [
@@ -115,7 +117,8 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "bd2c98e14703"
+          "sha": "bd2c98e14703",
+          "cligne": true
         },
         "prehistorique": {
           "etats": [

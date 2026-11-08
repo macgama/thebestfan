@@ -1,6 +1,6 @@
 {
   "id": "MT13",
-  "rev": 3,
+  "rev": 5,
   "evolutions": {
     "e1": {
       "skins": {
@@ -13,7 +13,8 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "82aa17caa14b"
+          "sha": "82aa17caa14b",
+          "cligne": true
         },
         "halloween": {
           "etats": [

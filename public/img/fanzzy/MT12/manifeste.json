@@ -1,6 +1,6 @@
 {
   "id": "MT12",
-  "rev": 4,
+  "rev": 6,
   "evolutions": {
     "e1": {
       "skins": {
@@ -13,7 +13,8 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "b2d53f70ddbf"
+          "sha": "b2d53f70ddbf",
+          "cligne": true
         },
         "apocalyptique": {
           "etats": [
