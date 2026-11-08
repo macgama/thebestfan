@@ -277,6 +277,20 @@ await jusqua(async () => await page.$('#fcorps .aff') !== null);
     relecture: RELECTURE_MS,
   }));
 
+  /* Chaque nom sous son écusson, centré, et pas aux bords de l'écran (Gaël,
+     8 novembre 2026, Elche – Real Betis). */
+  const cotes = await page.evaluate(() => [...document.querySelectorAll('#fcorps .sc .cote')].map((c) => {
+    const i = c.querySelector('img').getBoundingClientRect(), n = c.querySelector('span').getBoundingClientRect();
+    return Math.abs((i.left + i.right) / 2 - (n.left + n.right) / 2) < 2 && n.top >= i.bottom;
+  }));
+  check('dans la fiche, chaque nom est centré sous son écusson',
+    cotes.length === 2 && cotes.every(Boolean) || (console.log('        ', JSON.stringify(cotes)), false));
+  if (process.env.CAPTURES) {
+    await page.setViewport({ width: 400, height: 900, deviceScaleFactor: 2 });
+    await new Promise((r) => setTimeout(r, 300));
+    await (await page.$('#fcorps .aff')).screenshot({ path: `${process.env.CAPTURES}/fiche-match-noms.png` });
+  }
+
   check('la fiche s’ouvre sur la minute courante',
     f.etat === '21′' || (console.log('        elle dit :', f.etat), false));
 

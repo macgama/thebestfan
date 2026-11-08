@@ -1,5 +1,12 @@
 # À déposer sur Infomaniak
 
+**Fiche d'un match : chaque nom sous son écusson** (branche
+`claude/project-thread-9zc9fe`, 8 novembre 2026, Gaël, Elche – Real Betis).
+Code seul. Les noms des clubs ne sont plus poussés aux bords de l'écran ;
+écusson et nom mènent tous deux à la page du club. **Redémarrer**.
+
+---
+
 **Page du club : les vrais matchs en lignes de jeu** (branche
 `claude/project-thread-9zc9fe`, 8 novembre 2026, Gaël, capture d'Elche). Code
 seul. LE VRAI CLUB : PROCHAINS MATCHS et DERNIERS RÉSULTATS en lignes compactes

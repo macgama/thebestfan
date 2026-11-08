@@ -195,15 +195,14 @@ html[data-calme~="animations"] .spin{animation-duration:3s}
 .f .fermer{width:44px;height:44px;min-height:44px;padding:0;font-size:20px}
 .f .aff{text-align:center;padding:18px 0 10px}
 .f .aff .lg{font-size:11px;letter-spacing:.14em;opacity:.88;font-family:var(--banner)}
-.f .aff .sc{display:flex;align-items:center;justify-content:center;gap:16px;margin-top:14px}
-.f .aff .sc img{width:46px;height:46px;object-fit:contain}
-.f .aff .sc .n{font-family:var(--banner);font-size:38px;letter-spacing:.02em}
-.f .aff .nom{display:flex;justify-content:space-between;margin-top:10px;font-size:12.5px;opacity:.9}
+.f .aff .sc{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:start;gap:10px;margin-top:14px}
+.f .aff .sc .cote{display:flex;flex-direction:column;align-items:center;gap:6px;min-width:0;font-size:12.5px;line-height:1.2}
+.f .aff .sc .cote img{width:46px;height:46px;object-fit:contain}
+.f .aff .sc .cote span{max-width:100%;overflow-wrap:anywhere;opacity:.92}
+.f .aff .sc .n{font-family:var(--banner);font-size:38px;letter-spacing:.02em;line-height:46px;white-space:nowrap}
 a.vers-club{color:inherit;text-decoration:none;min-width:0;display:flex}
 a.vers-club:hover span,a.vers-club:focus-visible span{text-decoration:underline}
 .m .r a.vers-club{flex:1}
-.f .aff .nom a.vers-club{max-width:48%}
-.f .aff .nom a.vers-club span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ftbfo{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:4px 10px;margin:12px auto 0;max-width:420px;
   padding:8px 12px;border-radius:10px;border:2px solid var(--projo);background:rgba(245,195,59,.1);color:var(--craie);
   text-decoration:none;font-size:12px}
@@ -780,15 +779,18 @@ $('liste').addEventListener('click', (e) => {
 const ICONES = { Goal:'⚽', Card:'▮', subst:'⇄', Var:'▣' };
 
 /** Tout ce que la fiche tient entre deux relectures. */
-/* Le nom d'un club mène à sa page (Gaël, 8 novembre 2026), dans la fiche
-   du match. Pas dans les lignes de la liste : sur un téléphone, les deux
-   noms couvraient presque toute la case, et toucher le match ouvrait la
-   page d'un club au lieu de sa fiche (Gaël, 8 novembre 2026, 10 h 28). */
-function nomClub(c) {
+
+/* Un club en tête de fiche : son écusson et son nom dessous, centrés, et
+   les deux mènent à sa page (pas dans les lignes de la liste : toucher le
+   match doit ouvrir sa fiche, Gaël, 8 novembre 2026, 10 h 28). Les noms vivaient sur une ligne à part, poussés
+   aux deux bords de l'écran, loin de leur écusson (Gaël, 8 novembre 2026,
+   Elche – Real Betis). */
+function coteFiche(c) {
   const id = Number(c?.id);
+  const dedans = `<img src="${esc(c?.logo ?? '')}" alt=""><span>${esc(eqNom(c?.name))}</span>`;
   return Number.isInteger(id) && id > 0
-    ? `<a class="vers-club" href="/club/${id}"><span>${esc(eqNom(c.name))}</span></a>`
-    : `<span>${esc(eqNom(c?.name))}</span>`;
+    ? `<a class="cote vers-club" href="/club/${id}">${dedans}</a>`
+    : `<span class="cote">${dedans}</span>`;
 }
 
 /* Le match TBFO de la fiche (Gaël, 8 novembre 2026) : son score à côté du
@@ -1124,12 +1126,11 @@ function dessinerFiche() {
     <div class="aff">
       ${ligneCompetition}
       <div class="sc">
-        <img src="${esc(e.home.logo)}" alt="">
+        ${coteFiche(e.home)}
         <span class="n">${f.fini || f.live ? `${e.home.goals ?? 0} – ${e.away.goals ?? 0}`
           : heure(f.date)}</span>
-        <img src="${esc(e.away.logo)}" alt="">
+        ${coteFiche(e.away)}
       </div>
-      <div class="nom">${nomClub(e.home)}${nomClub(e.away)}</div>
       <div class="etat ${f.live ? '' : 'calme'}" id="fetat">${f.live ? (min ?? 'EN COURS')
         : f.fini ? 'TERMINÉ' : esc(f.statusLong ?? 'À VENIR')}</div>
       ${tbfoFiche(FICHE.id)}
