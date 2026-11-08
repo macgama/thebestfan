@@ -78,10 +78,14 @@ import { grandLivreFerme } from './auth/schema.js';
 
     `tbfo` (7 novembre 2026, choix de Gaël) : les écharpes d'un match TBFO
     gagné ou nul par la tribune qu'on a poussée, une fois par match — la clé
-    est l'identifiant du match (`classements/victoires.js`). */
+    est l'identifiant du match (`classements/victoires.js`).
+
+    `tbfo-hdm` et `tbfo-champ` (8 novembre 2026, Gaël) : l'homme du match
+    TBFO (clé = le match) et le cadeau du champion TBFO d'une saison finie
+    à ses supporters (clé = ligue-saison). Voir `classements/exploits.js`. */
 export const SOURCES = ['bonus', 'mission', 'sachet', 'carnet', 'relais', 'cran', 'serie', 'division',
   'virage', 'prono', 'jongles', 'tirs', 'chant', 'deplacement', 'tifo', 'boss', 'cadeau', 'defi',
-  'hebdo', 'voie', 'victoire', 'tbfo'];
+  'hebdo', 'voie', 'victoire', 'tbfo', 'tbfo-hdm', 'tbfo-champ'];
 
 /** Les raisons d'un refus, liste fermée (`CONTRATS.md`, § 11). */
 export const RAISONS = ['deja', 'incomplet', 'jour_passe', 'change', 'inactif', 'plafond',

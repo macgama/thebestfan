@@ -1,5 +1,26 @@
 # À déposer sur Infomaniak
 
+**Les exploits TBFO** (branche `claude/project-thread-9zc9fe`, 8 novembre 2026,
+Gaël : « les 4 idées m'intéressent »). Code seul, sans schéma (grand livre
+`recompenses`, nouvelles sources `tbfo-hdm` et `tbfo-champ`).
+1. **Homme du match TBFO** : le joueur qui a gagné le plus de duels classés sur
+   un vrai match fini reçoit le titre et 15 écharpes ; sa carte (avec son
+   Fanzzy) sur la page `/tbfo/:id`.
+2. **Derby de la semaine** : le vrai match de la semaine qui réunit le plus de
+   supporters ; écharpes de tribune ×2 ; affiche en haut de MATCHS, ligne
+   dorée sur l'accueil, étiquette DERBY ×2 sous le match (`/api/club/derby`).
+3. **Alerte « ton club perd au TBFO »** pendant un vrai match, avec UN DUEL et
+   VIRAGE (`public/tbfo-alerte.js`, `/api/club/alertes`).
+4. **Fin de saison TBFO** : quand la saison d'un championnat est finie, le
+   premier du championnat TBFO est champion, 100 écharpes et le titre à
+   chacun de ses supporters ; course au titre dans l'onglet ⚡ TBFO, trophées
+   sur la page du club (`/api/club/fin/:ligue`).
+Six réglages dans /admin › LE GRAND VIRAGE (`tbfo.hdm_echarpes`, `tbfo.derby`,
+`tbfo.derby_coef`, `tbfo.derby_match`, `tbfo.alerte`,
+`tbfo.champion_echarpes`). **Redémarrer**.
+
+---
+
 **Correctif MATCHS : score TBFO partout, et la case du match ouvre le match**
 (branche `claude/fix-tbfo-matchs`, 8 novembre 2026, Gaël). Code seul, sans
 schéma. Les matchs finis de la liste du jour sont maintenant gardés en base

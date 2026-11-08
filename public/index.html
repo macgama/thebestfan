@@ -2206,6 +2206,9 @@ html[data-calme~="animations"] .ouverture .fan img{animation:none}
     </div>
 
     <footer class="bas">
+      <!-- Le derby de la semaine (Gaël, 8 novembre 2026) : une ligne dorée,
+           remplie par `derby.js`, absente sans derby. -->
+      <div class="derby-accueil" data-derby="bandeau" hidden></div>
       <div class="duo">
         <!-- Le compte et la jauge naissent vides : voir « Sans valeur, rien »
              dans la feuille de cette page. Un panneau calme à gauche, le seul
@@ -6935,5 +6938,7 @@ async function alerteDuel() {
 <script src="/cadeau-fete.js" defer></script>
 <script src="/appel-fete.js" defer></script>
 <script src="/tbfo-fete.js" defer></script>
+<script src="/tbfo-alerte.js" defer></script>
+<script src="/derby.js" defer></script>
 </body>
 </html>

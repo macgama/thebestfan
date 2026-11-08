@@ -82,6 +82,15 @@ main{width:100%;max-width:var(--colonne);padding:0 12px;--c1:#E0402C;--c2:#F2EEE
   align-items:center;gap:8px;margin:16px 0 8px}
 .cousu::after{content:"";flex:1;border-top:2px dashed rgba(242,238,228,.25);order:2}
 .cousu i{font-style:normal;opacity:.7;font-size:10.5px;order:3}
+/* Les titres de champion TBFO du club (Gaël, 8 novembre 2026). */
+.vitrine{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding:2px 0 4px}
+.vitrine .trophee{flex:none;display:flex;flex-direction:column;align-items:center;gap:3px;width:92px;padding:8px 4px;border-radius:9px;
+  background:linear-gradient(180deg,#2a2014,#141820);border:2px solid var(--projo);box-shadow:0 3px 0 #000;text-align:center;
+  color:inherit;text-decoration:none}
+.vitrine .trophee i{width:34px;height:30px;background:linear-gradient(90deg,#c9961f,#ffe08a 45%,#c9961f);
+  border:2px solid #111;border-radius:3px 3px 17px 17px;box-shadow:2px 2px 0 #111}
+.vitrine .trophee b{font-family:var(--banner);font-size:10.5px;letter-spacing:.06em;line-height:1.2}
+.vitrine .trophee small{font-size:10px;opacity:.8}
 .forme{display:flex;gap:5px}
 .forme i{flex:1;font-style:normal;text-align:center;font-family:var(--banner);font-size:13px;padding:5px 0;
   border-radius:4px;color:#fff}
@@ -303,6 +312,9 @@ function tribune(d) {
       <span>${esc(quand(m.coup))}${m.vide ? ' · personne n’a joué' : ''}</span><b>${pour}–${contre}${vir} · +${m.points[c]} ›</b></a>`;
   }).join('');
   return `<div class="cousu">MEILLEURS FANS <i>SAISON</i></div>${podium}
+    ${d.tbfo?.titres?.length ? `<div class="cousu">🏆 TITRES TBFO <i>${d.tbfo.titres.length}</i></div>
+      <div class="vitrine">${d.tbfo.titres.map((t) => `<a class="trophee" href="/teletext?ligue=${Number(t.ligue)}"><i></i>
+        <b>${esc(String(t.name ?? '').toUpperCase())}</b><small>CHAMPION ${esc(t.saison)}</small></a>`).join('')}</div>` : ''}
     <div class="cousu">CHAMPIONNATS TBFO <i>${rangs.length > 1 ? `${rangs.length} COMPÉTITIONS` : esc((r?.ligue?.name ?? '').toUpperCase())}</i></div>${voisins}
     <div class="cousu">BILAN TBFO <i>SAISON</i></div>
     <div class="pan">

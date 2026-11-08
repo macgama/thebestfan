@@ -12110,6 +12110,11 @@ html[data-calme~="animations"] .tbf-jeu .virage::before{animation:none}
   color:#b9c6d8}
 .tbf-jeu .tbfo.vide b{color:#8fb0dc}
 .tbf-jeu .tbfo.vide.direct{border-color:#ff6a5a}
+/* Le derby de la semaine (Gaël, 8 novembre 2026, `derby.js`) : son étiquette
+   noire et or, écharpes multipliées. */
+.tbf-jeu .tbfo em.derby{font-style:normal;flex:none;background:#111;color:var(--projo);border:1px solid var(--projo);
+  border-radius:4px;padding:2px 5px;font-size:10px;letter-spacing:.06em}
+.tbf-jeu .tbfo.derby-seul{border-color:var(--projo)}
 
 /* ------------------------------------------- les deux tribunes face à face
 

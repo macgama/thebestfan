@@ -54,6 +54,12 @@
   let scores = new Map();   // fixtureId -> le match TBFO (`/api/rank/score-tbfo`)
   let lus0 = false;          // une lecture des scores a répondu
   const lusOk = () => lus0;
+  /* Le derby de la semaine (Gaël, 8 novembre 2026) : son bandeau porte
+     « DERBY ×2 ». Lu une fois par page. */
+  let derby = null;
+  fetch('/api/club/derby', { credentials: 'same-origin' }).then((r) => (r.ok ? r.json() : null))
+    .then((j) => { if (j?.derby) { derby = { id: Number(j.derby.id), coef: Number(j.derby.coef) || 2 }; poser(); } })
+    .catch(() => {});
   let minuterie = null;
 
   /** La tribune de ce match est-elle ouverte maintenant ? */
@@ -120,9 +126,12 @@
    */
   function bandeau(id, statut = '') {
     const m = scores.get(id);
+    const tag = derby?.id === Number(id) ? `<em class="derby">⚔ DERBY ×${derby.coef}</em>` : '';
     /* Un match qui se joue et que le jeu ne garde pas encore en base (aucun
        club suivi) : le 0–0 d'office quand même, sans lien. */
     if (!m) {
+      if (tag) return `<a class="tbfo derby-seul" href="/tbfo/${Number(id)}"><b>TBFO</b>${tag}`
+        + '<small>LE DERBY DE LA SEMAINE · ÉCHARPES DOUBLÉES</small></a>';
       return lusOk() && A_UN_SCORE.has(statut) && !FINIS.has(statut) ? '<span class="tbfo vide direct"><b>TBFO</b>'
         + '<strong>0–0</strong><small>À PRENDRE · UN DUEL FAIT LA DIFFÉRENCE</small></span>' : '';
     }
@@ -132,7 +141,7 @@
        autre couleur, et ce qu'il reste à prendre quand le match se joue. */
     if (m.vide) {
       return `<a class="tbfo vide${m.direct ? ' direct' : ''}" href="${lien}" title="Match TBFO : personne n’a encore joué">`
-        + `<b>TBFO</b><strong>0–0</strong>`
+        + `<b>TBFO</b><strong>0–0</strong>${tag}`
         + `<small>${m.direct ? 'À PRENDRE · UN DUEL FAIT LA DIFFÉRENCE' : 'PERSONNE N’A JOUÉ · +1 · +1'}</small></a>`;
     }
     const total = a + b;
@@ -140,7 +149,7 @@
     const v = Array.isArray(m.virage) ? `VIRAGE ${m.virage[0]}–${m.virage[1]}` : '';
     const pts = `${m.fini ? '' : m.direct ? 'EN JEU ' : ''}+${m.points?.[0] ?? 0} · +${m.points?.[1] ?? 0}`;
     return `<a class="tbfo${m.direct ? ' direct' : ''}" href="${lien}" title="Match TBFO : duels classés gagnés par chaque tribune">`
-      + `<b>TBFO</b><strong>${a}–${b}</strong>`
+      + `<b>TBFO</b><strong>${a}–${b}</strong>${tag}`
       + `<i class="jauge" style="--part:${part}%"></i>`
       + `<small>${v ? `${v} · ` : ''}${pts}</small></a>`;
   }

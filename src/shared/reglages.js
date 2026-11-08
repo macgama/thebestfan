@@ -291,6 +291,39 @@ export const REGLAGES = [
     min: 0, max: 300, defaut: 10,
     aide: 'En plus du résultat aux duels, à toute la tribune qui a gagné la corde ' +
       'du Virage, même si elle a perdu aux duels. Zéro : rien.' },
+  /* Les exploits TBFO (Gaël, 8 novembre 2026, « les 4 idées m'intéressent ») :
+     `classements/exploits.js`. */
+  { cle: 'tbfo.hdm_echarpes', section: 'virage', type: 'entier',
+    titre: 'Homme du match TBFO : écharpes en plus', unite: 'écharpes',
+    min: 0, max: 300, defaut: 15,
+    aide: 'Le joueur qui a gagné le plus de duels classés sur un vrai match fini ' +
+      '(à égalité : la plus grosse ferveur au Virage) reçoit le titre « Homme du ' +
+      'match TBFO » et ces écharpes, une fois par match. Zéro : le titre seul.' },
+  { cle: 'tbfo.derby', section: 'virage', type: 'booleen',
+    titre: 'Le derby de la semaine', defaut: true,
+    aide: 'Chaque semaine (lundi–dimanche), le vrai match qui réunit le plus de ' +
+      'supporters des deux clubs est mis en avant sur l’accueil et les matchs, et ' +
+      'ses écharpes de tribune sont multipliées. Éteint : plus de derby.' },
+  { cle: 'tbfo.derby_coef', section: 'virage', type: 'entier',
+    titre: 'Derby de la semaine : écharpes de la tribune multipliées par', unite: '×',
+    min: 1, max: 5, defaut: 2,
+    aide: 'Victoire, nul et Virage gagné au derby valent autant de fois plus. 1 : ' +
+      'le derby est montré, sans bonus.' },
+  { cle: 'tbfo.derby_match', section: 'virage', type: 'entier',
+    titre: 'Derby de la semaine forcé (numéro du vrai match)',
+    min: 0, max: 99999999, defaut: 0,
+    aide: 'Zéro : le derby est choisi tout seul. Sinon, le numéro d’un vrai match ' +
+      '(celui de l’adresse /tbfo/…) : il devient le derby de sa semaine.' },
+  { cle: 'tbfo.alerte', section: 'virage', type: 'booleen',
+    titre: 'Alerte « ton club perd au TBFO »', defaut: true,
+    aide: 'Pendant un vrai match, le joueur dont le club est mené au TBFO est ' +
+      'prévenu sur la page où il est, avec un duel et le Virage à un toucher.' },
+  { cle: 'tbfo.champion_echarpes', section: 'virage', type: 'entier',
+    titre: 'Champion TBFO d’une saison : écharpes à chacun de ses supporters', unite: 'écharpes',
+    min: 0, max: 2000, defaut: 100,
+    aide: 'Quand la saison d’un championnat est finie, le premier du championnat ' +
+      'TBFO (au moins un match TBFO gagné) est champion : chacun de ses supporters ' +
+      'reçoit le titre « Champion TBFO » et ces écharpes. Zéro : rien.' },
 
   /* Les Fanzzy liés à un club (demande de Gaël du 21 octobre 2026) : voir
      `shared/fanzzy/clubs.js`. Deux nombres, parce que « gagner plus » et
