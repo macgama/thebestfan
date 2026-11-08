@@ -19,6 +19,17 @@ et réelles) et le Fanzzy choisi par le joueur au milieu du stade.
 
 ---
 
+**Mes pronostics dans le vestiaire** (branche `claude/project-thread-5g4z94`,
+8 novembre 2026, demande de Gaël). Code seul, sans schéma. Une tuile blanche
+PRONOS dans /profil (à gauche, sous PARCOURS) ouvre le tiroir « Mes
+pronostics » : les 20 derniers, avec le score donné, le score final, EXACT /
+BON VAINQUEUR / BON NUL / RATÉ / À VENIR, les écharpes gagnées, et un lien
+vers le match. `/profil#pronos` arrive tiroir ouvert. Lit la route
+`GET /api/pronostics`, déjà en place. Traduit, QUESTIONS et /comment-jouer à
+jour. **Redémarrer** (pas indispensable : seule la page change).
+
+---
+
 **Écharpes d'un match TBFO gagné, et sa fête** (branche
 `claude/project-thread-9zc9fe`, 7 novembre 2026, choix de Gaël « Victoire 20,
 nul 5, Virage +10 »). Code seul, sans schéma (grand livre `recompenses`,
