@@ -58,7 +58,7 @@ await raw.query(`INSERT INTO saisons (id, numero, nom, series, tenues, lancee_a)
 await raw.query(`INSERT INTO leagues (id,name,country,type,current_season) VALUES (39,'Premier League','England','League',2026)`);
 await raw.query(`INSERT INTO teams (id,name,country,logo,founded,color1,color2) VALUES
   (42,'Arsenal','England','',1886,'#ef0107','#ffffff'),(66,'Aston Villa','England','',1874,'#670e36','#95bfe5'),
-  (49,'Chelsea','England','',1905,NULL,NULL)`);
+  (49,'Chelsea','England','/img/apple-touch-icon.png',1905,NULL,NULL)`);
 /* La Ligue des champions, parfois typée League par l'API : elle ne doit pas
    passer devant le championnat du pays du club (Gaël, 8 novembre 2026). */
 await raw.query(`INSERT INTO leagues (id,name,country,type,current_season) VALUES (2,'UEFA Champions League','World','League',2026)`);
@@ -288,6 +288,21 @@ check('TRIBUNE : les KOP du club', /North Bank 88/.test(await txt('.kops')));
 await page.click('.onglets [data-o=vrai]');
 check('LE VRAI CLUB : le classement réel', await jusqua(async () => /2e sur 3 · 24 PTS/.test(await txt('#onglet'))));
 check('LE VRAI CLUB : fondé en', /Fondé en\s*1886/.test(await txt('#onglet')));
+/* Les vrais matchs en lignes de jeu (Gaël, 8 novembre 2026, Elche : les
+   écussons prenaient toute la largeur). */
+check('LE VRAI CLUB : derniers résultats et prochains matchs en lignes compactes',
+  await page.$$eval('#onglet .mrow', (l) => l.length) >= 2
+  && await page.$$eval('#onglet .mrow img', (l) => l.length > 0 && l.every((i) => i.getBoundingClientRect().width <= 30)));
+check('le résultat dit l’issue et le score TBFO', /2–0\s*TBFO/.test(await txt('#onglet .mrow.V'))
+  && /Arsenal/.test(await txt('#onglet .mrow.V .cote.moi')));
+check('le match qui se joue : score et minute', /1–1\s*● 67’/.test(await txt('#onglet .mrow.avant')));
+if (process.env.CAPTURES) {
+  mkdirSync(process.env.CAPTURES, { recursive: true });
+  await page.setViewport({ width: 400, height: 900, deviceScaleFactor: 2 });
+  await dodo(400);
+  await (await page.$('#onglet')).screenshot({ path: path.join(process.env.CAPTURES, 'club-vrai-matchs.png') });
+  await page.setViewport({ width: 400, height: 900 });
+}
 await page.click('.onglets [data-o=fanzzy]');
 check('FANZZY : les trois Fanzzy liés, un à moi', await jusqua(async () =>
   (await page.$$('.fzc')).length === 3 && (await page.$$('.fzc.non')).length === 2));

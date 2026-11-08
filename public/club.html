@@ -99,7 +99,10 @@ main{width:100%;min-width:0;max-width:var(--colonne);padding:0 12px;--c1:#E0402C
 .forme i{flex:1;font-style:normal;text-align:center;font-family:var(--banner);font-size:13px;padding:5px 0;
   border-radius:4px;color:#fff}
 .forme .V{background:var(--vert)}.forme .N{background:#5b6270}.forme .D{background:var(--flare)}
-.forme .x{background:rgba(242,238,228,.08);color:rgba(242,238,228,.4)}
+.forme .x{background:transparent;border:1px dashed rgba(242,238,228,.28);color:rgba(242,238,228,.45);
+  font-size:9px;letter-spacing:.1em;padding:6px 0 5px}
+.ligne .forme{flex:none}
+.ligne .forme i{flex:none;width:26px;padding:4px 0}
 .vide{font-size:13px;opacity:.8;padding:6px 2px}
 
 /* ------------------------------------------------------- le prochain match */
@@ -162,6 +165,35 @@ a.mtbfo{color:inherit;text-decoration:none}
   border-radius:4px;border:1px solid rgba(245,195,59,.6);color:var(--projo)}
 .mtbfo .pt.vide{border-color:rgba(140,170,210,.55);color:#9fb7d8}
 .mtbfo.vide span{opacity:.8}
+.mtbfo img{width:22px;height:22px;object-fit:contain;flex:none}
+.mtbfo span{min-width:0;display:flex;align-items:center;gap:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* Les vrais matchs du club en lignes de jeu (Gaël, 8 novembre 2026, Elche :
+   les écussons prenaient toute la largeur) : les deux clubs face à face,
+   petit écusson, et au milieu le score (avec le score TBFO) ou la date. Le
+   bord gauche dit l'issue pour le club ; son nom est en or. */
+.mrows{display:flex;flex-direction:column;gap:6px}
+.mrow{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:8px;min-height:52px;
+  padding:7px 10px;border-radius:8px;color:inherit;text-decoration:none;position:relative;overflow:hidden;
+  background:linear-gradient(100deg,#1c222b,#151a20 60%);border:1px solid rgba(242,238,228,.1);box-shadow:0 3px 0 #000;
+  border-left:5px solid #5b6270}
+.mrow.V{border-left-color:var(--vert)}.mrow.D{border-left-color:var(--flare)}
+.mrow.avant{border-left-color:var(--projo)}
+.mrow .cote{display:flex;align-items:center;gap:7px;min-width:0;font-size:12.5px;line-height:1.15}
+.mrow .cote.d{flex-direction:row-reverse;text-align:right}
+.mrow .cote img{width:26px;height:26px;object-fit:contain;flex:none;filter:drop-shadow(0 2px 0 rgba(0,0,0,.6))}
+.mrow .cote span{min-width:0;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;
+  overflow-wrap:anywhere}
+.mrow .cote.moi span{color:var(--projo);font-weight:700}
+.mrow .mil{display:flex;flex-direction:column;align-items:center;gap:3px;text-align:center;min-width:58px}
+.mrow .mil b{font-family:var(--banner);font-size:20px;letter-spacing:.06em;line-height:1;background:#0b0e12;
+  border:1px solid rgba(242,238,228,.18);border-radius:5px;padding:3px 8px;white-space:nowrap}
+.mrow .mil .pt{font-style:normal;font-family:var(--banner);font-size:10px;letter-spacing:.05em;padding:1px 5px;white-space:nowrap;
+  border-radius:4px;border:1px solid rgba(245,195,59,.6);color:var(--projo)}
+.mrow .mil .pt.vide{border-color:rgba(140,170,210,.55);color:#9fb7d8}
+.mrow .mil .jour{font-family:var(--banner);font-size:12px;letter-spacing:.08em;line-height:1.1;white-space:nowrap;color:var(--projo)}
+.mrow .mil .jour.live{color:#ff6a5a}
+.mrow .mil .heure{font-family:var(--banner);font-size:16px;line-height:1;white-space:nowrap}
+.mrow .mil .comp{font-size:9.5px;letter-spacing:.06em;opacity:.65;max-width:84px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .fanzzys{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
 .fzc{position:relative;height:150px;border-radius:9px;overflow:hidden;border:2px solid var(--projo);
   background:linear-gradient(color-mix(in srgb,var(--c1) 45%,transparent),#14181e);display:block;color:inherit;text-decoration:none}
@@ -254,7 +286,7 @@ function forme(f) {
   const cinq = [...(f ?? [])].slice(0, 5);
   while (cinq.length < 5) cinq.push(null);
   return `<div class="forme">${cinq.reverse().map((x) => (x
-    ? `<i class="${x}">${x}</i>` : '<i class="x">·</i>')).join('')}</div>`;
+    ? `<i class="${x}">${x}</i>` : '<i class="x">À JOUER</i>')).join('')}</div>`;
 }
 
 /* Le prochain match, ou celui qui se joue : son score TBFO et ce qu'il
@@ -352,17 +384,37 @@ function vraiClub(d) {
   /* Le score TBFO à côté du vrai (Gaël, 8 novembre 2026) : 0–0 d'une autre
      couleur quand personne n'a joué. */
   const tbfoDe = new Map((d.tbfo?.derniers ?? []).map((m) => [Number(m.id), m]));
+  const cote = (t, droite) => `<span class="cote${droite ? ' d' : ''}${Number(t.id) === ID ? ' moi' : ''}">${
+    logo(t.logo)}<span>${esc(t.name)}</span></span>`;
   const resultat = (m) => {
     const c2 = m.home.id === ID ? 0 : 1;
     const b = m.buts ?? [0, 0];
     const t = tbfoDe.get(Number(m.id));
     const sc = t ? t.score : [0, 0];
     const vide = !t || t.vide;
-    return `<a class="mtbfo" href="/tbfo/${Number(m.id)}"><span>${logo((c2 ? m.home : m.away).logo)}${esc((c2 ? m.home : m.away).name)}</span>
-      <b>${b[0]}–${b[1]}</b><i class="pt${vide ? ' vide' : ''}">TBFO ${sc[0]}–${sc[1]}</i></a>`;
+    const issue = b[c2] > b[1 - c2] ? 'V' : b[c2] === b[1 - c2] ? 'N' : 'D';
+    return `<a class="mrow ${issue}" href="/tbfo/${Number(m.id)}">${cote(m.home)}
+      <span class="mil"><b>${b[0]}–${b[1]}</b><i class="pt${vide ? ' vide' : ''}">TBFO ${sc[0]}–${sc[1]}</i></span>${cote(m.away, true)}</a>`;
   };
-  const avenir = (m) => `<div class="mtbfo"><span>${logo((m.home.id === ID ? m.away : m.home).logo)}${
-    esc(m.home.name)} – ${esc(m.away.name)}</span><b>${esc(quand(m.coup))}</b></div>`;
+  const jourDe = (iso) => {
+    const x = new Date(iso);
+    if (Number.isNaN(x.getTime())) return ['', ''];
+    const lg = document.documentElement.lang || 'fr';
+    return [x.toLocaleDateString(lg, { weekday: 'short', day: 'numeric', month: 'short' }).replace(/\./g, '').toUpperCase(),
+      x.toLocaleTimeString(lg, { hour: '2-digit', minute: '2-digit' })];
+  };
+  const avenir = (m) => {
+    if (['1H', 'HT', '2H', 'ET', 'BT', 'P', 'LIVE', 'INT', 'SUSP'].includes(m.statut)) {
+      const b = m.buts ?? [0, 0];
+      return `<a class="mrow avant" href="/tbfo/${Number(m.id)}">${cote(m.home)}
+        <span class="mil"><b>${b[0]}–${b[1]}</b><span class="jour live">● ${m.statut === 'HT' ? 'MI-TEMPS'
+          : m.minute != null ? `${Number(m.minute)}’` : 'EN DIRECT'}</span></span>${cote(m.away, true)}</a>`;
+    }
+    const [jour, heure] = jourDe(m.coup);
+    return `<div class="mrow avant">${cote(m.home)}
+      <span class="mil"><span class="jour">${esc(jour)}</span><span class="heure">${esc(heure)}</span>${
+        m.ligue ? `<span class="comp">${esc(m.ligue)}</span>` : ''}</span>${cote(m.away, true)}</div>`;
+  };
   /* Les autres compétitions du club, avec leur classement réel quand il y
      en a un (Gaël, 8 novembre 2026). */
   const autres = (v.classements ?? []).filter((x) => x.ligue.id !== v.ligue?.id).map((x) => `
@@ -377,8 +429,8 @@ function vraiClub(d) {
         .map((x) => ({ W: 'V', D: 'N', L: 'D' }[x] ?? null)))}</div>` : ''}`
       : '<p class="vide">Le classement de ce championnat n’est pas encore chargé.</p>'}</div>
     ${autres ? `<div class="cousu">SES AUTRES COMPÉTITIONS</div>${autres}` : ''}
-    ${v.prochains?.length ? `<div class="cousu">PROCHAINS MATCHS</div><div class="pan">${v.prochains.map(avenir).join('')}</div>` : ''}
-    ${v.derniers?.length ? `<div class="cousu">DERNIERS RÉSULTATS</div><div class="pan">${v.derniers.map(resultat).join('')}</div>` : ''}
+    ${v.prochains?.length ? `<div class="cousu">PROCHAINS MATCHS</div><div class="mrows">${v.prochains.map(avenir).join('')}</div>` : ''}
+    ${v.derniers?.length ? `<div class="cousu">DERNIERS RÉSULTATS</div><div class="mrows">${v.derniers.map(resultat).join('')}</div>` : ''}
     <div class="cousu">LE CLUB</div>
     <div class="pan">
       ${d.team.country ? `<div class="ligne"><span>Pays</span><b>${esc(window.TBF_PAYS?.nom?.(d.team.country) ?? d.team.country)}</b></div>` : ''}
