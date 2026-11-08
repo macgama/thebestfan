@@ -182,6 +182,8 @@
   const SVG = {
     croix: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>',
     tourne: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.3-5.7M20 4v5h-5"/></svg>',
+    /* Le classeur : ses quatre cases, l'icône de la collection au menu. */
+    classeur: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z"/></svg>',
     lecture: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4l13 8-13 8z"/></svg>',
     fleche: '<svg class="fleche" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>',
   };
@@ -194,6 +196,8 @@
    * @param {object} [opts]
    * @param {Function} [opts.fermer]  appelée par la croix. Sans elle, pas de
    *   croix : c'est la page, et la barre du jeu y porte la flèche du retour.
+   * @param {boolean} [opts.dansClasseur]  vrai quand la fiche est montée
+   *   par-dessus le classeur : la plaque CLASSEUR n'y a pas lieu d'être.
    * @param {Function} [opts.change]  appelée après une action qui modifie la
    *   collection : la page qui accueille la fiche doit pouvoir se rafraîchir.
    * @returns {Promise<boolean>} faux si ce Fanzzy n'existe pas.
@@ -721,7 +725,7 @@
     function peindreCotes() {
       const v = hote.querySelector('#fiche-vitrine');
       if (!v) return;
-      v.querySelectorAll(':scope > .tourne, :scope > .paquet').forEach((n) => n.remove());
+      v.querySelectorAll(':scope > .tourne, :scope > .paquet, :scope > .vers-classeur').forEach((n) => n.remove());
       const a = ageDe(vu());
       const atteint = aMoi() && Boolean(a?.possede ?? true);
       let html = '';
@@ -740,6 +744,17 @@
         const src = paquet();
         if (src) html += `<div class="tbf-vitrine-paquet paquet"><img src="${esc(src)}" alt="${
           esc(d.fanzzy.setNom ? `Le booster ${d.fanzzy.setNom}` : 'Un booster')}"></div>`;
+      }
+      /* **De l'autre côté, le chemin du classeur** (Gaël, 8 novembre 2026 :
+         « il faudrait avoir un accès au classeur facilement depuis là »).
+         La flèche de la barre revient d'où l'on vient — l'accueil, le
+         vestiaire, un booster — et le classeur n'était qu'au menu. La plaque
+         ouvre le classeur à la page de la série de ce Fanzzy, sa case
+         éclairée (`?voir=`, fanzzy.html). Pas par-dessus le classeur lui-même
+         (`opts.dansClasseur`) : sa croix y rend déjà la grille. */
+      if (!opts.dansClasseur) {
+        html += `<a class="vers-classeur" href="/fanzzy?ecran=dex&amp;voir=${encodeURIComponent(racine())}"
+          aria-label="Voir dans mon classeur"><span class="tbf-plaque tbf-plaque--rond" data-ton="or">${SVG.classeur}</span><b aria-hidden="true">CLASSEUR</b></a>`;
       }
       v.insertAdjacentHTML('beforeend', html);
     }

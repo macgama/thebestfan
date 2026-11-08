@@ -1,5 +1,15 @@
 # À déposer sur Infomaniak
 
+**Fiche d'un Fanzzy : la plaque CLASSEUR** (branche
+`claude/project-thread-kzwgdb`, 8 novembre 2026, Gaël, capture « Siège à son
+nom »). Code seul, sans schéma. À gauche de la carte, une plaque ronde or
+CLASSEUR ouvre le classeur à la page de la série de ce Fanzzy, ses cases
+éclairées (`/fanzzy?ecran=dex&voir=<id>`). Pas sur la fiche ouverte par-dessus
+le classeur (sa croix y rend la grille). Question dans l'aide et ligne dans
+/comment-jouer, traduites. **Redémarrer**.
+
+---
+
 **Fiche d'un match : chaque nom sous son écusson** (branche
 `claude/project-thread-9zc9fe`, 8 novembre 2026, Gaël, Elche – Real Betis).
 Code seul. Les noms des clubs ne sont plus poussés aux bords de l'écran ;

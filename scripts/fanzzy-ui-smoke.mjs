@@ -3390,6 +3390,64 @@ if (process.env.CAPTURE) {
   await p.close();
 }
 
+/* ------------------------------------------- le chemin du classeur
+
+   Gaël, le 8 novembre 2026, sur la fiche d'un Fanzzy : « il faudrait avoir
+   un accès au classeur facilement depuis là ». La plaque CLASSEUR, à gauche
+   de la carte, ouvre le classeur à la page de sa série, sa case éclairée ;
+   par-dessus le classeur, la fiche n'en a pas (sa croix rend la grille). */
+{
+  const p = await nav.newPage();
+  p.on('pageerror', (e) => erreurs.push(e.message));
+  await p.setViewport({ width: 400, height: 880 });
+  await p.goto(`${base}/fanzzy/${ILLUSTRE}`, { waitUntil: 'networkidle0' });
+  await p.waitForSelector('.fiche .vers-classeur', { timeout: 8000 }).catch(() => null);
+  const plaque = await p.evaluate(() => {
+    const a = document.querySelector('.fiche .vers-classeur');
+    const c = document.querySelector('.fiche #fiche-art');
+    if (!a || !c) return null;
+    const r = a.getBoundingClientRect();
+    const k = c.getBoundingClientRect();
+    return { href: a.getAttribute('href'), mot: a.textContent.trim(), droite: r.right, gauche: r.left,
+      carte: k.left, haut: r.height, large: r.width };
+  });
+  check('la fiche porte la plaque CLASSEUR', plaque?.mot === 'CLASSEUR'
+    || (console.log('        ', plaque), false));
+  check('à gauche de la carte, sans la toucher ni sortir de l’écran', plaque
+    && plaque.droite <= plaque.carte && plaque.gauche >= 0 && plaque.haut >= 44
+    || (console.log('        ', plaque), false));
+  check('elle mène au classeur, à ce Fanzzy',
+    plaque?.href === `/fanzzy?ecran=dex&voir=${ILLUSTRE}`);
+  await Promise.all([p.waitForNavigation({ waitUntil: 'networkidle0' }),
+    p.click('.fiche .vers-classeur')]);
+  await p.waitForSelector('#s-dex.on .tbf-album-case, #s-dex.on .tbf-album-pochette', { timeout: 8000 }).catch(() => null);
+  await dodo(200);
+  const arrivee = await p.evaluate((id) => {
+    const c = document.querySelector(`#grid [data-open="${id}"]`);
+    const page = c?.closest('.tbf-album-page');
+    const g = document.getElementById('grid').getBoundingClientRect();
+    const r = c?.getBoundingClientRect();
+    return { classeur: document.getElementById('s-dex').classList.contains('on'),
+      eclairee: Boolean(c?.classList.contains('tbf-voulu')),
+      ouverte: page ? page.dataset.page === document.querySelector('.tbf-album-onglet[aria-current="true"]')?.dataset.serie : false,
+      vue: r ? r.left >= g.left - 1 && r.right <= g.right + 1 && r.top >= 0 && r.bottom <= innerHeight : false,
+      adresse: location.pathname + location.search };
+  }, ILLUSTRE);
+  check('le classeur s’ouvre à la page de sa série', arrivee.classeur && arrivee.ouverte
+    || (console.log('        ', arrivee), false));
+  check('et sa case s’éclaire, sous les yeux', arrivee.eclairee && arrivee.vue
+    || (console.log('        ', arrivee), false));
+  check('l’adresse redevient celle du classeur', arrivee.adresse === '/fanzzy?ecran=dex');
+  /* Par-dessus le classeur, la fiche n'a pas la plaque. */
+  await p.click(`#grid [data-open="${ILLUSTRE}"]`);
+  await p.waitForSelector('#detail.on .fiche .vitrine', { timeout: 8000 }).catch(() => null);
+  await dodo(300);
+  check('la fiche ouverte depuis le classeur n’a pas la plaque',
+    await p.evaluate(() => Boolean(document.querySelector('#detail.on .fiche'))
+      && !document.querySelector('#detail .vers-classeur')));
+  await p.close();
+}
+
 check('aucune page n’a jeté d’erreur de script', erreurs.length === 0
   || (console.log('       ', erreurs.slice(0, 5)), false));
 

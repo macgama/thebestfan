@@ -194,6 +194,11 @@ const RUBRIQUES = [
           + 'devant son décor, avec la tenue et l’expression choisies. Touche '
           + 'l’écran ou la croix pour revenir. Pour retourner la carte, c’est la '
           + 'plaque ronde à côté d’elle.'],
+      ['Comment revenir au classeur depuis la fiche d’un Fanzzy ?',
+        () => 'Touche la plaque or CLASSEUR, à gauche de sa carte. Le classeur '
+          + 's’ouvre à la page de sa série, et ses cases s’éclairent pour que tu le '
+          + 'retrouves tout de suite. Ouverte depuis le classeur, la fiche se '
+          + 'referme simplement par sa croix.'],
       ['Pourquoi mon Fanzzy de l’accueil ne change-t-il pas de tête quand je le touche ?',
         () => 'Sur l’accueil, il ne montre que les expressions que tu as gagnées en '
           + 'booster : la joie, la colère, le dépit, la poussée. Touche-le trois fois '
