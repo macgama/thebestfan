@@ -188,6 +188,8 @@ app.get('/api/tt/league/:id/results', (q, s) => {
 let derniereRang = null;
 let appelsRang = 0;
 let ferveurVide = false;
+/* Une coupe d'Europe : deux tables TBFO, qualifs et phase principale. */
+let avecQualifs = false;
 app.get('/api/rank/competition/:id', (q, s) => {
   derniereRang = { id: q.params.id, ...q.query };
   appelsRang++;
@@ -211,6 +213,10 @@ app.get('/api/rank/competition/:id', (q, s) => {
         membres: 2, ferveur: 1800, moyenne: 900 },
     ],
     moi: { ferveur: 120, seances: 2, rang: 6, sur: 6 },
+    qualifs: avecQualifs ? [
+      { id: 560, name: 'Sabah FA', logo: '', supporters: 0, joues: 12, gagnes: 0, nuls: 12, perdus: 0,
+        pour: 0, contre: 0, diff: 0, points: 12, direct: null },
+    ] : null,
   });
 });
 
@@ -537,6 +543,23 @@ await controlerColonne(page, check, { nom: 'la page des compétitions',
   await jusqua(async () => (await page.$eval('thead', (n) => n.textContent)).includes('KOP'));
   check('et les KOP ont la leur',
     (await page.$eval('tbody tr td.club', (n) => n.textContent)).includes('Les Fidèles'));
+
+  /* Une coupe d'Europe (Gaël, 8 novembre 2026) : les qualifs ont leur table,
+     la phase principale part de zéro. */
+  check('sans qualifs, pas de second rail', await page.$('.chips.phases') === null);
+  avecQualifs = true;
+  await page.evaluate(() => { FERVEUR = null; echelle = 'tribunes'; phase = null; charger(); });
+  await jusqua(async () => await page.$('.chips.phases') !== null);
+  check('une coupe à qualifs : PHASE PRINCIPALE d’abord',
+    (await page.$eval('.chips.phases .on', (n) => n.textContent)) === 'PHASE PRINCIPALE'
+    && (await page.$eval('tbody tr td.club', (n) => n.textContent)).includes('FC Sion'));
+  await page.evaluate(() => document.querySelector('[data-p=qualifs]').click());
+  await jusqua(async () => (await page.$eval('.chips.phases .on', (n) => n.textContent)) === 'QUALIFS');
+  check('QUALIFS : la table des tours de qualification',
+    (await page.$eval('tbody tr td.club', (n) => n.textContent)).includes('Sabah FA')
+    && !(await page.$eval('tbody', (n) => n.textContent)).includes('FC Sion'));
+  avecQualifs = false;
+  await page.evaluate(() => { phase = null; });
 
   /* Une compétition où personne n'a encore poussé : une phrase, pas un vide.
      Un tableau vide se lit comme une panne. */

@@ -563,6 +563,11 @@ const RUBRIQUES = [
           + 'est champion. Chacun de ses supporters reçoit le titre « Champion TBFO » et '
           + `${reglage('tbfo.champion_echarpes')} écharpes, et le trophée s’affiche sur la page `
           + 'du club. Pendant la saison, l’onglet ⚡ TBFO de la compétition montre la course au titre.'],
+      ['Pourquoi deux tables TBFO en coupe d’Europe ?',
+        'Un club qui passe par les tours de qualification joue plus de matchs qu’un club déjà '
+          + 'qualifié. Les qualifs et les barrages ont donc leur propre table (QUALIFS), et tout '
+          + 'le monde repart de zéro dans la PHASE PRINCIPALE. Les écharpes de ces matchs sont '
+          + 'payées comme les autres.'],
       ['C’est quoi, le carnet de la saison ?',
         () => 'Chaque mission du jour y pose des tampons : '
           + `${reglage('saison.tampons_facile')} pour une facile, `

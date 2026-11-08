@@ -1,5 +1,5 @@
 import express from 'express';
-import { MATCHS_TBFO, lireMatch, tableau, ordreChampionnat, coupEnvoiLocal, BAREME }
+import { MATCHS_TBFO, estQualif, lireMatch, tableau, ordreChampionnat, coupEnvoiLocal, BAREME }
   from './championnat.js';
 import { parIdentifiant } from '../fanzzy/catalogue.js';
 import { habillerJoueurs } from '../fanzzy/avatar.js';
@@ -707,22 +707,37 @@ export function createClassements({ pool, requireAuth,
    * lisait sous ce nom). `direct` : les points provisoires d'un match qui se
    * joue.
    */
-  async function tribunesDe(leagueId, saison, limite = 50) {
+  async function tablesDe(leagueId, saison, limite = 50) {
     const lg = Number(leagueId), sa = Number(saison);
-    const [equipes, matchs] = await Promise.all([
-      q(`SELECT t.id, t.name, t.logo
-           FROM (SELECT home_id AS team_id FROM fixtures WHERE league_id = ? AND season = ?
+    const [plateau, matchs] = await Promise.all([
+      q(`SELECT t.id, t.name, t.logo, p.round
+           FROM (SELECT home_id AS team_id, round FROM fixtures WHERE league_id = ? AND season = ?
                  UNION
-                 SELECT away_id FROM fixtures WHERE league_id = ? AND season = ?) plateau
-           JOIN teams t ON t.id = plateau.team_id`, [lg, sa, lg, sa]),
+                 SELECT away_id, round FROM fixtures WHERE league_id = ? AND season = ?) p
+           JOIN teams t ON t.id = p.team_id`, [lg, sa, lg, sa]),
       matchsTbfo(`f.league_id = ${lg} AND f.season = ${sa}`),
     ]);
-    const tab = tableau(matchs);
-    const fans = await supportersDe(equipes.map((t) => t.id));
-    return equipes.map((t) => ({ ...ligneClub(t, tab.get(Number(t.id)), fans.get(Number(t.id))),
-      duels: tab.get(Number(t.id))?.joues ?? 0 }))
-      .sort(ordreChampionnat).slice(0, Number(limite) || 50);
+    /* Deux tables quand la compétition a des qualifs (Gaël, 8 novembre
+       2026) : chacune son plateau et ses seuls matchs. Sans qualifs, la
+       phase principale est toute la compétition, et `qualifs` est nul. */
+    const fans = await supportersDe([...new Set(plateau.map((t) => Number(t.id)))]);
+    const table = (garder) => {
+      const equipes = new Map();
+      for (const t of plateau) if (garder(t.round)) equipes.set(Number(t.id), t);
+      const tab = tableau(matchs.filter((m) => garder(m.round)));
+      return [...equipes.values()].map((t) => ({ ...ligneClub(t, tab.get(Number(t.id)), fans.get(Number(t.id))),
+        duels: tab.get(Number(t.id))?.joues ?? 0 }))
+        .sort(ordreChampionnat).slice(0, Number(limite) || 50);
+    };
+    const aDesQualifs = plateau.some((t) => estQualif(t.round));
+    return {
+      principale: table((r) => !estQualif(r)),
+      qualifs: aDesQualifs ? table(estQualif) : null,
+    };
   }
+  /* La phase principale seule : le rang d'un club, la course au titre. */
+  const tribunesDe = (leagueId, saison, limite = 50) =>
+    tablesDe(leagueId, saison, limite).then((t) => t.principale);
 
 
   /**
@@ -797,12 +812,13 @@ export function createClassements({ pool, requireAuth,
     return memo(`comp:${leagueId}:${saison}:${limite}`, async () => {
       const [joueurs, tribunes2, kops] = await Promise.all([
         joueursDe(leagueId, saison, limite),
-        tribunesDe(leagueId, saison, limite),
+        tablesDe(leagueId, saison, limite),
         kopsDe(leagueId, saison, limite),
       ]);
       /* Les joueurs seulement : `tribunes` et `kops` sont des groupes, sans
          visage (`CONTRATS.md`, § 3). */
-      return { saison, joueurs: await habiller(joueurs), tribunes: tribunes2, kops };
+      return { saison, joueurs: await habiller(joueurs), tribunes: tribunes2.principale,
+        qualifs: tribunes2.qualifs, kops };
     });
   }
 

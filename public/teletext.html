@@ -293,6 +293,9 @@ td.pts{font-family:var(--banner);font-size:15px}
 .titre-tbfo.course .coupe img{position:absolute;opacity:.25}
 
 .chips.ech{margin:8px 0 10px}
+.chips.phases{margin:-2px 0 4px}
+.chips.phases .chip{font-size:11px;padding:5px 12px}
+.phase-note{font-size:11.5px;opacity:.75;margin:0 6px 10px;line-height:1.4}
 .maplace{font-size:12px;padding:2px 6px 12px;opacity:.9;line-height:1.6}
 /* Le rang, en craie grasse : en or et en quatorze pixels, il ne tenait pas
    au soleil (arbitrage du 2 octobre 2026). */
@@ -687,7 +690,7 @@ async function ouvrir(id) {
   /* La saison et les classements appartiennent à la compétition qu'on
      quitte : les garder ferait afficher les siens sous le nom de l'autre,
      le temps d'un aller-retour au serveur. */
-  SAISON = null; SAISON_VOULUE = null; FERVEUR = null; FIN = null; echelle = 'tribunes';
+  SAISON = null; SAISON_VOULUE = null; FERVEUR = null; FIN = null; echelle = 'tribunes'; phase = null;
   $('back').classList.add('on');
   // La feuille : un seul panneau sous le tableau, la colonne étant rendue au décor.
   $('list').classList.add('feuille');
@@ -991,6 +994,10 @@ function rendreJoueurs(d) {
 /* Le championnat TBFO des clubs d'abord (Gaël, 8 novembre 2026). */
 const ECHELLES = [['tribunes', 'CLUBS'], ['joueurs', 'SUPPORTERS'], ['kops', 'KOP']];
 let echelle = 'tribunes';
+/* **Qualifs ou phase principale** (Gaël, 8 novembre 2026) : une coupe
+   d'Europe a deux tables TBFO. `null` : la page choisit (la phase principale
+   dès qu'elle a des clubs, sinon les qualifs). */
+let phase = null;
 /** La dernière réponse : changer d'échelle ne doit rien redemander. */
 let FERVEUR = null;
 /* La fin de saison TBFO de la compétition (`/api/club/fin/:ligue`). */
@@ -1099,7 +1106,19 @@ function rendreFerveur() {
       ? '<div class="maplace vide">Tu n’as encore rien donné dans cette compétition.</div>'
       : '';
 
-  const liste = d[echelle] ?? [];
+  /* Deux tables pour une compétition à qualifs : un second rail, sous le
+     premier, et la course au titre seulement sur la phase principale. */
+  const qualifs = Array.isArray(d.qualifs) ? d.qualifs : null;
+  const enQualifs = echelle === 'tribunes' && qualifs
+    && (phase === 'qualifs' || (phase == null && !(d.tribunes ?? []).length));
+  const phases = echelle === 'tribunes' && qualifs
+    ? `<div class="chips phases tbf-onglets" data-ton="vert">${[['principale', 'PHASE PRINCIPALE'], ['qualifs', 'QUALIFS']]
+      .map(([cle, titre]) => `<button class="chip tbf-onglet ${(cle === 'qualifs') === Boolean(enQualifs) ? 'on' : ''}" data-p="${cle}">${titre}</button>`)
+      .join('')}</div><p class="phase-note">${enQualifs
+      ? 'Les tours de qualification et les barrages, à part : ils ne comptent pas pour la phase principale.'
+      : 'Tout le monde part de zéro : les tours de qualification ont leur propre table.'}</p>`
+    : '';
+  const liste = (enQualifs ? qualifs : d[echelle]) ?? [];
   /* **Trois échelles, trois façons d'être vide — et une seule phrase pour les
      dire toutes, ce qui la rendait fausse deux fois sur trois.**
    *
@@ -1129,13 +1148,20 @@ function rendreFerveur() {
         + 'donnent <i>pour son club</i>.'
       : 'Aucun KOP n’a encore de ferveur dans cette compétition.',
   };
-  $('list').innerHTML = chips + (echelle === 'tribunes' ? titreTbfo(FIN) : '') + moi + (liste.length ? tableFerveur(liste)
+  $('list').innerHTML = chips + phases + (echelle === 'tribunes' && !enQualifs ? titreTbfo(FIN) : '') + moi + (liste.length ? tableFerveur(liste)
     : `<div class="empty">${RIEN[echelle] ?? RIEN.joueurs}</div>`);
 
   $('list').querySelector('.ech').onclick = (e) => {
     const b = e.target.closest('[data-e]');
     if (!b || b.dataset.e === echelle) return;
     echelle = b.dataset.e;
+    rendreFerveur();
+  };
+  const rail = $('list').querySelector('.phases');
+  if (rail) rail.onclick = (e) => {
+    const b = e.target.closest('[data-p]');
+    if (!b) return;
+    phase = b.dataset.p;
     rendreFerveur();
   };
 }

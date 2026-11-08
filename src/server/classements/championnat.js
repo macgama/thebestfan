@@ -112,13 +112,30 @@ const VIRAGE_PAR_MATCH = (filtre) => `
 const SQL_JOUES = liste([...FINIS, ...EN_COURS_DE_JEU]);
 
 /**
+ * **Les tours de qualification** (Gaël, 8 novembre 2026, sur la Ligue des
+ * champions : « si on prend les équipes qui font les tours de qualification,
+ * ils auront forcément plus de points ») : un club qui passe par trois tours
+ * de qualif joue six matchs de plus qu'un club déjà qualifié. Gaël a choisi
+ * deux tables : les qualifs d'un côté, la phase principale de l'autre.
+ *
+ * Le nom du tour vient de l'API (`fixtures.round`) : « 1st Qualifying
+ * Round », « Preliminary Round », « Play-offs » (les barrages d'accès). Les
+ * « Knockout Round Play-offs » de la phase à élimination, eux, sont de la
+ * phase principale.
+ */
+export function estQualif(round) {
+  const r = String(round ?? '').trim();
+  return /qualif|preliminary/i.test(r) || /^play-?offs?$/i.test(r);
+}
+
+/**
  * Les matchs TBFO du filtre : ceux où l'on a joué (au moins un duel ou un
  * Virage), et avec `vides`, aussi les vrais matchs finis ou qui se jouent
  * sans rien (0–0). `virage` faux : sans la table de la corde (schéma pas
  * encore appliqué).
  */
 export const MATCHS_TBFO = (filtre, { plafond = 5, virage = true, vides = false } = {}) => `
-  SELECT f.id, f.league_id, f.season, f.home_id, f.away_id, f.status_short, f.elapsed,
+  SELECT f.id, f.league_id, f.season, f.round, f.home_id, f.away_id, f.status_short, f.elapsed,
          f.kickoff_at, f.home_goals, f.away_goals,
          COALESCE(d.dom, 0) AS dom, COALESCE(d.ext, 0) AS ext, COALESCE(d.duels, 0) AS duels,
          ${virage ? 'v.buts_dom AS v_dom, v.buts_ext AS v_ext' : 'NULL AS v_dom, NULL AS v_ext'}
@@ -146,7 +163,7 @@ export function lireMatch(m) {
   return {
     id: Number(m.id), home: Number(m.home_id), away: Number(m.away_id),
     league: Number(m.league_id), saison: Number(m.season),
-    statut: m.status_short, coup: m.kickoff_at,
+    statut: m.status_short, coup: m.kickoff_at, round: m.round ?? null,
     score: [dom, ext], duels: Number(m.duels ?? 0), virage,
     points: [pointsDe(dom, ext, virage?.[0], virage?.[1]), pointsDe(ext, dom, virage?.[1], virage?.[0])],
     fini,

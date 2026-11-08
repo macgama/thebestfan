@@ -233,6 +233,29 @@ moi = ID(1);
   moi = ID(1);
 }
 
+/* ------------------------------------- les qualifs d'une coupe d'Europe
+   (Gaël, 8 novembre 2026) : deux tables TBFO, les qualifs à part. */
+{
+  await pool.query(`INSERT INTO teams (id,name,country,logo) VALUES (560,'Sabah FA','Azerbaijan',''),
+    (561,'Celje','Slovenia',''),(85,'Paris SG','France','')`);
+  await pool.query(`INSERT INTO fixtures (id,league_id,season,round,home_id,away_id,home_goals,away_goals,status_short,elapsed,kickoff_at) VALUES
+    (9101,2,2026,'1st Qualifying Round',560,561,1,0,'FT',90,UTC_TIMESTAMP() - INTERVAL 90 DAY),
+    (9102,2,2026,'Play-offs',561,560,0,0,'FT',90,UTC_TIMESTAMP() - INTERVAL 60 DAY),
+    (9103,2,2026,'League Stage - 1',85,560,2,0,'FT',90,UTC_TIMESTAMP() - INTERVAL 30 DAY),
+    (9104,2,2026,'Knockout Round Play-offs',85,560,NULL,NULL,'NS',NULL,UTC_TIMESTAMP() + INTERVAL 30 DAY)`);
+  const c = await (await fetch(`${base}/api/rank/competition/2?saison=2026`)).json();
+  const ligne = (t, id) => t?.find((x) => Number(x.id) === id);
+  check('phase principale : Sabah n’a que son match de la phase de ligue',
+    ligne(c.tribunes, 560)?.joues === 1 && ligne(c.tribunes, 85)?.joues === 1
+    || (console.log('        ', JSON.stringify(c.tribunes)), false));
+  check('Celje, sorti en qualifs, n’est pas dans la phase principale', !ligne(c.tribunes, 561));
+  check('QUALIFS : ses deux matchs de qualif, à part',
+    ligne(c.qualifs, 560)?.joues === 2 && ligne(c.qualifs, 561)?.joues === 2 && !ligne(c.qualifs, 85)
+    || (console.log('        ', JSON.stringify(c.qualifs)), false));
+  const pl = await (await fetch(`${base}/api/rank/competition/39?saison=2026`)).json();
+  check('un championnat sans qualifs : une seule table', pl.qualifs === null && pl.tribunes.length > 0);
+}
+
 /* ----------------------------------------------------------- la page */
 const nav = await puppeteer.launch({ args: ['--no-sandbox', '--accept-lang=fr-FR'] });
 const erreurs = [];
