@@ -908,6 +908,17 @@
    "es"
   ]
  },
+ "● MI-TEMPS": {
+  "ou": [
+   "public/club.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
  "{0} / {1} · {2} PTS ›": {
   "ou": [
    "public/club.html"
@@ -1305,6 +1316,17 @@
   ]
  },
  "À la <0>fin de la saison</0> d’un championnat, le champion TBFO offre 100 écharpes et le titre « Champion TBFO » à chacun de ses supporters.": {
+  "ou": [
+   "public/comment-jouer.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "En <0>coupe d’Europe</0>, les tours de qualification ont leur propre table (QUALIFS) : tout le monde repart de zéro dans la <1>phase principale</1>.": {
   "ou": [
    "public/comment-jouer.html"
   ],
@@ -3198,6 +3220,50 @@
    "es"
   ]
  },
+ "PHASE PRINCIPALE": {
+  "ou": [
+   "public/teletext.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "QUALIFS": {
+  "ou": [
+   "public/teletext.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Les tours de qualification et les barrages, à part : ils ne comptent pas pour la phase principale.": {
+  "ou": [
+   "public/teletext.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Tout le monde part de zéro : les tours de qualification ont leur propre table.": {
+  "ou": [
+   "public/teletext.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
  "{0} écharpes à chacun de ses supporters": {
   "ou": [
    "public/teletext.html"
@@ -3628,6 +3694,28 @@
   ]
  },
  "Quand la saison d’un championnat est finie, le premier de son championnat TBFO est champion. Chacun de ses supporters reçoit le titre « Champion TBFO » et {0} écharpes, et le trophée s’affiche sur la page du club. Pendant la saison, l’onglet ⚡ TBFO de la compétition montre la course au titre.": {
+  "ou": [
+   "src/shared/aide.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Pourquoi deux tables TBFO en coupe d’Europe ?": {
+  "ou": [
+   "src/shared/aide.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Un club qui passe par les tours de qualification joue plus de matchs qu’un club déjà qualifié. Les qualifs et les barrages ont donc leur propre table (QUALIFS), et tout le monde repart de zéro dans la PHASE PRINCIPALE. Les écharpes de ces matchs sont payées comme les autres.": {
   "ou": [
    "src/shared/aide.js"
   ],

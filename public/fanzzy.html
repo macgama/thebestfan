@@ -327,6 +327,20 @@ html[data-calme~="animations"] .toast.on{animation:none}
 .rail{display:flex;align-items:flex-start;gap:8px;flex:none}
 .rail .nav{flex:1;min-width:0}
 .rail .vers-deck{flex:none;min-height:49px;padding:0 14px}
+
+/* **La case qu'on vient voir** (`?voir=`, la plaque CLASSEUR de la fiche) :
+   un halo or qui pulse deux fois, puis s'en va. Sans mouvement, le halo
+   reste fixe le temps de la trouver. */
+.tbf-voulu{position:relative;z-index:2;border-radius:10px;
+  animation:tbf-voulu 1.2s ease-in-out 2}
+@keyframes tbf-voulu{
+  0%,100%{box-shadow:0 0 0 0 transparent}
+  40%{box-shadow:0 0 0 4px var(--projo),0 0 26px 6px var(--projo)}
+}
+@media (prefers-reduced-motion:reduce){
+  .tbf-voulu{animation:none;box-shadow:0 0 0 4px var(--projo)}
+}
+:root[data-calme~=animations] .tbf-voulu{animation:none;box-shadow:0 0 0 4px var(--projo)}
 </style>
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="icon" href="/img/logo.png" type="image/png">
@@ -1168,15 +1182,54 @@ $('filtres').addEventListener('click', (e) => {
   if (album.courant >= 0) placer(album.courant);
 });
 
+/**
+ * **Le Fanzzy qu'on vient voir** (`?voir=RP1`) : la plaque CLASSEUR de sa
+ * fiche (fanzzy-fiche.js, Gaël, 8 novembre 2026) ouvre le classeur à la page
+ * de sa série, et sa lignée s'éclaire sous les yeux. Lu une fois : l'adresse
+ * redevient celle du classeur, et un rafraîchissement ne rejoue rien.
+ */
+let voirId = new URLSearchParams(location.search).get('voir');
+if (voirId) {
+  const u = new URL(location.href);
+  u.searchParams.delete('voir');
+  history.replaceState(history.state, '', u.pathname + u.search + u.hash);
+}
+function pageDuVoulu() {
+  const f = voirId ? BY_ID.get(voirId) : null;
+  if (!f) { voirId = null; return -1; }
+  return album.pages.findIndex((p) => p.set.id === f.set);
+}
+function eclairerVoulu(i) {
+  const id = voirId;
+  voirId = null;
+  /* Toute la lignée s'éclaire — une rangée, ses trois âges : la fiche
+     regardait peut-être le deuxième, et c'est le personnage qu'on cherche. */
+  const cases = [...(album.pages[i]?.el.querySelectorAll(`[data-open="${CSS.escape(id)}"]`) ?? [])];
+  const c = cases[0];
+  if (!c) return;
+  /* À la main, comme le rail : `scrollIntoView` ferait aussi glisser la
+     grille de côté. */
+  const ecran = $('s-dex');
+  const ecart = c.getBoundingClientRect().top - ecran.getBoundingClientRect().top;
+  ecran.scrollTo({ top: Math.max(0, ecran.scrollTop + ecart - (ecran.clientHeight - c.offsetHeight) / 2),
+    behavior: 'auto' });
+  for (const x of cases) x.classList.remove('tbf-voulu');
+  void c.offsetWidth;
+  for (const x of cases) x.classList.add('tbf-voulu');
+  setTimeout(() => { for (const x of cases) x.classList.remove('tbf-voulu'); }, 2600);
+}
+
 /** Ouvre le classeur, ou le remet à jour s'il l'est déjà. */
 function ouvrirClasseur() {
   if (!DEX.length) return;
   if (!$('filtres').firstChild) construireFiltres();
   construireAlbum();
   if (!album.pages.length) return;
-  const i = album.courant >= 0 ? album.courant : pageDepart();
+  const voulu = pageDuVoulu();
+  const i = voulu >= 0 ? voulu : album.courant >= 0 ? album.courant : pageDepart();
   aller(i, { instant: true });
   reobserver();
+  if (voulu >= 0) eclairerVoulu(i);
 }
 
 /* ------------------------------------------------------------- la fiche
@@ -1237,6 +1290,7 @@ function ouvrirFiche(id, pousser = true) {
   }
   return window.TBF_FICHE.ouvrir(n, id, {
     fermer: fermerFiche,
+    dansClasseur: true,
     // La collection a pu changer — un Fanzzy équipé, un âge acheté. La grille
     // et l'écran « Mon Fanzzy » lisent la même chose : on les relit.
     change: () => { load().catch(() => {}); },
