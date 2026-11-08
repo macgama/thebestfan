@@ -167,6 +167,10 @@ a.mtbfo{color:inherit;text-decoration:none}
   background:linear-gradient(color-mix(in srgb,var(--c1) 45%,transparent),#14181e);display:block;color:inherit;text-decoration:none}
 .fzc img{position:absolute;left:50%;bottom:-4px;translate:-50% 0;height:132px;width:auto;max-width:none}
 .fzc small{position:absolute;left:5px;top:4px;font-family:var(--banner);font-size:10.5px;background:rgba(0,0,0,.65);padding:1px 5px;border-radius:3px}
+.bientot{display:block;margin:0 0 10px;padding:9px 12px;border-radius:9px;text-decoration:none;color:var(--craie);
+  font-size:13px;background:rgba(231,195,90,.12);border:1px solid rgba(231,195,90,.5)}
+.bientot b{color:#e7c35a}
+.fzc.vide{height:110px}
 .fzc.non{border:2px dashed rgba(242,238,228,.3);background:#14181e}
 .fzc.non img{filter:brightness(0) opacity(.55)}
 .fzc.non::after{content:"?";position:absolute;inset:0;display:grid;place-items:center;font-family:var(--banner);font-size:34px;color:rgba(242,238,228,.55)}
@@ -195,6 +199,15 @@ a.mtbfo{color:inherit;text-decoration:none}
    championnat TBFO, la page le dessine.
    ======================================================================= */
 const $ = (id) => document.getElementById(id);
+/** « le 1er décembre », depuis `YYYY-MM-DD`, ou `null` (comme `pass-pub.js`). */
+function quandOuvre(ouvre) {
+  const j = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(ouvre ?? ''));
+  if (!j) return null;
+  const date = new Date(Number(j[1]), Number(j[2]) - 1, Number(j[3]));
+  const lg = window.TBF_LANGUE?.langue ?? 'fr';
+  if (lg !== 'fr') return date.toLocaleDateString(lg, { day: 'numeric', month: 'long' });
+  return `le ${date.getDate() === 1 ? '1er' : date.getDate()} ${date.toLocaleDateString('fr', { month: 'long' })}`;
+}
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g,
   (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const nombre = (n) => Number(n ?? 0).toLocaleString('fr-CH').replace(/ | /g, ' ');
@@ -383,6 +396,18 @@ function fanzzy(d) {
       à ton club principal depuis sa fiche.</p>
       ${d.fanzzy?.achetes ? `<p class="note">${nombre(d.fanzzy.achetes)} Fanzzy liés à ce club par ses fans.</p>` : ''}`;
   }
+  /* La série du club pas encore ouverte (Gaël, 8 novembre 2026, option A) :
+     ses Fanzzy restent en silhouettes, sous « BIENTÔT · PASS 1 », et mènent à
+     la page du PASS plutôt qu'aux boosters, qui ne les donnent pas encore. */
+  const b = d.serie?.bientot;
+  if (b) {
+    const quand = quandOuvre(b.ouvre);
+    const pass = Number.isInteger(b.pass) ? b.pass : null;
+    return `<div class="cousu">FANZZY LIÉS <i>${esc(pass ? `BIENTÔT · PASS ${pass}` : 'BIENTÔT')}</i></div>
+      <a class="bientot" href="/abonnement"><b>${esc(quand ? `Ses Fanzzy arrivent ${quand}` : 'Ses Fanzzy arrivent bientôt')}</b>${
+        pass ? ` ${esc(`avec le PASS ${pass}`)}` : ''} ›</a>
+      <div class="fanzzys">${lies.map(() => `<a class="fzc non vide" href="/abonnement" aria-label="Bientôt"></a>`).join('')}</div>`;
+  }
   const a = Object.keys(miens).length;
   return `<div class="cousu">FANZZY LIÉS <i>${a} / ${lies.length} DANS TA COLLECTION</i></div>
     <div class="fanzzys">${lies.map((f) => `<a class="fzc${miens[f.id] ? '' : ' non'}" href="${miens[f.id] ? `/fanzzy/${esc(f.id)}` : '/boosters'}">
@@ -435,7 +460,8 @@ function rendre() {
         ?? window.TBF_ETATS?.resoudre?.(a.id, { evo: a.evo, skin: a.skin, etat: 'pousse' })?.src ?? null;
     } catch { src = null; }
   }
-  const premier = d.fanzzy?.lies?.[0];
+  // Pas de héros tiré d'une série pas encore ouverte : on la croirait disponible.
+  const premier = d.serie?.bientot ? null : d.fanzzy?.lies?.[0];
   if (!src && premier) {
     src = window.TBF_ETATS?.resoudre?.(premier.id, { evo: d.moi?.fanzzy?.[premier.id] ?? 3, etat: 'pousse' })?.src ?? null;
   }

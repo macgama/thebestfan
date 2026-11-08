@@ -1,5 +1,18 @@
 # À déposer sur Infomaniak
 
+**Fanzzy de championnat « BIENTÔT » avant leur PASS** (branche
+`claude/project-thread-31pr9n`, 8 novembre 2026, Gaël, option A). Code seul,
+sans schéma. Une série de championnat que les saisons de l'admin n'ont pas
+encore ouverte (aujourd'hui DIE KURVE, Super League, PASS 1, et LE PARCAGE,
+Ligue 1, PASS 2) s'affiche « BIENTÔT · PASS 1 », avec des silhouettes « ? » à
+la place des visages et « Ses Fanzzy arrivent le 1er décembre avec le PASS 1 »
+(lien vers la page du PASS) : sur MATCHS, en tête de la page du championnat
+et dans l'onglet Fanzzy de la page du club. Les cris des clubs restent. Le
+jour où la saison du PASS est lancée dans /admin, tout s'affiche seul.
+**Redémarrer**.
+
+---
+
 **Les exploits TBFO** (branche `claude/project-thread-9zc9fe`, 8 novembre 2026,
 Gaël : « les 4 idées m'intéressent »). Code seul, sans schéma (grand livre
 `recompenses`, nouvelles sources `tbfo-hdm` et `tbfo-champ`).

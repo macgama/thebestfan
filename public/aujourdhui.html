@@ -111,6 +111,17 @@ input:focus{outline:none;border-color:var(--projo)}
 .ligue .t .visages img.passe{opacity:0}
 .ligue .serie-lien{display:block;margin:-2px 6px 6px;font-size:11.5px;color:var(--craie);opacity:.9;text-decoration:none}
 .ligue .serie-lien b{color:color-mix(in srgb,var(--s1) 40%,var(--craie))}
+/* Pas encore ouverte : l'écharpe pâlit, une pastille or « BIENTÔT · PASS 1 »
+   et trois silhouettes remplacent le tampon et les visages. */
+.ligue.serie.bientot::before{filter:grayscale(.6);opacity:.55}
+.ligue .t .bientot-pastille{flex:none;font-size:9.5px;letter-spacing:.12em;padding:3px 7px 2px;border-radius:999px;
+  background:#e7c35a;color:#14110a;font-weight:700;white-space:nowrap}
+.ligue .t .ronds{display:flex;flex:none;margin-left:2px}
+.ligue .t .ronds i{width:24px;height:24px;border-radius:50%;margin-left:-7px;display:grid;place-items:center;
+  background:#05080a;border:1.5px solid color-mix(in srgb,var(--s1) 55%,#4a5a60);font-style:normal;
+  font-family:var(--banner);font-size:12px;color:#8fa3a8}
+.ligue .t .ronds i:first-child{margin-left:0}
+.ligue .bientot-lien b{color:#e7c35a}
 .m .cris{display:flex;gap:10px;margin-top:3px;font-family:var(--banner);font-size:9.5px;letter-spacing:.08em;
   color:color-mix(in srgb,var(--s1) 35%,var(--craie));opacity:.92;overflow:hidden;white-space:nowrap}
 .m .cris span{overflow:hidden;text-overflow:ellipsis;min-width:0}
@@ -530,6 +541,36 @@ function visage(id) {
     ?? `/img/fanzzy/${encodeURIComponent(id)}/e1/base/portrait.webp`;
 }
 
+/* **Une série pas encore ouverte** (Gaël, 8 novembre 2026 : « si on les
+   affiche déjà maintenant, on pourrait croire qu'ils sont déjà disponibles ») :
+   le serveur la marque `bientot: { pass, ouvre }`. Option A choisie par Gaël :
+   pastille « BIENTÔT · PASS 1 », trois silhouettes « ? » à la place des
+   visages, et le lien mène à la page du PASS. */
+
+/** « le 1er décembre », depuis `YYYY-MM-DD`, ou `null` (comme `pass-pub.js`). */
+function quandOuvre(ouvre) {
+  const j = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(ouvre ?? ''));
+  if (!j) return null;
+  const date = new Date(Number(j[1]), Number(j[2]) - 1, Number(j[3]));
+  const lg = window.TBF_LANGUE?.langue ?? 'fr';
+  if (lg !== 'fr') return date.toLocaleDateString(lg, { day: 'numeric', month: 'long' });
+  return `le ${date.getDate() === 1 ? '1er' : date.getDate()} ${date.toLocaleDateString('fr', { month: 'long' })}`;
+}
+
+function bientotTampon(b) {
+  return `<span class="bientot-pastille">${esc(Number.isInteger(b.pass) ? `BIENTÔT · PASS ${b.pass}` : 'BIENTÔT')}</span>
+    <span class="ronds" aria-hidden="true"><i>?</i><i>?</i><i>?</i></span>`;
+}
+
+function bientotLien(b) {
+  const quand = quandOuvre(b.ouvre);
+  const pass = Number.isInteger(b.pass) ? b.pass : null;
+  return `<a class="serie-lien bientot-lien" href="/abonnement">${
+    quand && pass ? `<b>${esc(`Ses Fanzzy arrivent ${quand}`)}</b> ${esc(`avec le PASS ${pass}`)} ›`
+      : quand ? `<b>${esc(`Ses Fanzzy arrivent ${quand}`)}</b> ›`
+        : `<b>Ses Fanzzy arrivent bientôt</b> ›`}</a>`;
+}
+
 function visages(liste) {
   return trois(liste).map((id) => `<img src="${esc(visage(id))}" alt="" loading="lazy" data-id="${esc(id)}">`).join('');
 }
@@ -614,15 +655,16 @@ function rendre() {
       : `${total} MATCH${total > 1 ? 'S' : ''}`;
 
   $('liste').innerHTML = groupes.length ? groupes.map((g) => `
-    <div class="ligue ${g.mien ? 'mien' : ''}${g.serie ? ' serie' : ''}"${g.serie
+    <div class="ligue ${g.mien ? 'mien' : ''}${g.serie ? ' serie' : ''}${g.serie?.bientot ? ' bientot' : ''}"${g.serie
       ? ` style="--s1:${couleur(g.serie.c1)};--s2:${couleur(g.serie.c2)}"` : ''}>
       <!-- Le nom de la compétition mène à sa page : classement, buteurs,
            calendrier. On voyait un match de Liga 1 sans pouvoir savoir qui
            mène le championnat, alors que la page existe. -->
       <a class="t" href="/teletext?ligue=${g.ligue.id}">${esc(g.ligue.name)}<span class="pays">${esc(pays(g.ligue.country, g.ligue.drapeau))}</span>
-        <span class="sep"></span>${g.serie ? `<span class="tampon">${esc(g.serie.nom)}</span>
+        <span class="sep"></span>${g.serie?.bientot ? bientotTampon(g.serie.bientot) : g.serie ? `<span class="tampon">${esc(g.serie.nom)}</span>
         <span class="visages" data-serie="${esc(g.serie.code)}">${visages(g.serie.fanzzy)}</span>` : ''}<span class="fl">›</span></a>
-      ${g.serie ? `<a class="serie-lien" href="/collection?serie=${encodeURIComponent(g.serie.code)}"><b>Ce championnat a ses Fanzzy</b> et ses cris ›</a>` : ''}
+      ${g.serie?.bientot ? bientotLien(g.serie.bientot)
+        : g.serie ? `<a class="serie-lien" href="/collection?serie=${encodeURIComponent(g.serie.code)}"><b>Ce championnat a ses Fanzzy</b> et ses cris ›</a>` : ''}
       ${g.matchs.map((m) => {
         const min = minute(m);
         /* Sans minute — l'horloge se tait quand le relevé n'a plus rien dit

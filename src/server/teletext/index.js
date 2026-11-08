@@ -1,5 +1,6 @@
 import express from 'express';
 import { serieDeLigue, criDeSerie } from '../../shared/fanzzy/series-ligues.js';
+import { bientotDeSerie } from '../fanzzy/serie-bientot.js';
 // Renommé à l'import : la fonction jour() plus bas a déjà une variable
 // locale nommée jourISO, et deux noms identiques dans le même fichier se
 // lisent mal même quand la portée les sépare.
@@ -1009,10 +1010,14 @@ export function createTeletext({ pool, client, footballStore = null }) {
   }));
 
   /* **Les championnats qui ont leurs Fanzzy** (`shared/fanzzy/series-ligues.js`) :
-     la page du championnat montre leur bandeau. `null` pour les autres. */
+     la page du championnat montre leur bandeau. `null` pour les autres.
+     Dix minutes de cache et non plus une heure : le jour où la saison du PASS
+     se lance, le « BIENTÔT » doit tomber vite. */
   router.get('/league/:id/serie', (req, res) => {
-    res.set('cache-control', 'public, max-age=3600');
-    res.json({ serie: serieDeLigue(Number(req.params.id)) });
+    const serie = serieDeLigue(Number(req.params.id));
+    const bientot = serie ? bientotDeSerie(serie.code) : null;
+    res.set('cache-control', 'public, max-age=600');
+    res.json({ serie: serie && bientot ? { ...serie, bientot } : serie });
   });
 
   router.get('/match/:id', safe(async (req, res) => {
@@ -1050,7 +1055,10 @@ export function createTeletext({ pool, client, footballStore = null }) {
       const serie = serieDeLigue(g.ligue?.id);
       return { ...g,
         ...(serie ? { serie: { code: serie.code, nom: serie.nom, c1: serie.c1, c2: serie.c2,
-          fanzzy: serie.clubs.flatMap((c) => c.fanzzy) } } : {}),
+          fanzzy: serie.clubs.flatMap((c) => c.fanzzy),
+          /* Pas encore ouverte (Gaël, 8 novembre 2026) : la page la dit
+             « BIENTÔT », sans montrer ses visages. */
+          ...(bientotDeSerie(serie.code) ? { bientot: bientotDeSerie(serie.code) } : {}) } } : {}),
         matchs: (g.matchs ?? []).map((m) => ({ ...m, home: equipe(m.home), away: equipe(m.away) })) };
     }) };
   }

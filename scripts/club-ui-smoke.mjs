@@ -50,7 +50,9 @@ for (const f of ['auth.sql', 'football.sql', 'minutes.sql', 'couleurs.sql', 'due
 }
 await raw.query('DELETE FROM saisons');
 await raw.query(`INSERT INTO saisons (id, numero, nom, series, tenues, lancee_a)
-  VALUES (1, 1, 'La reprise', JSON_ARRAY('RP'), JSON_ARRAY(), NOW(3) - INTERVAL 10 DAY)`);
+  VALUES (1, 1, 'La reprise', JSON_ARRAY('RP', 'AN'), JSON_ARRAY(), NOW(3) - INTERVAL 10 DAY)`);
+/* La BASE ouvre RP et AN (Les Terraces, Premier League), comme en production ;
+   DIE KURVE (Super League, PASS 1) reste fermée : son club dit « BIENTÔT ». */
 
 /* Arsenal (42) : la lignée AN1, AN21, AN41 lui est liée d'office. */
 await raw.query(`INSERT INTO leagues (id,name,country,type,current_season) VALUES (39,'Premier League','England','League',2026)`);
@@ -61,6 +63,9 @@ await raw.query(`INSERT INTO teams (id,name,country,logo,founded,color1,color2) 
    passer devant le championnat du pays du club (Gaël, 8 novembre 2026). */
 await raw.query(`INSERT INTO leagues (id,name,country,type,current_season) VALUES (2,'UEFA Champions League','World','League',2026)`);
 await raw.query(`INSERT INTO team_leagues (team_id,league_id,season) VALUES (42,2,2026),(42,39,2026),(66,39,2026),(49,39,2026)`);
+await raw.query(`INSERT INTO leagues (id,name,country,type,current_season) VALUES (207,'Super League','Switzerland','League',2026)`);
+await raw.query(`INSERT INTO teams (id,name,country,logo,founded,color1,color2) VALUES (551,'FC Basel','Switzerland','',1893,'#e2001a','#0033a0')`);
+await raw.query(`INSERT INTO team_leagues (team_id,league_id,season) VALUES (551,207,2026)`);
 await raw.query(`INSERT INTO standings (league_id,season,team_id,\`rank\`,points,played,win,draw,lose,goals_for,goals_against,form)
   VALUES (39,2026,42,2,24,11,7,3,1,21,8,'WWDWL'),(39,2026,66,5,19,11,5,4,2,15,11,'WDDWW'),(39,2026,49,4,20,11,6,2,3,18,12,'LWWDW')`);
 await raw.query(`INSERT INTO fixtures (id,league_id,season,home_id,away_id,home_goals,away_goals,status_short,elapsed,kickoff_at,venue) VALUES
@@ -263,6 +268,20 @@ check('LE VRAI CLUB : fondé en', /Fondé en\s*1886/.test(await txt('#onglet')))
 await page.click('.onglets [data-o=fanzzy]');
 check('FANZZY : les trois Fanzzy liés, un à moi', await jusqua(async () =>
   (await page.$$('.fzc')).length === 3 && (await page.$$('.fzc.non')).length === 2));
+/* Gaël, 8 novembre 2026 : les Fanzzy d'une série pas encore ouverte ne se
+   montrent pas, on les croirait disponibles. */
+const bale = await (await fetch(`${base}/api/club/551`)).json();
+check('un club de série fermée : « BIENTÔT », avec le numéro du PASS',
+  bale.serie?.code === 'SU' && bale.serie.bientot?.pass === 1
+  || (console.log('        serie :', JSON.stringify(bale.serie)), false));
+check('un club de série ouverte n’a pas de « BIENTÔT »', r.serie?.code === 'AN' && !r.serie.bientot);
+await page.goto(`${base}/club/551`, { waitUntil: 'domcontentloaded' });
+await jusqua(async () => (await page.$('.onglets [data-o=fanzzy]')) !== null);
+await page.click('.onglets [data-o=fanzzy]');
+check('FANZZY d’une série fermée : silhouettes, BIENTÔT · PASS 1, lien vers le PASS', await jusqua(async () =>
+  /BIENTÔT · PASS 1/.test(await txt('#onglet')) && (await page.$$('#onglet img[data-fz]')).length === 0
+  && (await page.$$('.fzc.non')).length === 3
+  && await page.$eval('#onglet a.bientot', (a) => a.getAttribute('href')) === '/abonnement'));
 check('aucune erreur de page', erreurs.length === 0 || (console.log('        ', erreurs.join(' | ')), false));
 const large = await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1);
 check('rien ne dépasse en largeur au téléphone', large);

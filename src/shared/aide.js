@@ -723,6 +723,11 @@ const RUBRIQUES = [
       ['Quand puis-je prendre le PASS ?',
         'Dès l’ouverture de sa saison. Pendant la BASE, le PASS 1 est marqué « Bientôt » : '
           + 'il ne s’achète qu’à partir du 1er décembre. D’ici là, tout le jeu reste ouvert, sans payer.'],
+      ['Pourquoi la Super League dit « BIENTÔT · PASS 1 » ?',
+        'Ses Fanzzy, la série DIE KURVE, ne sont pas encore dans les boosters : ils arrivent '
+          + 'pour tout le monde à l’ouverture du PASS 1, le 1er décembre. D’ici là, ils restent en '
+          + 'silhouettes sur MATCHS, sur la page du championnat et sur celle de chaque club. '
+          + 'Il en va de même pour la Ligue 1 et ses Fanzzy, LE PARCAGE, qui arrivent avec le PASS 2.'],
       ['Et le PASS, il donne un avantage ?',
         () => 'Du confort et du style, jamais de la puissance : une '
           + `réserve de ${reglage('abo.pack_max')} boosters au lieu de ${reglage('pack.max')}, `

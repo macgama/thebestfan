@@ -252,6 +252,16 @@ td.pts{font-family:var(--banner);font-size:15px}
 .serie-bandeau .sb-v img:first-child{margin-left:0}
 .serie-bandeau .sb-cri{margin-top:5px;font-family:var(--banner);font-size:10px;letter-spacing:.06em;line-height:1.25}
 .serie-bandeau .sb-fin{display:block;margin:8px 12px 0;font-size:11.5px;font-weight:700;text-align:right}
+/* Pas encore ouverte : écharpe pâlie, pastille or, silhouettes « ? ». */
+.serie-bandeau.bientot::before{filter:grayscale(.6);opacity:.55}
+.serie-bandeau .sb-pastille{flex:none;font-family:var(--banner);font-size:11px;letter-spacing:.12em;padding:4px 9px 3px;
+  border-radius:999px;background:#e7c35a;color:#14110a;font-weight:700}
+.serie-bandeau.bientot .sb-l{font-style:normal;font-weight:700;color:#e7c35a}
+.serie-bandeau .sb-v i{width:32px;height:32px;border-radius:50%;margin-left:-9px;display:grid;place-items:center;
+  background:#05080a;border:1.5px solid color-mix(in srgb,var(--s1) 55%,#4a5a60);font-style:normal;
+  font-family:var(--banner);font-size:14px;color:#8fa3a8}
+.serie-bandeau .sb-v i:first-child{margin-left:0}
+.serie-bandeau.bientot .sb-fin{color:#e7c35a}
 .tabs.tbf-onglets{overflow-x:auto;scrollbar-width:none;scroll-behavior:smooth}
 .tabs.tbf-onglets::-webkit-scrollbar{display:none}
 .tabs .tbf-onglet{flex:1 0 auto;padding-left:13px;padding-right:13px}
@@ -612,6 +622,16 @@ function debounce(fn, ms) {
 /** Une couleur de série, seulement si c'est bien un hexadécimal. */
 const couleurSerie = (c) => (/^#[0-9a-f]{3,8}$/i.test(String(c)) ? c : '#3B7A57');
 
+/** « le 1er décembre », depuis `YYYY-MM-DD`, ou `null` (comme `pass-pub.js`). */
+function quandOuvre(ouvre) {
+  const j = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(ouvre ?? ''));
+  if (!j) return null;
+  const date = new Date(Number(j[1]), Number(j[2]) - 1, Number(j[3]));
+  const lg = window.TBF_LANGUE?.langue ?? 'fr';
+  if (lg !== 'fr') return date.toLocaleDateString(lg, { day: 'numeric', month: 'long' });
+  return `le ${date.getDate() === 1 ? '1er' : date.getDate()} ${date.toLocaleDateString('fr', { month: 'long' })}`;
+}
+
 /** Le portrait d'un Fanzzy, au premier âge. */
 const visageFanzzy = (id) => window.TBF_ETATS?.portrait?.(id, { evo: 1 })?.src
   ?? `/img/fanzzy/${encodeURIComponent(id)}/e1/base/portrait.webp`;
@@ -632,6 +652,26 @@ async function bandeauSerie(id) {
   a.href = `/collection?serie=${encodeURIComponent(serie.code)}`;
   a.style.setProperty('--s1', couleurSerie(serie.c1));
   a.style.setProperty('--s2', couleurSerie(serie.c2));
+  /* Pas encore ouverte (Gaël, 8 novembre 2026, option A) : « BIENTÔT ·
+     PASS 1 », des silhouettes à la place des visages, et le bandeau mène à la
+     page du PASS. Les cris restent. */
+  const b = serie.bientot;
+  if (b) {
+    const quand = quandOuvre(b.ouvre);
+    const pass = Number.isInteger(b.pass) ? b.pass : null;
+    a.href = '/abonnement';
+    a.classList.add('bientot');
+    a.innerHTML = `<div class="sb-t"><span class="sb-pastille">${esc(pass ? `BIENTÔT · PASS ${pass}` : 'BIENTÔT')}</span>
+        <b>${esc(serie.nom)}</b></div>
+      <div class="sb-l">${esc(quand && pass ? `Ses Fanzzy arrivent ${quand} avec le PASS ${pass}`
+        : quand ? `Ses Fanzzy arrivent ${quand}` : 'Ses Fanzzy arrivent bientôt')}</div>
+      <div class="sb-rail">${serie.clubs.map((c) => `<div class="sb-club">
+        <div class="sb-v" aria-hidden="true">${c.fanzzy.map(() => '<i>?</i>').join('')}</div>
+        ${c.cri ? `<div class="sb-cri">${esc(c.cri)}</div>` : ''}</div>`).join('')}</div>
+      <span class="sb-fin">Voir le PASS ›</span>`;
+    $('head').prepend(a);
+    return;
+  }
   a.innerHTML = `<div class="sb-t"><span class="tampon">${esc(serie.nom)}</span>
       <b>Ce championnat a ses Fanzzy</b></div>
     ${serie.ligne ? `<div class="sb-l">${esc(serie.ligne)}</div>` : ''}
