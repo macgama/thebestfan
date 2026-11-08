@@ -1,5 +1,13 @@
 # À déposer sur Infomaniak
 
+**Mon vestiaire (Profil) ne bouge plus** (branche
+`claude/project-thread-od4e3h`, 8 novembre 2026, Gaël : « je n'aime pas trop
+que cette page bouge »). Code seul. La page faisait 26 px de plus que l'écran :
+elle glissait au doigt, la barre du navigateur se repliait et le Fanzzy
+sautait. Elle tient maintenant l'écran au pixel près. **Redémarrer**.
+
+---
+
 **Fiche d'un Fanzzy : la plaque CLASSEUR** (branche
 `claude/project-thread-kzwgdb`, 8 novembre 2026, Gaël, capture « Siège à son
 nom »). Code seul, sans schéma. À gauche de la carte, une plaque ronde or
