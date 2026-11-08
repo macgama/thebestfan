@@ -182,6 +182,7 @@ const fermer = () => page.evaluate(() => document.querySelector('.vt-volet:not([
       pastilles: [...document.querySelectorAll('#stats .vt-res')].map((a) => a.getAttribute('href')),
       echarpes: document.querySelector('#stats [data-solde="echarpes"]')?.textContent.trim(),
       hauteur: carte.height, ecran: innerHeight,
+      deborde: document.documentElement.scrollHeight - innerHeight,
       fermes: [...document.querySelectorAll('.vt-volet')].every((t) => t.hidden),
     };
   });
@@ -194,6 +195,16 @@ const fermer = () => page.evaluate(() => document.querySelector('.vt-volet:not([
   check('le vestiaire prend l’écran, tiroirs fermés',
     v.fermes && v.hauteur >= 560 && v.hauteur <= v.ecran
     || (console.log('        ', v), false));
+  // Gaël, 8 novembre 2026 : « je n'aime pas trop que cette page bouge ».
+  check('la page tient l’écran : rien ne glisse au doigt',
+    v.ecran < 637 || v.deborde <= 0 || (console.log('        ', v), false));
+  // Un téléphone ordinaire, où le vestiaire n'atteint pas ses 780 px.
+  await page.setViewport({ width: 400, height: 760 });
+  await new Promise((r) => setTimeout(r, 300));
+  const t = await page.evaluate(() => ({ ecran: innerHeight, deborde: document.documentElement.scrollHeight - innerHeight }));
+  check('et sur un téléphone de 760 px de haut aussi', t.deborde <= 0 || (console.log('        ', t), false));
+  await page.setViewport({ width: 400, height: 900 });
+  await new Promise((r) => setTimeout(r, 300));
   const ouvert = await ouvrir('clubs');
   const dedans = await page.evaluate(() => ({
     voile: !document.getElementById('vtVoile').hidden,

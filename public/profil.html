@@ -486,8 +486,19 @@ html[data-calme~="animations"] .spin{animation-duration:3s}
   --vt-rail:clamp(62px,18.5vw,78px);
   display:grid;grid-template-columns:var(--vt-rail) minmax(0,1fr) var(--vt-rail);
   grid-template-rows:auto minmax(0,1fr) auto auto;column-gap:6px;
-  height:clamp(560px,calc(var(--h-ecran,100dvh) - 78px),780px);
+  height:clamp(560px,calc(var(--h-ecran,100dvh) - 77px - var(--bas)),780px);
   margin:10px 0 0;padding:16px 10px 12px}
+/* **La page ne bouge plus** (Gaël, 8 novembre 2026 : « je n'aime pas trop
+   que cette page bouge »). Le vestiaire prenait l'écran moins 78 px, mais la
+   page ajoutait sous lui les quarante pixels de dégagement des pages qui
+   défilent : 26 px de trop, donc une page qui glisse au doigt. Sur un
+   téléphone, ce glissement replie la barre du navigateur, `100dvh` grandit,
+   le vestiaire grandit avec lui et le Fanzzy saute. Le compte est maintenant
+   juste : bandeau du haut (54) + marge (10) + vestiaire + 12 px dessous +
+   la barre gestuelle (`--bas`) = l'écran, au pixel près (un de marge pour
+   les arrondis). Sous 637 px de haut, le vestiaire garde ses 560 px et la
+   page défile, comme avant. */
+html,body{overscroll-behavior-y:none}
 /* Le décor occupe toute la scène, et un voile en haut et en bas fait lire ce
    qui s'y écrit ; le milieu, où se tient le Fanzzy, reste clair. */
 #carte.vestiaire .carte-fond{inset:6.5px 0 0}
@@ -613,8 +624,8 @@ html[data-calme~="animations"] .vt-volet{animation:none}
 #tiroir-reglages .tbf-reglages-corps{padding:0}
 html.vt-ouvert{overflow:hidden}
 
-/* tbf-degagement */
-#app{padding-bottom:calc(var(--bas) + 40px)}
+/* tbf-degagement : 12 px et non 40, le vestiaire tient l'écran (voir « La page ne bouge plus »). */
+#app{padding-bottom:calc(var(--bas) + 12px)}
 </style>
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="icon" href="/img/logo.png" type="image/png">
