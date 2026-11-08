@@ -203,6 +203,12 @@ const fermer = () => page.evaluate(() => document.querySelector('.vt-volet:not([
   await new Promise((r) => setTimeout(r, 300));
   const t = await page.evaluate(() => ({ ecran: innerHeight, deborde: document.documentElement.scrollHeight - innerHeight }));
   check('et sur un téléphone de 760 px de haut aussi', t.deborde <= 0 || (console.log('        ', t), false));
+  // « J'aimerais que le cadre soit figé » : même une fenêtre basse ne défile pas.
+  await page.setViewport({ width: 400, height: 560 });
+  await new Promise((r) => setTimeout(r, 300));
+  const b = await page.evaluate(() => ({ deborde: document.documentElement.scrollHeight - innerHeight,
+    defile: (scrollTo(0, 200), scrollY) }));
+  check('et une fenêtre de 560 px ne défile pas non plus', (b.deborde <= 0 && b.defile === 0) || (console.log('        ', b), false));
   await page.setViewport({ width: 400, height: 900 });
   await new Promise((r) => setTimeout(r, 300));
   const ouvert = await ouvrir('clubs');
