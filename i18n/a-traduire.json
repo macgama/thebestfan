@@ -1,4 +1,50 @@
 {
+ "VIRAGE {0}–{1}": {
+  "ou": [
+   "public/a-jouer.js",
+   "public/tbfo-fete.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "EN JEU +{0} · +{1}": {
+  "ou": [
+   "public/a-jouer.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Match TBFO : duels classés gagnés par chaque tribune": {
+  "ou": [
+   "public/a-jouer.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "TBFO": {
+  "ou": [
+   "public/a-jouer.js",
+   "public/club.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
  "REJOINDRE LE DUEL": {
   "ou": [
    "public/appel-fete.js",
@@ -14,6 +60,810 @@
  "--haut": {
   "ou": [
    "public/boosters.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Un championnat, comme en vrai : chaque vrai match est un match TBFO. Le club qui gagne le plus de duels classés sur ce match marque 3 points, à égalité 1, sinon 0 ; la tribune qui gagne le Virage donne 2 points de plus. Touche un club pour ouvrir sa page.": {
+  "ou": [
+   "public/classement.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "+{0} duels": {
+  "ou": [
+   "public/classement.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "{0} duels": {
+  "ou": [
+   "public/classement.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "+{0} en direct": {
+  "ou": [
+   "public/classement.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "duels gagnés au score TBFO": {
+  "ou": [
+   "public/classement.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "pour {0} · gagne un duel classé sur son match pour faire pencher le score": {
+  "ou": [
+   "public/classement.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Le club — thebestfan": {
+  "ou": [
+   "public/club.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Chargement du club…": {
+  "ou": [
+   "public/club.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Rang au championnat TBFO": {
+  "ou": [
+   "public/club.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "CHAMPIONNAT": {
+  "ou": [
+   "public/club.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "TU LE SUIS": {
+  "ou": [
+   "public/club.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Le cri du club": {
+  "ou": [
+   "public/club.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "VIRAGE GAGNÉ": {
+  "ou": [
+   "public/club.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "VIRAGES GAGNÉS": {
+  "ou": [
+   "public/club.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "FANS": {
+  "ou": [
+   "public/club.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "FANZZY LIÉS": {
+  "ou": [
+   "public/club.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Pas de match annoncé pour l’instant.": {
+  "ou": [
+   "public/club.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Points :": {
+  "ou": [
+   "public/club.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Si ça finit comme ça :": {
+  "ou": [
+   "public/club.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Points : {0} +{1} · {2} +{3}": {
+  "ou": [
+   "public/club.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Si ça finit comme ça : {0} +{1} · {2} +{3}": {
+  "ou": [
+   "public/club.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Personne n’a encore joué ce match : le premier duel peut tout lancer.": {
+  "ou": [
+   "public/club.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "● EN DIRECT · {0}’": {
+  "ou": [
+   "public/club.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "● EN DIRECT": {
+  "ou": [
+   "public/club.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "TBFO EN DIRECT": {
+  "ou": [
+   "public/club.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "SCORE TBFO": {
+  "ou": [
+   "public/club.html",
+   "public/tbfo-fete.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Virage {0}–{1} ·": {
+  "ou": [
+   "public/club.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Vrai score {0}–{1}": {
+  "ou": [
+   "public/club.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Virage {0}–{1} · {2}": {
+  "ou": [
+   "public/club.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "⚡ FAIS PENCHER LA BALANCE": {
+  "ou": [
+   "public/club.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Personne n’a encore poussé pour ce club cette saison. La première place est à prendre.": {
+  "ou": [
+   "public/club.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "{0} <0>{1}<0>{2}</0></0> {3} PTS": {
+  "ou": [
+   "public/club.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "{0} <0>{1}{2}</0> {3} PTS": {
+  "ou": [
+   "public/club.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "– <0>{0}<0>{1}</0></0> {2} PTS": {
+  "ou": [
+   "public/club.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "– <0>{0}{1}</0> {2} PTS": {
+  "ou": [
+   "public/club.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Le championnat TBFO de ce club n’a pas encore commencé.": {
+  "ou": [
+   "public/club.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "<0>{0}</0>{1} membres": {
+  "ou": [
+   "public/club.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "<0>{0}</0>{1} membre": {
+  "ou": [
+   "public/club.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "<0>+ CRÉER</0>ton KOP": {
+  "ou": [
+   "public/club.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "· +2 VIR.": {
+  "ou": [
+   "public/club.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "DERNIERS MATCHS TBFO": {
+  "ou": [
+   "public/club.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "MEILLEURS FANS <0>SAISON</0>": {
+  "ou": [
+   "public/club.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "CHAMPIONNAT TBFO <0>{0}</0>": {
+  "ou": [
+   "public/club.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "BILAN TBFO <0>SAISON</0>": {
+  "ou": [
+   "public/club.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Matchs TBFO": {
+  "ou": [
+   "public/club.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Points": {
+  "ou": [
+   "public/club.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Duels gagnés pour le club": {
+  "ou": [
+   "public/club.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Virages gagnés": {
+  "ou": [
+   "public/club.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "LES KOP DU CLUB <0>{0}</0>": {
+  "ou": [
+   "public/club.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Chaque vrai match est un match TBFO : le club qui gagne le plus de duels classés sur ce match marque 3 points, à égalité 1, et la tribune qui gagne le Virage donne 2 points de plus.": {
+  "ou": [
+   "public/club.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Forme": {
+  "ou": [
+   "public/club.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "{0} sur {1} · {2} PTS": {
+  "ou": [
+   "public/club.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Bilan": {
+  "ou": [
+   "public/club.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Buts": {
+  "ou": [
+   "public/club.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "{0} · {1} PTS": {
+  "ou": [
+   "public/club.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Le classement de ce championnat n’est pas encore chargé.": {
+  "ou": [
+   "public/club.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "PROCHAINS MATCHS": {
+  "ou": [
+   "public/club.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "DERNIERS RÉSULTATS": {
+  "ou": [
+   "public/club.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Pays": {
+  "ou": [
+   "public/club.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Fondé en": {
+  "ou": [
+   "public/club.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "LE CLUB": {
+  "ou": [
+   "public/club.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "{0} Fanzzy liés à ce club par ses fans.": {
+  "ou": [
+   "public/club.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Aucun Fanzzy n’est encore lié d’office à ce club. Tu peux lier un de tes Fanzzy neutres à ton club principal depuis sa fiche.": {
+  "ou": [
+   "public/club.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Et {0} Fanzzy ont été liés à ce club par ses fans.": {
+  "ou": [
+   "public/club.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "FANZZY LIÉS <0>{0} / {1} DANS TA COLLECTION</0>": {
+  "ou": [
+   "public/club.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Un Fanzzy lié pousse plus fort dans les matchs de son club, au Virage comme en duel. Et {0} Fanzzy ont été liés à ce club par ses fans.": {
+  "ou": [
+   "public/club.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Un Fanzzy lié pousse plus fort dans les matchs de son club, au Virage comme en duel.": {
+  "ou": [
+   "public/club.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "{0} — thebestfan": {
+  "ou": [
+   "public/club.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "LE MATCH EN COURS": {
+  "ou": [
+   "public/club.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "LE PROCHAIN MATCH": {
+  "ou": [
+   "public/club.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "FORME TBFO <0>5 DERNIERS</0>": {
+  "ou": [
+   "public/club.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "LE VRAI CLUB": {
+  "ou": [
+   "public/club.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Impossible de lire ce club pour l’instant.": {
+  "ou": [
+   "public/club.html"
   ],
   "langues": [
    "en",
@@ -45,6 +895,50 @@
   ]
  },
  "<0>Duel privé</0> : coche-le dans la case du match, avant CRÉER LE DUEL (ou touche RENDRE PRIVÉ dans la salle d’attente). Ton duel n’apparaît plus dans les listes, et seuls tes invités peuvent y entrer.": {
+  "ou": [
+   "public/comment-jouer.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Les <0>clubs</0> jouent un championnat TBFO : chaque vrai match est aussi un <1>match TBFO</1> entre ses deux clubs. Le club dont la tribune gagne le plus de duels classés sur ce match marque 3 points, 1 à égalité, 0 sinon, et gagner le <2>Virage</2> du match rapporte 2 points de plus. Un duel compte pour 1, quel que soit son format, et le score se fige au coup de sifflet final.": {
+  "ou": [
+   "public/comment-jouer.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Le <0>score TBFO</0> s’affiche sous chaque match, en direct : un duel de plus peut faire pencher la balance.": {
+  "ou": [
+   "public/comment-jouer.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Quand ta tribune gagne un match TBFO, <0>toute la tribune est payée</0> : chaque joueur qui y a joué un duel classé ou le Virage reçoit 20 écharpes pour une victoire, 5 pour un nul, et 10 de plus pour un Virage gagné.": {
+  "ou": [
+   "public/comment-jouer.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Touche le <0>nom d’un club</0> pour ouvrir sa page : son rang au championnat TBFO, ses fans, ses Fanzzy, son prochain match et le vrai club.": {
   "ou": [
    "public/comment-jouer.html"
   ],
@@ -363,9 +1257,196 @@
    "es"
   ]
  },
+ "SCORE TBFO · {0}": {
+  "ou": [
+   "public/duel-nvn.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "DUEL GAGNÉ": {
+  "ou": [
+   "public/duel-nvn.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
  "0cqh": {
   "ou": [
    "public/fanzzy-scene.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Équipe": {
+  "ou": [
+   "public/menu.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "VICTOIRE + VIRAGE !": {
+  "ou": [
+   "public/tbfo-fete.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "VICTOIRE TBFO !": {
+  "ou": [
+   "public/tbfo-fete.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "NUL + VIRAGE !": {
+  "ou": [
+   "public/tbfo-fete.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "MATCH NUL TBFO": {
+  "ou": [
+   "public/tbfo-fete.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "VIRAGE GAGNÉ !": {
+  "ou": [
+   "public/tbfo-fete.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "{0} {1}–{2} {3} · tu étais dans la tribune": {
+  "ou": [
+   "public/tbfo-fete.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "{0} matchs TBFO pour tes tribunes": {
+  "ou": [
+   "public/tbfo-fete.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Match TBFO : {0}": {
+  "ou": [
+   "public/tbfo-fete.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "{0} matchs TBFO": {
+  "ou": [
+   "public/tbfo-fete.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "TES TRIBUNES ONT GAGNÉ": {
+  "ou": [
+   "public/tbfo-fete.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "LA TRIBUNE PAIE !": {
+  "ou": [
+   "public/tbfo-fete.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "LE PROCHAIN MATCH T’ATTEND": {
+  "ou": [
+   "public/tbfo-fete.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "UN DUEL DE PLUS FAIT PENCHER LA BALANCE": {
+  "ou": [
+   "public/tbfo-fete.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "VOIR MON CLUB": {
+  "ou": [
+   "public/tbfo-fete.js"
   ],
   "langues": [
    "en",
@@ -421,6 +1502,138 @@
  "Oui : coche DUEL PRIVÉ dans la case du match avant CRÉER LE DUEL, ou touche RENDRE PRIVÉ dans la salle d’attente. Ton duel n’apparaît alors dans aucune liste : seuls ceux à qui tu envoies le lien ou une invitation peuvent entrer, dans la tribune qui a de la place, même s’ils suivent ton club. Les supporters d’appoint n’y entrent pas d’eux-mêmes, et le duel compte au classement comme les autres. Sans adversaire au bout de {0} minutes, il se ferme. Les autres joueurs peuvent toujours jouer le même match, dans la file publique ou dans leur propre duel privé.": {
   "ou": [
    "src/shared/aide.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Comme un vrai championnat : chaque vrai match est aussi un match TBFO entre ses deux clubs. Son score, ce sont les duels classés gagnés par chaque tribune sur ce match (un duel compte 1, du 1v1 au 5v5). Le club qui en gagne le plus marque 3 points, à égalité 1 chacun, sinon 0. La tribune qui gagne le Virage donne 2 points de plus à son club, même s’il a perdu aux duels. Le score se fige à la fin du vrai match, et un match où personne n’a joué ne compte pas. Tu peux pousser n’importe quel club : ta victoire compte pour lui. Tes {0} premiers duels classés du jour comptent pour les clubs. Le classement repart à chaque saison.": {
+  "ou": [
+   "src/shared/aide.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Comme un vrai championnat : chaque vrai match est aussi un match TBFO entre ses deux clubs. Son score, ce sont les duels classés gagnés par chaque tribune sur ce match (un duel compte 1, du 1v1 au 5v5). Le club qui en gagne le plus marque 3 points, à égalité 1 chacun, sinon 0. La tribune qui gagne le Virage donne 2 points de plus à son club, même s’il a perdu aux duels. Le score se fige à la fin du vrai match, et un match où personne n’a joué ne compte pas. Tu peux pousser n’importe quel club : ta victoire compte pour lui. Le classement repart à chaque saison.": {
+  "ou": [
+   "src/shared/aide.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Où voir le score TBFO d’un match ?": {
+  "ou": [
+   "src/shared/aide.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Sous chaque match de MATCHS et des compétitions, dès qu’un duel ou un Virage y a été joué : le score des duels, le Virage et les points en jeu. Pendant le match, il bouge en direct : un duel de plus peut faire pencher la balance.": {
+  "ou": [
+   "src/shared/aide.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "C’est quoi, la page d’un club ?": {
+  "ou": [
+   "src/shared/aide.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Touche le nom d’un club (classements, compétitions, mes équipes) : sa tribune, son Fanzzy, son cri, ses fans, ses Fanzzy liés, ses duels, ses Virages gagnés, son rang au championnat TBFO, sa forme, son prochain match, ses meilleurs fans et ses KOP, avec les vraies infos du club.": {
+  "ou": [
+   "src/shared/aide.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Qu’est-ce que je gagne quand mon club gagne un match TBFO ?": {
+  "ou": [
+   "src/shared/aide.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Des écharpes, si tu étais dans la tribune : un duel classé ou le Virage classé joué pour ce club pendant le vrai match. Une fois le match fini : 20 écharpes si ta tribune a gagné le plus de duels, 5 à égalité, et 10 de plus si elle a gagné le Virage. Une fête te les annonce à ta visite suivante. Même si ton duel est perdu, tu touches ta part quand ta tribune gagne.": {
+  "ou": [
+   "src/shared/aide.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "compétitions": {
+  "ou": [
+   "src/server/club/index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "compétitions des matchs": {
+  "ou": [
+   "src/server/club/index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "classement réel": {
+  "ou": [
+   "src/server/club/index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Fanzzy liés achetés": {
+  "ou": [
+   "src/server/club/index.js"
   ],
   "langues": [
    "en",

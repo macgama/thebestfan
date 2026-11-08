@@ -30,6 +30,7 @@ import { controlerColonne } from './colonne-ui.mjs';
 import { createClassements } from '../src/server/classements/index.js';
 import { createOnboarding } from '../src/server/onboarding/index.js';
 import { createNiveau } from '../src/server/niveau/index.js';
+import { createPronostics } from '../src/server/pronostics/index.js';
 /* `palier` et `ecarpesDuPalier` : la table du jeu, celle que le serveur sert
    au chemin. Le contrôle compare ce que chaque nœud annonce à elle, et non à
    un libellé recopié qui vieillirait avec la table. */
@@ -64,7 +65,9 @@ for (const f of ['auth.sql', 'football.sql', 'minutes.sql', 'couleurs.sql', 'due
                  'tenues.sql', 'deck.sql', 'kop.sql', 'niveau.sql',
                  // Les deux colonnes qui disent de quelle sorte un duel était.
                  // Sans elles, il n'y a rien à raconter.
-                 'historique.sql']) {
+                 'historique.sql',
+                 // Mes pronostics, dans le vestiaire (8 novembre 2026).
+                 'pronostics.sql']) {
   await raw.query(readFileSync(path.join(RACINE, 'sql', f), 'utf8'));
 }
 
@@ -109,6 +112,15 @@ await raw.query(
           ('p3',?,'x','draw',1,1,7001,85,  30,'1v1','entrainement', NULL,0,NULL,NULL, NOW(3) - INTERVAL 3 MINUTE),
           ('p4',?,'x','win', 2,0,7001,NULL,15,'2v2','entrainement', NULL,0,NULL,NULL, NOW(3) - INTERVAL 4 MINUTE)`,
   [U, U, U, U]);
+/* Trois pronostics : un score exact réglé (50 écharpes), un raté réglé, et
+   un match à venir, encore modifiable. Réglés d'avance : la suite ne monte
+   pas le grand livre, et le règlement a sa propre suite (prono:smoke). */
+await raw.query(`INSERT INTO fixtures (id,league_id,season,home_id,away_id,status_short,kickoff_at,home_goals,away_goals)
+                 VALUES (7002,207,2026,91,85,'FT',NOW() - INTERVAL 3 DAY,0,1),
+                        (7003,207,2026,85,91,'NS',NOW() + INTERVAL 2 DAY,NULL,NULL)`);
+await raw.query('UPDATE fixtures SET home_goals = 2, away_goals = 1 WHERE id = 7001');
+await raw.query(`INSERT INTO pronostics (user_id,fixture_id,home_goals,away_goals,issue,echarpes,regle_a) VALUES
+  (?,7001,2,1,'exact',50,NOW(3)), (?,7002,2,0,'rate',0,NOW(3)), (?,7003,3,0,NULL,NULL,NULL)`, [U, U, U]);
 await raw.end();
 
 /* ----------------------------------------------------------- le serveur */
@@ -128,6 +140,7 @@ app.use('/api/rank', createClassements({ pool, requireAuth }).router);
 const niveau = createNiveau({ pool, requireAuth });
 app.use('/api/me', createOnboarding({ pool, requireAuth, niveau }).router);
 app.use('/api/niveau', niveau.router);
+app.use('/api/pronostics', createPronostics({ pool, requireAuth }).router);
 app.get('/api/auth/me', (_q, s) => s.json({
   user: { id: U, pseudo: 'Parcoureur', email: 'parcours@ex.fr', verified: true },
 }));
@@ -172,8 +185,8 @@ const fermer = () => page.evaluate(() => document.querySelector('.vt-volet:not([
       fermes: [...document.querySelectorAll('.vt-volet')].every((t) => t.hidden),
     };
   });
-  check('six tuiles, chacune vers sa rubrique',
-    v.tuiles.join() === 'clubs,saison,parcours,niveau,equipement,reglages'
+  check('sept tuiles, chacune vers sa rubrique',
+    v.tuiles.join() === 'clubs,saison,parcours,pronos,niveau,equipement,reglages'
     || (console.log('        tuiles :', v.tuiles), false));
   check('les quatre pastilles de ce qu’on possède, avec leurs liens',
     v.pastilles.join() === '/boutique,/boosters,/carnet,/carnet' && /^\d+$/.test(v.echarpes ?? '')
@@ -595,6 +608,43 @@ check('aucune erreur de script sur le profil', erreurs.length === 0
   check('une partie d’avant ces colonnes n’invente pas de chiffres',
     Boolean(vieille) && !/XP/.test(vieille.texte) && !/(^|\s)0 s\b/.test(vieille.sous ?? '')
     || (console.log('        elle dit :', JSON.stringify(vieille)), false));
+}
+
+/* ---------------------------------------------------- mes pronostics
+
+   Gaël, 8 novembre 2026 : la liste de ses pronostics, dans le vestiaire. Un
+   ticket par match, le plus récent en tête : l'issue en tampon, les écharpes
+   gagnées en sticker, et le ticket ouvre la fiche du match. */
+{
+  check('la tuile PRONOS ouvre son tiroir', await ouvrir('pronos'));
+  check('les pronostics arrivent', await jusqua(async () =>
+    page.evaluate(() => document.querySelectorAll('#pronosListe .prono').length === 3)));
+  const pr = await page.evaluate(() => ({
+    lignes: [...document.querySelectorAll('#pronosListe .prono')].map((a) => ({
+      issue: a.dataset.issue, href: a.getAttribute('href'),
+      titre: a.querySelector('.tbf-partie-q b').textContent.trim(),
+      sous: a.querySelector('.tbf-partie-q small').textContent.trim(),
+      score: a.querySelector('.tbf-partie-score')?.textContent.trim() ?? null,
+      tampon: a.querySelector('.tbf-tampon')?.textContent.trim(),
+      gain: a.querySelector('.tbf-sticker')?.textContent.replace(/\s+/g, ' ').trim() ?? null })),
+    stickers: [...document.querySelectorAll('#pronosAgregats .tbf-sticker')].map((s) => s.textContent.trim()),
+    regle: document.getElementById('pronosRegle').textContent,
+  }));
+  const [avenir, exact, rate] = pr.lignes;
+  check('le match à venir en tête, modifiable, sans score ni gain',
+    avenir?.issue === 'avenir' && avenir.tampon === 'À VENIR' && /Ton prono 3 – 0/.test(avenir.sous)
+    && /encore modifiable/.test(avenir.sous) && !avenir.score && !avenir.gain && avenir.href === '/matchs?match=7003'
+    || (console.log('        ', avenir), false));
+  check('le score exact : le score final, EXACT et +50',
+    exact?.titre === 'FC Sion – FC Bale' && exact.score === '2 – 1' && exact.tampon === 'EXACT'
+    && /^\+50/.test(exact.gain ?? '') || (console.log('        ', exact), false));
+  check('le raté : RATÉ, sans gain', rate?.tampon === 'RATÉ' && rate.score === '0 – 1' && !rate.gain
+    || (console.log('        ', rate), false));
+  check('en tête, les chiffres de la liste',
+    pr.stickers.join('|') === '3 PRONOSTICS|1 EXACT|+50 ÉCHARPES' || (console.log('        ', pr.stickers), false));
+  check('la règle dit les deux gains', /15 écharpes/.test(pr.regle) && /exact 50/.test(pr.regle)
+    || (console.log('        ', pr.regle), false));
+  await fermer();
 }
 
 /* ------------------------------------------ l'emplacement de club suivant

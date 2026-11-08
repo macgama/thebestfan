@@ -486,6 +486,10 @@ const RUBRIQUES = [
           + 'score d’un match de tes clubs jusqu’au coup d’envoi. Le bon vainqueur, ou '
           + `le bon nul, rapporte ${reglage('prono.vainqueur_echarpes')} écharpes, et le `
           + `score exact ${reglage('prono.exact_echarpes')}.`],
+      ['Où revoir mes pronostics ?',
+        'Dans ton profil, la tuile PRONOS : tes derniers pronostics, le score '
+          + 'final, ce que chacun a rapporté, et ceux qui restent à jouer. Un '
+          + 'pronostic s’y touche pour ouvrir son match.'],
     ],
   },
   {
@@ -663,8 +667,8 @@ const RUBRIQUES = [
     titre: 'Mon compte',
     questions: [
       ['Où trouver mes clubs, mon niveau et mes réglages ?',
-        'Sur ton profil, ton vestiaire : ton Fanzzy au centre, et six cases de couleur '
-          + 'autour de lui. CLUBS, SAISON et PARCOURS à gauche ; NIVEAU, ÉQUIPEMENT et '
+        'Sur ton profil, ton vestiaire : ton Fanzzy au centre, et sept cases de couleur '
+          + 'autour de lui. CLUBS, SAISON, PARCOURS et PRONOS à gauche ; NIVEAU, ÉQUIPEMENT et '
           + 'RÉGLAGES à droite. Chaque case ouvre sa partie par le bas ; la croix, ou un '
           + 'toucher à côté, la referme. Le bonus du jour se prend dans le coffre, tout en bas.'],
       ['À quoi sert mon niveau ?',

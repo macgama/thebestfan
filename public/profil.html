@@ -591,6 +591,9 @@ html[data-calme~="animations"] .vt-volet{animation:none}
 .vt-volet[data-tiroir=parcours]{--vt-ton:var(--face-violet)}
 .vt-volet[data-tiroir=niveau]{--vt-ton:var(--face-vert)}
 .vt-volet[data-tiroir=equipement]{--vt-ton:var(--face-flare)}
+.vt-volet[data-tiroir=pronos]{--vt-ton:var(--craie)}
+/* Mes pronostics : la même feuille que le parcours, un ticket par match. */
+.pronos{display:flex;flex-direction:column;gap:11px;margin:0}
 .vt-tete{flex:none;position:relative;height:42px}
 .vt-poignee{position:absolute;left:50%;top:10px;translate:-50% 0;width:44px;height:5px;border-radius:3px;
   background:rgba(242,238,228,.3)}
@@ -651,6 +654,9 @@ html.vt-ouvert{overflow:hidden}
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l2.6 5.6 6 .7-4.5 4.1 1.2 6-5.3-3-5.3 3 1.2-6L3.4 9.3l6-.7z"/></svg><span class="lib">SAISON</span></button>
       <button type="button" class="tbf-case" data-ton="violet" data-tiroir="parcours" id="caseParcours">
         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2M9 2h6"/></svg><span class="lib">PARCOURS</span></button>
+      <!-- Gaël, 8 novembre 2026 : « la page mes pronostics (vestiaire) ». -->
+      <button type="button" class="tbf-case" data-ton="craie" data-tiroir="pronos" id="casePronos">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7.5l4 2.9-1.5 4.6h-5L8 10.4zM12 3v4.5M16 10.4l4.3-1.4M14.5 15l2.6 3.8M9.5 15l-2.6 3.8M8 10.4L3.7 9"/></svg><span class="lib">PRONOS</span></button>
     </nav>
 
     <!-- Le Fanzzy équipé, vivant (`fanzzy-scene.js`) : il respire, cligne,
@@ -742,6 +748,24 @@ html.vt-ouvert{overflow:hidden}
       <h2 class="tbf-cousu">MON PARCOURS</h2>
       <div class="serie" id="serie"></div>
       <div id="parcours"><div class="pan bloc"><div class="vide">chargement…</div></div></div>
+    </div>
+  </section>
+
+  <!-- ## Mes pronostics
+       Gaël, 8 novembre 2026. Le serveur gardait la liste (`GET
+       /api/pronostics`, les vingt derniers, réglés au passage) et rien ne la
+       montrait : un ticket par match, avec le score donné, le score final,
+       l'issue et les écharpes gagnées. Un ticket ouvre la fiche du match. -->
+  <section class="vt-volet" id="tiroir-pronos" data-tiroir="pronos" role="dialog" aria-modal="true" aria-label="Mes pronostics" hidden>
+    <div class="vt-tete"><span class="vt-poignee" aria-hidden="true"></span>
+      <button type="button" class="vt-fermer" aria-label="Fermer">✕</button></div>
+    <div class="vt-corps">
+      <h2 class="tbf-cousu">MES PRONOSTICS</h2>
+      <div id="pronos"><div class="pan bloc"><div class="vide">chargement…</div></div></div>
+      <p class="vt-note" id="pronosRegle" hidden></p>
+      <a class="tbf-plaque tbf-bloc deck" data-ton="vert" href="/matchs">
+        <span class="tbf-lib2"><small>AVANT LE COUP D’ENVOI, SUR LES MATCHS DE TES CLUBS</small><b>FAIRE UN PRONOSTIC</b></span>
+        <span aria-hidden="true">›</span></a>
     </div>
   </section>
 
@@ -839,8 +863,8 @@ html.vt-ouvert{overflow:hidden}
 /* =======================================================================
    Profil : « Mon vestiaire » (6 novembre 2026).
    Tout ce qui concerne le joueur au même endroit : son Fanzzy en grand, ce
-   qu'il possède, son niveau, et derrière six tuiles qui s'ouvrent en
-   tiroir, ses clubs, sa saison, ce qu'il a joué, son équipement, sa langue,
+   qu'il possède, son niveau, et derrière sept tuiles qui s'ouvrent en
+   tiroir, ses clubs, sa saison, ce qu'il a joué, ses pronostics, son équipement, sa langue,
    ses notifications et son compte.
    ======================================================================= */
 
@@ -1977,6 +2001,94 @@ document.addEventListener('click', (e) => {
   chargerParcours(bt.dataset.suite);
 });
 
+/* ------------------------------------------------------ mes pronostics
+
+   Un ticket par match, du plus récent au plus ancien : le match, le score
+   donné, le score final s'il est connu, l'issue en tampon et les écharpes
+   gagnées en sticker. La couleur du bandeau dit l'issue : l'or du score
+   exact, le vert du bon vainqueur, le gris du raté, le bleu de ce qui reste à
+   jouer. */
+const EN_JEU = new Set(['1H', 'HT', '2H', 'ET', 'BT', 'P', 'LIVE', 'INT', 'SUSP']);
+function etatDuProno(l) {
+  const p = l.prono ?? {};
+  const s = l.match?.score;
+  if (p.issue === 'exact') return { ton: 'or', mot: 'EXACT', teinte: 'var(--projo)' };
+  if (p.issue === 'vainqueur') {
+    const nul = s && s.home === s.away;
+    return { ton: 'vert', mot: nul ? 'BON NUL' : 'BON VAINQUEUR', teinte: 'var(--vert)' };
+  }
+  if (p.issue === 'rate') return { ton: 'gris', mot: 'RATÉ', teinte: 'var(--gris,#C2CAD6)' };
+  const st = l.match?.statut;
+  if (st === 'NS' || st === 'TBD') return { ton: 'bleu', mot: 'À VENIR', teinte: 'var(--bleu,#3B82C4)', avenir: true };
+  if (EN_JEU.has(st)) return { ton: 'flare', mot: 'EN COURS', teinte: 'var(--flare)' };
+  if (st === 'PST') return { ton: 'gris', mot: 'REPORTÉ', teinte: 'var(--gris,#C2CAD6)' };
+  if (st === 'CANC' || st === 'ABD') return { ton: 'gris', mot: 'ANNULÉ', teinte: 'var(--gris,#C2CAD6)' };
+  return { ton: 'gris', mot: 'EN ATTENTE', teinte: 'var(--gris,#C2CAD6)' };
+}
+
+function ligneDeProno(l) {
+  const e = etatDuProno(l);
+  const p = l.prono ?? {};
+  const m = l.match ?? {};
+  const rencontre = m.domicile && m.exterieur ? `${m.domicile} – ${m.exterieur}` : 'match non répertorié';
+  const quand = m.coupDEnvoi ? new Date(m.coupDEnvoi).toLocaleString(document.documentElement.lang || 'fr',
+    { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : null;
+  const sous = [`Ton prono ${Number(p.home)} – ${Number(p.away)}`,
+    quand, e.avenir ? 'encore modifiable' : null].filter(Boolean).join(' · ');
+  const score = m.score
+    ? `<b class="tbf-partie-score">${Number(m.score.home)} – ${Number(m.score.away)}</b>` : '';
+  const ech = Number(p.echarpes) || 0;
+  const gain = ech > 0
+    ? `<span class="tbf-sticker">+${nombre(ech)}<span class="vh"> écharpes</span></span>` : '';
+  return `<a class="tbf-ticket tbf-partie part prono" data-issue="${esc(p.issue ?? (e.avenir ? 'avenir' : 'attente'))}"
+    href="/matchs?match=${Number(m.id)}" style="--e1:${e.teinte};--e2:var(--craie)">
+    <span class="tbf-partie-q"><b>${esc(rencontre)}</b><small>${esc(sous)}</small></span>${score}<span
+    class="tbf-tampon" data-ton="${e.ton}">${e.mot}</span>${gain}</a>`;
+}
+
+function rendrePronos(d) {
+  const liste = d?.pronostics ?? [];
+  const g = d?.gains;
+  if (g) {
+    $('pronosRegle').textContent = `Le bon vainqueur, ou le bon nul, rapporte ${nombre(g.vainqueur)} écharpes, `
+      + `et le score exact ${nombre(g.exact)}. Un pronostic faux ne coûte rien.`;
+    $('pronosRegle').hidden = false;
+  }
+  if (!liste.length) {
+    $('pronos').innerHTML = `<div class="pan bloc"><div class="vide">Tu n’as encore fait aucun pronostic.<br>
+      Donne le score d’un match de tes clubs avant le coup d’envoi.</div></div>`;
+    return;
+  }
+  const exacts = liste.filter((l) => l.prono?.issue === 'exact').length;
+  const bons = liste.filter((l) => l.prono?.issue === 'vainqueur').length;
+  const gagne = liste.reduce((t, l) => t + (Number(l.prono?.echarpes) || 0), 0);
+  const stickers = [
+    `<span class="tbf-sticker" data-sorte="pronos">${liste.length > 1
+      ? `${nombre(liste.length)} PRONOSTICS` : `${nombre(liste.length)} PRONOSTIC`}</span>`,
+    exacts ? `<span class="tbf-sticker" data-sorte="exacts">${exacts > 1
+      ? `${nombre(exacts)} EXACTS` : `${nombre(exacts)} EXACT`}</span>` : '',
+    bons ? `<span class="tbf-sticker" data-sorte="bons">${bons > 1
+      ? `${nombre(bons)} BONS VAINQUEURS` : `${nombre(bons)} BON VAINQUEUR`}</span>` : '',
+    gagne ? `<span class="tbf-sticker" data-sorte="echarpes">+${nombre(gagne)} ÉCHARPES</span>` : '',
+  ].join('');
+  /* Le serveur n'en rend que vingt : les chiffres de tête le disent. */
+  const derniers = liste.length >= 20 ? '<p class="vt-note">Tes vingt derniers pronostics.</p>' : '';
+  $('pronos').innerHTML = `<div class="agregats" id="pronosAgregats">${stickers}</div>${derniers}
+    <div class="pronos" id="pronosListe">${liste.map(ligneDeProno).join('')}</div>`;
+}
+
+async function chargerPronos() {
+  /* Facultatif, comme le parcours : sans réponse, le tiroir le dit à sa
+     place, et le reste du vestiaire ne bouge pas. */
+  const d = await lire('/api/pronostics');
+  if (!d) {
+    $('pronos').innerHTML =
+      '<div class="pan bloc"><div class="vide">Tes pronostics ne sont pas lisibles pour le moment.</div></div>';
+    return;
+  }
+  rendrePronos(d);
+}
+
 /* ------------------------------------------------------------- rendu */
 
 /* Le prix de l'emplacement suivant, relu à chaque rendu : la table est celle
@@ -2405,7 +2517,7 @@ $('supprimer').onclick = async () => {
    se ferme par sa croix, le voile, Échap, ou le retour du téléphone : à
    l'ouverture, la page pousse une entrée d'historique (sans changer
    d'adresse), que le retour dépile. `/profil#clubs` (ou #niveau, #saison,
-   #parcours, #equipement, #reglages) arrive tiroir ouvert. Le focus entre
+   #parcours, #pronos, #equipement, #reglages) arrive tiroir ouvert. Le focus entre
    dans le tiroir, et revient à la tuile en sortant. */
 let tiroirOuvert = null;
 let tiroirDepuis = null;
@@ -2472,6 +2584,7 @@ const domPret = new Promise((r) => (document.readyState === 'loading'
     /* Sans `await` : le parcours, le niveau, ma place et le quotidien se
        posent quand ils arrivent, à leur place, qui est déjà dessinée. */
     chargerParcours();
+    chargerPronos();
     const pNiveau = chargerNiveau();
     const pMoi = chargerMoi();
     chargerQuotidien();
