@@ -77,21 +77,25 @@ export function createClub({ pool, classements, store = null }) {
 
   /* Ses compétitions : le championnat d'abord (type League), la saison la
      plus récente. */
-  async function competitions(id) {
+  async function competitions(id, pays0 = null) {
     const l = await facultatif('compétitions', () => q(
-      `SELECT l.id, l.name, l.logo, l.type, MAX(tl.season) AS season
+      `SELECT l.id, l.name, l.logo, l.type, l.country, MAX(tl.season) AS season
          FROM team_leagues tl JOIN leagues l ON l.id = tl.league_id
-        WHERE tl.team_id = ? GROUP BY l.id, l.name, l.logo, l.type`, [id]), []);
+        WHERE tl.team_id = ? GROUP BY l.id, l.name, l.logo, l.type, l.country`, [id]), []);
     /* Sans `team_leagues` (club jamais rafraîchi), les matchs le disent. */
     const vues = l.length ? l : await facultatif('compétitions des matchs', () => q(
-      `SELECT l.id, l.name, l.logo, l.type, MAX(f.season) AS season
+      `SELECT l.id, l.name, l.logo, l.type, l.country, MAX(f.season) AS season
          FROM fixtures f JOIN leagues l ON l.id = f.league_id
         WHERE f.home_id = ? OR f.away_id = ?
-        GROUP BY l.id, l.name, l.logo, l.type`, [id, id]), []);
+        GROUP BY l.id, l.name, l.logo, l.type, l.country`, [id, id]), []);
+    /* Le championnat du club d'abord : une compétition de type League **de
+       son pays** (la Ligue des champions se dit parfois League, et passait
+       devant la Bundesliga : Gaël, 8 novembre 2026). */
+    const pays = String(pays0 ?? '').toLowerCase();
+    const rang = (x) => (x.type === 'League' ? 0 : 2) + (pays && String(x.country ?? '').toLowerCase() === pays ? 0 : 1);
     return vues.map((x) => ({ id: Number(x.id), name: x.name, logo: x.logo ?? null,
-      type: x.type ?? null, saison: x.season == null ? null : Number(x.season) }))
-      .sort((a, b) => (a.type === 'League' ? 0 : 1) - (b.type === 'League' ? 0 : 1)
-        || (b.saison ?? 0) - (a.saison ?? 0));
+      type: x.type ?? null, country: x.country ?? null, saison: x.season == null ? null : Number(x.season) }))
+      .sort((a, b) => rang(a) - rang(b) || (b.saison ?? 0) - (a.saison ?? 0));
   }
 
   /* Le vrai classement du club dans son championnat. */
@@ -221,11 +225,11 @@ export function createClub({ pool, classements, store = null }) {
     if (!team) return null;
     const lignees = lignéesDuClub(id);
     const [ligues, reels, nbFans, lesKops, achetes, meilleurs] = await Promise.all([
-      competitions(id), matchsReels(id), fans(id), kops(id), liesAchetes(id),
+      competitions(id, team.country), matchsReels(id), fans(id), kops(id), liesAchetes(id),
       facultatif('meilleurs fans', () => classements.supporters('saison', 3,
         { type: 'club', id, nom: team.name }), []),
     ]);
-    const ligue = ligues.find((l) => l.type === 'League') ?? ligues[0] ?? null;
+    const ligue = ligues[0]?.type === 'League' ? ligues[0] : (ligues.find((l) => l.type === 'League') ?? ligues[0] ?? null);
     const [jeu, reel, reels2, titres] = await Promise.all([tbfo(id, ligue, ligues), classementReel(id, ligue),
       Promise.all(ligues.map(async (l) => ({ ligue: { id: l.id, name: l.name, logo: l.logo ?? null, type: l.type ?? null },
         classement: await classementReel(id, l) }))),
