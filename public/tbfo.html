@@ -206,23 +206,28 @@ function versus(d) {
   </section>`;
 }
 
+/* **Les points en grand** (Gaël, 9 novembre 2026, sur carte) : le gros
+   chiffre disait les duels gagnés, et un Virage gagné sans duel laissait
+   « 0 – 0 » à l'écran alors que la tribune avait pris 3 points contre 1.
+   Le gros chiffre dit donc les points du match ; les duels et le Virage
+   passent dessous. Un match où personne n'a joué reste « 0 – 0 ». */
 function tableauScore(d) {
   const m = d.match, t = d.tbfo;
   const vide = !t || t.vide;
   const sc = t?.score ?? [0, 0];
-  const total = sc[0] + sc[1];
-  const part = total ? Math.round((sc[0] / total) * 100) : 50;
   const direct = t?.direct || EN_JEU.has(m.statut);
-  const pts = t?.points ?? (m.fini || direct ? [1, 1] : [0, 0]);
+  const pts = vide ? [0, 0] : (t?.points ?? [0, 0]);
+  const total = pts[0] + pts[1];
+  const part = total ? Math.round((pts[0] / total) * 100) : 50;
   const etat = vide ? (m.fini ? 'PERSONNE N’A JOUÉ' : direct ? 'PERSONNE N’A ENCORE JOUÉ' : 'PAS ENCORE COMMENCÉ')
-    : direct ? 'EN DIRECT · POINTS PROVISOIRES' : m.fini ? 'POINTS ACQUIS' : '';
+    : direct ? 'POINTS PROVISOIRES' : m.fini ? 'POINTS ACQUIS' : '';
   const vir = t?.virage ? `Virage ${t.virage[0]}–${t.virage[1]}` : 'Pas de Virage classé';
+  const n = t?.duels ?? 0;
   const jouable = !m.fini && (direct || PAS_JOUE.has(m.statut));
   return `<div class="score${vide ? ' vide' : ''}${direct && !vide ? ' direct' : ''}">
-    <div class="l"><b>${sc[0]}</b><span><em>SCORE TBFO</em>DUELS GAGNÉS<br>${esc(etat)}</span><b>${sc[1]}</b></div>
+    <div class="l"><b>${pts[0]}</b><span><em>SCORE TBFO</em>${esc(etat)}</span><b>${pts[1]}</b></div>
     <div class="jauge"><i style="width:${part}%"></i></div>
-    <div class="mini"><span>${esc(vir)}</span><span>${t?.duels ?? 0} duel${(t?.duels ?? 0) > 1 ? 's' : ''} classé${(t?.duels ?? 0) > 1 ? 's' : ''}</span>
-      <b>+${pts[0]} · +${pts[1]}</b></div>
+    <div class="mini"><span>Duels <b>${sc[0]}–${sc[1]}</b>${n ? ` · ${n} classé${n > 1 ? 's' : ''}` : ''}</span><span>${esc(vir)}</span></div>
     ${jouable ? `<div class="boutons">
       <a class="pousser" href="/duel-nvn?${new URLSearchParams({ match: String(m.id) })}">⚡ FAIS PENCHER LA BALANCE</a>
       ${direct ? `<a class="virage" href="/virage?match=${Number(m.id)}">VIRAGE</a>` : ''}</div>` : ''}

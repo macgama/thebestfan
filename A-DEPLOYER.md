@@ -11,6 +11,15 @@ Les images restent hors git, dans `Documents\GitHub\tbf-mt` sur le PC :
 
 ---
 
+**Score TBFO : les points en grand** (branche `claude/project-thread-9zc9fe`,
+9 novembre 2026, Gaël, carte « Les points en grand »). Code seul, règle
+inchangée. Partout où le score TBFO s'affiche (MATCHS, fiche, page `/tbfo/:id`,
+page du club, derby, alerte, fête), le gros chiffre dit les points du match ;
+les duels gagnés et le Virage passent dessous. Un Virage gagné sans duel ne
+laisse plus « 0–0 » à l'écran. **Redémarrer**.
+
+---
+
 **Fiche d'un match : le Fanzzy dans sa loge du bas** (branche
 `claude/project-thread-qlorwe`, 8 novembre 2026, Gaël : « le fanzzy est par
 dessus les informations », proposition 3 sur 4). Code seul, sans schéma. Le

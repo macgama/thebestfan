@@ -529,8 +529,9 @@ const RUBRIQUES = [
           + (reglage('tribune.duels_jour') ? `Tes ${reglage('tribune.duels_jour')} premiers duels classés du jour comptent pour les clubs. ` : '')
           + 'Le classement repart à chaque saison.'],
       ['Où voir le score TBFO d’un match ?',
-        'Sous chaque match de MATCHS et des compétitions, à côté du vrai résultat : le '
-          + 'score des duels, le Virage et les points en jeu. Un 0–0 en bleu-gris veut dire '
+        'Sous chaque match de MATCHS et des compétitions, à côté du vrai résultat : en grand, '
+          + 'les points de chaque tribune (un Virage gagné compte, même sans duel) ; dessous, '
+          + 'les duels gagnés et le Virage. Un 0–0 en bleu-gris veut dire '
           + 'que personne n’a encore joué. Pendant le match, il bouge en direct : un duel '
           + 'de plus peut faire pencher la balance.'],
       ['Où voir tout ce qui s’est joué sur un match ?',
