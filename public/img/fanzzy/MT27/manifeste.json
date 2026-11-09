@@ -1,6 +1,6 @@
 {
   "id": "MT27",
-  "rev": 6,
+  "rev": 18,
   "evolutions": {
     "e1": {
       "skins": {
@@ -13,7 +13,8 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "4a321c25d987"
+          "sha": "4a321c25d987",
+          "cligne": true
         },
         "apocalyptique": {
           "etats": [
@@ -25,7 +26,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "0a7ecbf3c69a"
+          "sha": "0a7ecbf3c69a",
+          "cligne": true
         },
         "prehistorique": {
           "etats": [
@@ -37,7 +39,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "ff0d4dc1fb70"
+          "sha": "ff0d4dc1fb70",
+          "cligne": true
         },
         "halloween": {
           "etats": [
@@ -49,7 +52,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "a49e8ce39dd3"
+          "sha": "a49e8ce39dd3",
+          "cligne": true
         }
       }
     },
@@ -64,7 +68,8 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "7376f678e633"
+          "sha": "7376f678e633",
+          "cligne": true
         },
         "apocalyptique": {
           "etats": [
@@ -76,7 +81,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "706c572de59b"
+          "sha": "706c572de59b",
+          "cligne": true
         },
         "halloween": {
           "etats": [
@@ -88,7 +94,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "e1439052311a"
+          "sha": "e1439052311a",
+          "cligne": true
         },
         "prehistorique": {
           "etats": [
@@ -100,7 +107,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "afc31e78afef"
+          "sha": "afc31e78afef",
+          "cligne": true
         }
       }
     },
@@ -115,7 +123,8 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "45c39b2b1633"
+          "sha": "45c39b2b1633",
+          "cligne": true
         },
         "prehistorique": {
           "etats": [
@@ -127,7 +136,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "afbb296c71a9"
+          "sha": "afbb296c71a9",
+          "cligne": true
         },
         "halloween": {
           "etats": [
@@ -139,7 +149,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "5b71e5744dfd"
+          "sha": "5b71e5744dfd",
+          "cligne": true
         },
         "apocalyptique": {
           "etats": [
@@ -151,7 +162,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "cf2c522b01f3"
+          "sha": "cf2c522b01f3",
+          "cligne": true
         }
       }
     }

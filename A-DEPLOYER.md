@@ -1,5 +1,16 @@
 # À déposer sur Infomaniak
 
+**Série MT : clignements et Ultimate** (branche `claude/project-thread-ec0sqz`,
+9 novembre 2026, Gaël : « Il faut faire les clignements pour MT, ainsi que les
+Ultimate pour MT »). Images seules, sans schéma, faites en gratuit. Les 50 Fanzzy
+MT clignent des yeux sur leurs 560 tenues (534 clignements, 26 « en ordre » :
+lunettes noires, masque, yeux déjà fermés). Ultimate en image : 140 de base et
+411 des 420 en tenue (les 9 restantes prennent l'image de base en attendant).
+Les images restent hors git, dans `Documents\GitHub\tbf-mt` sur le PC :
+**la mise en ligne les envoie** (clones tbf-*), puis **Redémarrer**.
+
+---
+
 **Score TBFO : les points en grand** (branche `claude/project-thread-9zc9fe`,
 9 novembre 2026, Gaël, carte « Les points en grand »). Code seul, règle
 inchangée. Partout où le score TBFO s'affiche (MATCHS, fiche, page `/tbfo/:id`,
