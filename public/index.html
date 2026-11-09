@@ -1109,8 +1109,13 @@ html[data-calme~="animations"] .cestlui{animation:none}
    duo les jours où il restait une étape et le faisait monter d'autant, est
    entré dans la bâche du jour : la bande du bas a désormais toujours la même
    hauteur. */
-.bas{display:grid;gap:8px;flex:none}
-.duo{display:grid;grid-template-columns:.94fr 1.06fr;gap:10px;height:88px}
+/* **Rien ne pousse la bande hors de l'écran** (Gaël, 9 novembre 2026). Sans
+   colonne déclarée, la grille prenait la largeur de son contenu le plus
+   long : le bandeau du derby, sur une ligne, l'élargissait au-delà de la
+   colonne et le duo avec lui (date du derby et affiche du ticket coupées à
+   droite). `minmax(0,…)` tient chaque case à la largeur qu'on lui donne. */
+.bas{display:grid;grid-template-columns:minmax(0,1fr);gap:8px;flex:none}
+.duo{display:grid;grid-template-columns:minmax(0,.94fr) minmax(0,1.06fr);gap:10px;height:88px}
 /* **Un seul cadre dans le duo : la bâche du jour.** Le cadre est la grande
    bâche d'un écran, celle qu'on regarde en arrivant (`.tbf-cadre`, dans
    `ui.css`). COLLECTION est un panneau calme (`.pan`), que son écharpe-jauge
@@ -1348,7 +1353,7 @@ html[data-calme~="animations"] .direct[data-quoi="bonus"]:active #directPlaque:n
   .entrer{font-size:19px}
 }
 @media (min-aspect-ratio:1/1){
-  .duo{grid-template-columns:1fr 1fr}
+  .duo{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
 }
 
 @media (prefers-reduced-motion:reduce){

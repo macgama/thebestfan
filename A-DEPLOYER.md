@@ -1,5 +1,14 @@
 # À déposer sur Infomaniak
 
+**Accueil : le bandeau du derby et le ticket ne dépassent plus** (branche
+`claude/project-thread-toxidb`, 9 novembre 2026, Gaël : « le bandeau jaune
+dépasse sur la droite, ainsi que la box prochain coup d'envoi »). Code seul.
+La bande du bas de l'accueil prenait la largeur du bandeau DERBY écrit sur une
+ligne et sortait de l'écran. Elle tient la colonne ; le nom du derby passe sur
+deux lignes au besoin, et la date se dit en court (« VEN. 20:45 »). **Redémarrer**.
+
+---
+
 **Fiche d'un match : le Fanzzy dans sa loge du bas** (branche
 `claude/project-thread-qlorwe`, 8 novembre 2026, Gaël : « le fanzzy est par
 dessus les informations », proposition 3 sur 4). Code seul, sans schéma. Le

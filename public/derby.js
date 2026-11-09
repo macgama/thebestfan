@@ -34,7 +34,7 @@
   color:#111;background:repeating-linear-gradient(90deg,#F5C33B 0 26px,#ffd85e 26px 52px);border:2px solid #111;
   box-shadow:0 3px 0 #111;font:600 12px var(--banner,Oswald,sans-serif);letter-spacing:.08em;overflow:hidden;white-space:nowrap}
 .tbf-derby-b img{width:22px;height:22px;object-fit:contain;flex:none}
-.tbf-derby-b .n{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.tbf-derby-b .n{flex:1;min-width:0;white-space:normal;line-height:14px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow-wrap:anywhere}
 .tbf-derby-b em{font-style:normal;background:#111;color:#F5C33B;border-radius:4px;padding:1px 6px;flex:none}
 .tbf-derby-b.live em{color:#ff8a7a}
 .tbf-derby-c{position:relative;display:block;margin:4px 0 12px;border-radius:12px;overflow:hidden;isolation:isolate;text-decoration:none;
@@ -72,11 +72,22 @@
       { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
   }
 
+  /* Le bandeau n'a qu'une ligne : le jour et l'heure suffisent (« VEN. 20:45 »),
+     le derby est celui de la semaine. La date entière reste sur l'affiche. */
+  function quandCourt(iso) {
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return '';
+    const l = document.documentElement.lang || 'fr';
+    const loin = d.getTime() - Date.now() > 6 * 864e5;
+    return `${d.toLocaleDateString(l, loin ? { weekday: 'short', day: 'numeric' } : { weekday: 'short' })} ${
+      d.toLocaleTimeString(l, { hour: '2-digit', minute: '2-digit' })}`;
+  }
+
   function bandeau(d) {
     const live = EN_JEU.has(d.statut);
     const t = d.tbfo;
     const etat = live ? `TBFO ${t?.score?.join('–') ?? '0–0'} · ${d.minute ?? ''}’`
-      : FINIS.has(d.statut) ? `TBFO ${t?.score?.join('–') ?? '0–0'}` : quand(d.coup).toUpperCase();
+      : FINIS.has(d.statut) ? `TBFO ${t?.score?.join('–') ?? '0–0'}` : quandCourt(d.coup).toUpperCase();
     return `<a class="tbf-derby-b${live ? ' live' : ''}" href="/tbfo/${Number(d.id)}">⚔
       ${d.home.logo ? `<img src="${esc(d.home.logo)}" alt="">` : ''}<span class="n">DERBY : ${esc(d.home.name)} – ${esc(d.away.name)}</span>
       ${d.away.logo ? `<img src="${esc(d.away.logo)}" alt="">` : ''}<em>${esc(etat)} · ×${Number(d.coef) || 2}</em></a>`;
