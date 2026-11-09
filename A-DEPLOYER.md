@@ -1,5 +1,14 @@
 # À déposer sur Infomaniak
 
+**Accueil : le bandeau du derby et le ticket ne dépassent plus** (branche
+`claude/project-thread-toxidb`, 9 novembre 2026, Gaël : « le bandeau jaune
+dépasse sur la droite, ainsi que la box prochain coup d'envoi »). Code seul.
+La bande du bas de l'accueil prenait la largeur du bandeau DERBY écrit sur une
+ligne et sortait de l'écran. Elle tient la colonne ; le nom du derby passe sur
+deux lignes au besoin, et la date se dit en court (« VEN. 20:45 »). **Redémarrer**.
+
+---
+
 **Série MT : clignements et Ultimate** (branche `claude/project-thread-ec0sqz`,
 9 novembre 2026, Gaël : « Il faut faire les clignements pour MT, ainsi que les
 Ultimate pour MT »). Images seules, sans schéma, faites en gratuit. Les 50 Fanzzy
