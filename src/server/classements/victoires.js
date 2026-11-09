@@ -180,6 +180,9 @@ export function createVictoires({ pool, classements, exploits = createExploits({
         club: equipe(c === 0 ? m.home : m.away),
         adverse: equipe(c === 0 ? m.away : m.home),
         score: [pour, contre],
+        /* Les points du match, de son côté d'abord : ce que la fête montre en
+           grand (Gaël, 9 novembre 2026). */
+        pts: [m.points[c], m.points[1 - c]],
         echarpes: Number(l.echarpes),
       };
       if (l.source === 'tbfo-hdm') {

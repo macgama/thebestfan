@@ -272,7 +272,8 @@ check('TON CLUB, quand c’est le mien', (await txt('.toi')) === 'TON CLUB');
 check('les quatre chiffres', /^3\s*FANS 3\s*FANZZY LIÉS 6\s*DUELS 1\s*VIRAGES? GAGNÉS?$/.test(await txt('.stats'))
   || (console.log('        stats :', await txt('.stats')), false));
 check('la forme TBFO', (await txt('.forme')).endsWith('V'));
-check('le match en cours et son score TBFO', /2 – 1/.test(await txt('.prochain .sc'))
+/* Les points en grand (Gaël, 9 novembre 2026) : 2–1 aux duels, 3 points à 0. */
+check('le match en cours et ses points TBFO', /3 – 0/.test(await txt('.prochain .sc'))
   && /EN DIRECT/.test(await txt('.prochain .quand')));
 check('ce que vaudrait la fin du match', /Arsenal \+3 · Aston Villa \+0/.test(await txt('.prochain .enjeu'))
   || (console.log('        enjeu :', await txt('.prochain .enjeu')), false));
@@ -417,8 +418,12 @@ check('un club inconnu : une phrase, pas une page vide',
   await p3.goto(`${base}/tbfo/9001`, { waitUntil: 'domcontentloaded' });
   const t3 = async (sel) => p3.$eval(sel, (n) => n.textContent.replace(/\s+/g, ' ').trim()).catch(() => '');
   check('la page du match TBFO se dessine', await jusqua(async () => /SCORE TBFO/.test(await t3('.score'))));
-  check('le vrai score en petit, le score TBFO en grand', /VRAI SCORE 2–0/.test(await t3('.vs'))
-    && /^2\s*SCORE TBFO/.test(await t3('.score .l')));
+  /* Les points en grand (Gaël, 9 novembre 2026) : 3 aux duels (2–1) et 2 au
+     Virage (3–1) pour Arsenal, 0 pour Chelsea ; les duels dessous. */
+  check('le vrai score en petit, les points TBFO en grand', /VRAI SCORE 2–0/.test(await t3('.vs'))
+    && /^5\s*SCORE TBFO\s*POINTS ACQUIS\s*0$/.test(await t3('.score .l'))
+    && /Duels 2–1/.test(await t3('.score .mini')) && /Virage 3–1/.test(await t3('.score .mini'))
+    || (console.log('        ', await t3('.score')), false));
   check('les duels et le Virage', (await p3.$$('.duel')).length === 3 && /CORDE/.test(await t3('.corde')));
   check('les écharpes de chaque tribune', /\+30/.test(await t3('.ech')));
   check('les clubs mènent à leur page', await p3.$eval('.vs .nom.a', (a) => a.getAttribute('href')) === '/club/42');
@@ -532,7 +537,7 @@ check('un club inconnu : une phrase, pas une page vide',
   await p4.addScriptTag({ url: '/tbfo-alerte.js' });
   await p4.evaluate(() => window.TBF_TBFO_ALERTE.lire());
   check('alerte : le bandeau rouge, et le duel pour son camp', await jusqua(async () =>
-    /TON CLUB PERD AU TBFO Aston Villa 1–2 Arsenal/.test(await t4('.tbf-alerte')))
+    /TON CLUB PERD AU TBFO Aston Villa 0–3 Arsenal/.test(await t4('.tbf-alerte')))
     && await p4.$eval('.tbf-alerte .duel', (a) => a.getAttribute('href')) === '/duel-nvn?match=9002&camp=1');
   if (process.env.CAPTURES) {
     await dodo(600);

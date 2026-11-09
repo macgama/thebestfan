@@ -144,14 +144,17 @@
         + `<b>TBFO</b><strong>0–0</strong>${tag}`
         + `<small>${m.direct ? 'À PRENDRE' : 'PERSONNE N’A JOUÉ'}</small></a>`;
     }
-    const total = a + b;
-    const part = total ? Math.round((a / total) * 100) : 50;
-    const v = Array.isArray(m.virage) ? `VIRAGE ${m.virage[0]}–${m.virage[1]}` : '';
-    const pts = `${m.fini ? '' : m.direct ? 'EN JEU ' : ''}+${m.points?.[0] ?? 0} · +${m.points?.[1] ?? 0}`;
-    return `<a class="tbfo${m.direct ? ' direct' : ''}" href="${lien}" title="Match TBFO : duels classés gagnés par chaque tribune">`
-      + `<b>TBFO</b><strong>${a}–${b}</strong>${tag}`
+    /* Les points en grand (Gaël, 9 novembre 2026) : un Virage gagné sans
+       duel laissait « 0–0 » à côté d'une tribune qui avait pris 3 points.
+       Dessous : les duels gagnés et le Virage. */
+    const [pa, pb] = [Number(m.points?.[0] ?? 0), Number(m.points?.[1] ?? 0)];
+    const total = pa + pb;
+    const part = total ? Math.round((pa / total) * 100) : 50;
+    const v = Array.isArray(m.virage) ? ` · VIRAGE ${m.virage[0]}–${m.virage[1]}` : '';
+    return `<a class="tbfo${m.direct ? ' direct' : ''}" href="${lien}" title="Match TBFO : les points de chaque tribune">`
+      + `<b>TBFO</b><strong>${pa}–${pb}</strong>${tag}`
       + `<i class="jauge" style="--part:${part}%"></i>`
-      + `<small>${v ? `${v} · ` : ''}${pts}</small></a>`;
+      + `<small>${m.direct ? 'EN JEU · ' : ''}DUELS ${a}–${b}${v}</small></a>`;
   }
 
   /** Remplit chaque emplacement, et ne touche qu'à ceux qui changent. */
