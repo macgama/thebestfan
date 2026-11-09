@@ -101,9 +101,9 @@
     el.innerHTML = `<span class="ecu">${a.club.logo ? `<img src="${esc(a.club.logo)}" alt="">` : ''}
         <b>${a.minute != null ? `${esc(a.minute)}’` : 'LIVE'}</b></span>
       <span class="t"><small>⚠ TON CLUB PERD AU TBFO</small>
-        <strong>${esc(a.club.name)} ${esc(a.score[0])}–${esc(a.score[1])} ${esc(a.adverse.name)}</strong>
+        <strong>${esc(a.club.name)} ${esc(a.points[0])}–${esc(a.points[1])} ${esc(a.adverse.name)}</strong>
         <span>${ecart > 0 ? `Il manque <b>${ecart + 1}</b> duel${ecart + 1 > 1 ? 's' : ''} gagné${ecart + 1 > 1 ? 's' : ''} pour repasser devant`
-          : 'Le Virage d’en face fait la différence'} · +${esc(a.points[0])} contre +${esc(a.points[1])}</span></span>
+          : 'Le Virage d’en face fait la différence'} · duels ${esc(a.score[0])}–${esc(a.score[1])}</span></span>
       <span class="gestes"><a class="duel" href="/duel-nvn?${q}">⚡ UN DUEL</a>
         <a class="vir" href="/virage?match=${Number(a.match)}">VIRAGE</a>
         <button type="button" class="tard">PLUS TARD</button></span>`;

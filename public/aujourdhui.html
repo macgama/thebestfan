@@ -840,6 +840,7 @@ async function lireTbfoFiche(id) {
     if (el && FICHE.id === id) el.outerHTML = tbfoFiche(id);
   } catch { /* hors ligne : la fiche s'en passe */ }
 }
+/* Les points en grand, les duels et le Virage dessous (Gaël, 9 novembre 2026). */
 function tbfoFiche(id) {
   const m = TBFO_FICHE.get(Number(id));
   const lien = `/tbfo/${Number(id)}`;
@@ -849,9 +850,9 @@ function tbfoFiche(id) {
   }
   const v = Array.isArray(m.virage) ? ` · VIRAGE ${m.virage[0]}–${m.virage[1]}` : '';
   return `<a class="ftbfo${m.vide ? ' vide' : ''}${m.direct ? ' direct' : ''}" data-ftbfo href="${lien}">
-    <b>MATCH TBFO</b><strong>${m.score[0]} – ${m.score[1]}</strong>
-    <span>${m.vide ? (m.direct ? 'Personne n’a encore joué' : 'Personne n’a joué : 0–0') : `${m.duels} duel${m.duels > 1 ? 's' : ''}${v}`}
-      · ${m.fini ? '' : 'EN JEU '}+${m.points[0]} · +${m.points[1]}</span><i>TOUT LE MATCH ›</i></a>`;
+    <b>MATCH TBFO</b><strong>${m.vide ? '0 – 0' : `${m.points[0]} – ${m.points[1]}`}</strong>
+    <span>${m.vide ? (m.direct ? 'Personne n’a encore joué' : 'Personne n’a joué : 0–0')
+      : `${m.fini ? 'POINTS' : 'POINTS EN JEU'} · duels ${m.score[0]}–${m.score[1]}${v}`}</span><i>TOUT LE MATCH ›</i></a>`;
 }
 
 const FICHE = {

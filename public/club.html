@@ -300,7 +300,8 @@ function prochain(d) {
   if (!m) return '<p class="vide">Pas de match annoncé pour l’instant.</p>';
   const camp = m.home.id === ID ? 0 : 1;
   const s = m.tbfo;
-  const sc = s ? s.score : [0, 0];
+  /* Les points en grand (Gaël, 9 novembre 2026). */
+  const sc = s && !s.vide ? s.points : [0, 0];
   const total = sc[0] + sc[1];
   const part = total ? Math.round((sc[camp] / total) * 100) : 50;
   const direct = EN_JEU.has(m.statut);
@@ -315,7 +316,7 @@ function prochain(d) {
       <span class="${direct ? 'live' : ''}">${direct ? `● EN DIRECT${m.minute ? ` · ${m.minute}'` : ''}` : esc(quand(m.coup))}</span></div>
     <div class="vs">
       <a href="/club/${m.home.id}">${logo(m.home.logo)}<span>${esc(m.home.name)}</span></a>
-      <a class="sc" href="/tbfo/${Number(m.id)}"><b>${sc[0]} – ${sc[1]}</b><small>${direct ? 'TBFO EN DIRECT' : 'SCORE TBFO'} ›</small></a>
+      <a class="sc" href="/tbfo/${Number(m.id)}"><b>${sc[0]} – ${sc[1]}</b><small>${direct ? 'POINTS TBFO EN DIRECT' : 'POINTS TBFO'} ›</small></a>
       <a href="/club/${m.away.id}">${logo(m.away.logo)}<span>${esc(m.away.name)}</span></a>
     </div>
     <div class="jauge" aria-hidden="true"><i style="width:${part}%"></i></div>
@@ -359,9 +360,10 @@ function tribune(d) {
     const c = m.home === ID ? 0 : 1;
     const pour = m.score[c], contre = m.score[1 - c];
     const issue = pour > contre ? ['V', 'var(--vert)'] : pour === contre ? ['N', '#5b6270'] : ['D', 'var(--flare)'];
-    const vir = m.virage && m.virage[c] > m.virage[1 - c] ? ' · +2 VIR.' : '';
+    const vir = m.virage && m.virage[c] > m.virage[1 - c] ? ' · VIRAGE' : '';
     return `<a class="mtbfo${m.vide ? ' vide' : ''}" href="/tbfo/${Number(m.id)}"><em style="background:${m.vide ? '#4d6a8f' : issue[1]}">${issue[0]}</em>
-      <span>${esc(quand(m.coup))}${m.vide ? ' · personne n’a joué' : ''}</span><b>${pour}–${contre}${vir} · +${m.points[c]} ›</b></a>`;
+      <span>${esc(quand(m.coup))}${m.vide ? ' · personne n’a joué' : ` · duels ${pour}–${contre}${vir}`}</span><b>${
+        m.vide ? '0–0' : `${m.points[c]}–${m.points[1 - c]}`} PTS ›</b></a>`;
   }).join('');
   return `<div class="cousu">MEILLEURS FANS <i>SAISON</i></div>${podium}
     ${d.tbfo?.titres?.length ? `<div class="cousu">🏆 TITRES TBFO <i>${d.tbfo.titres.length}</i></div>
@@ -393,8 +395,8 @@ function vraiClub(d) {
     const c2 = m.home.id === ID ? 0 : 1;
     const b = m.buts ?? [0, 0];
     const t = tbfoDe.get(Number(m.id));
-    const sc = t ? t.score : [0, 0];
     const vide = !t || t.vide;
+    const sc = vide ? [0, 0] : t.points;
     const issue = b[c2] > b[1 - c2] ? 'V' : b[c2] === b[1 - c2] ? 'N' : 'D';
     return `<a class="mrow ${issue}" href="/tbfo/${Number(m.id)}">${cote(m.home)}
       <span class="mil"><b>${b[0]}–${b[1]}</b><i class="pt${vide ? ' vide' : ''}">TBFO ${sc[0]}–${sc[1]}</i></span>${cote(m.away, true)}</a>`;
