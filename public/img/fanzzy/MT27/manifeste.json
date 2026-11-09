@@ -1,6 +1,6 @@
 {
   "id": "MT27",
-  "rev": 9,
+  "rev": 18,
   "evolutions": {
     "e1": {
       "skins": {
@@ -26,7 +26,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "0a7ecbf3c69a"
+          "sha": "0a7ecbf3c69a",
+          "cligne": true
         },
         "prehistorique": {
           "etats": [
@@ -38,7 +39,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "ff0d4dc1fb70"
+          "sha": "ff0d4dc1fb70",
+          "cligne": true
         },
         "halloween": {
           "etats": [
@@ -50,7 +52,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "a49e8ce39dd3"
+          "sha": "a49e8ce39dd3",
+          "cligne": true
         }
       }
     },
@@ -78,7 +81,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "706c572de59b"
+          "sha": "706c572de59b",
+          "cligne": true
         },
         "halloween": {
           "etats": [
@@ -90,7 +94,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "e1439052311a"
+          "sha": "e1439052311a",
+          "cligne": true
         },
         "prehistorique": {
           "etats": [
@@ -102,7 +107,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "afc31e78afef"
+          "sha": "afc31e78afef",
+          "cligne": true
         }
       }
     },
@@ -130,7 +136,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "afbb296c71a9"
+          "sha": "afbb296c71a9",
+          "cligne": true
         },
         "halloween": {
           "etats": [
@@ -142,7 +149,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "5b71e5744dfd"
+          "sha": "5b71e5744dfd",
+          "cligne": true
         },
         "apocalyptique": {
           "etats": [
@@ -154,7 +162,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "cf2c522b01f3"
+          "sha": "cf2c522b01f3",
+          "cligne": true
         }
       }
     }

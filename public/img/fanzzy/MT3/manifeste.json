@@ -1,6 +1,6 @@
 {
   "id": "MT3",
-  "rev": 12,
+  "rev": 13,
   "evolutions": {
     "e1": {
       "skins": {
@@ -49,7 +49,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "72b86f7ae0b9"
+          "sha": "72b86f7ae0b9",
+          "cligne": true
         }
       }
     },

@@ -1,6 +1,6 @@
 {
   "id": "MT6",
-  "rev": 8,
+  "rev": 17,
   "evolutions": {
     "e1": {
       "skins": {
@@ -26,7 +26,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "40da33ac2f4d"
+          "sha": "40da33ac2f4d",
+          "cligne": true
         },
         "prehistorique": {
           "etats": [
@@ -38,7 +39,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "3b8de7a1b7e1"
+          "sha": "3b8de7a1b7e1",
+          "cligne": true
         },
         "halloween": {
           "etats": [
@@ -50,7 +52,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "f205f28c82e9"
+          "sha": "f205f28c82e9",
+          "cligne": true
         }
       }
     },
@@ -78,7 +81,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "bcbd5556e611"
+          "sha": "bcbd5556e611",
+          "cligne": true
         },
         "prehistorique": {
           "etats": [
@@ -90,7 +94,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "cea390958549"
+          "sha": "cea390958549",
+          "cligne": true
         },
         "halloween": {
           "etats": [
@@ -102,7 +107,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "6459cda86a0f"
+          "sha": "6459cda86a0f",
+          "cligne": true
         }
       }
     },
@@ -130,7 +136,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "7b9b46559ee5"
+          "sha": "7b9b46559ee5",
+          "cligne": true
         },
         "prehistorique": {
           "etats": [
@@ -142,7 +149,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "2d53ea754dff"
+          "sha": "2d53ea754dff",
+          "cligne": true
         },
         "halloween": {
           "etats": [
@@ -154,7 +162,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "59442eabd95a"
+          "sha": "59442eabd95a",
+          "cligne": true
         }
       }
     }

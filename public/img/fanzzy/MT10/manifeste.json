@@ -1,6 +1,6 @@
 {
   "id": "MT10",
-  "rev": 7,
+  "rev": 10,
   "evolutions": {
     "e1": {
       "skins": {
@@ -26,7 +26,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "9ca9602e6ec7"
+          "sha": "9ca9602e6ec7",
+          "cligne": true
         },
         "halloween": {
           "etats": [
@@ -38,7 +39,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "a40b07bd9cc7"
+          "sha": "a40b07bd9cc7",
+          "cligne": true
         },
         "apocalyptique": {
           "etats": [
@@ -50,7 +52,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "386ddc62c9c6"
+          "sha": "386ddc62c9c6",
+          "cligne": true
         }
       }
     }
