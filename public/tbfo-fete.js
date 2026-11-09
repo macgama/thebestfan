@@ -129,7 +129,7 @@
       ? `🏆 ${esc(x.club.name)} champion · ${esc(x.ligue?.name ?? '')}`
       : x.type === 'hdm'
         ? `★ Homme du match · ${esc(x.club.name)}–${esc(x.adverse.name)}`
-        : `${esc(x.club.name)} ${esc(x.score[0])}–${esc(x.score[1])} ${esc(x.adverse.name)}${x.derby ? ' · DERBY' : ''}`;
+        : `${esc(x.club.name)} ${esc((x.pts ?? x.score)[0])}–${esc((x.pts ?? x.score)[1])} ${esc(x.adverse.name)}${x.derby ? ' · DERBY' : ''}`;
     return `<div class="tbf-tbfo-ligne"><span>${quoi}</span><b>+${esc(x.echarpes)}</b></div>`;
   }
 
@@ -156,7 +156,7 @@
         ? `<img src="${esc(v.club.logo)}" alt="">` : ''}</span></span>`;
     } else {
       scene = `<span class="tbf-tbfo-scene">${ecusson(v.club, 'tbf-tbfo-ecu--nous')}
-        <span class="tbf-tbfo-sc">${esc(v.score[0])}–${esc(v.score[1])}<small>SCORE TBFO</small></span>
+        <span class="tbf-tbfo-sc">${esc((v.pts ?? v.score)[0])}–${esc((v.pts ?? v.score)[1])}<small>${v.pts ? 'POINTS TBFO' : 'SCORE TBFO'}</small></span>
         ${ecusson(v.adverse, 'tbf-tbfo-ecu--eux')}</span>`;
     }
     const ech = `<span class="tbf-sticker tbf-sticker--prix tbf-niv-ech${colle(1150)}"><img
@@ -173,7 +173,7 @@
         ? `${esc(v.club.name)} finit premier du championnat TBFO ${esc(v.ligue?.name ?? '')} ${esc(v.saison ?? '')} · merci à toute la tribune`
         : v.type === 'hdm'
           ? `${esc(v.club.name)}–${esc(v.adverse.name)} · ${Number(v.gagnes) > 0 ? `${Number(v.gagnes)} duel${Number(v.gagnes) > 1 ? 's' : ''} gagné${Number(v.gagnes) > 1 ? 's' : ''}, ` : ''}personne n’a fait mieux que toi`
-          : `${esc(v.club.name)} ${esc(v.score[0])}–${esc(v.score[1])} ${esc(v.adverse.name)} · tu étais dans la tribune`;
+          : `${esc(v.club.name)} ${esc((v.pts ?? v.score)[0])}–${esc((v.pts ?? v.score)[1])} ${esc(v.adverse.name)} · tu étais dans la tribune`;
     const choix = await N.annoncer({
       nomDeLaFete: un ? `${titreDe(v)} ${v.club?.name ?? ''}` : `${tri.length} récompenses TBFO`,
       quoi: un ? String(v.type === 'champion' ? (v.ligue?.name ?? v.club.name) : v.club.name).toUpperCase()

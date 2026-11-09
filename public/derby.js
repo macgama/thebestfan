@@ -86,8 +86,10 @@
   function bandeau(d) {
     const live = EN_JEU.has(d.statut);
     const t = d.tbfo;
-    const etat = live ? `TBFO ${t?.score?.join('–') ?? '0–0'} · ${d.minute ?? ''}’`
-      : FINIS.has(d.statut) ? `TBFO ${t?.score?.join('–') ?? '0–0'}` : quandCourt(d.coup).toUpperCase();
+    /* Les points en grand (Gaël, 9 novembre 2026). */
+    const pts = t && !t.vide && t.points ? t.points.join('–') : '0–0';
+    const etat = live ? `TBFO ${pts} · ${d.minute ?? ''}’`
+      : FINIS.has(d.statut) ? `TBFO ${pts}` : quandCourt(d.coup).toUpperCase();
     return `<a class="tbf-derby-b${live ? ' live' : ''}" href="/tbfo/${Number(d.id)}">⚔
       ${d.home.logo ? `<img src="${esc(d.home.logo)}" alt="">` : ''}<span class="n">DERBY : ${esc(d.home.name)} – ${esc(d.away.name)}</span>
       ${d.away.logo ? `<img src="${esc(d.away.logo)}" alt="">` : ''}<em>${esc(etat)} · ×${Number(d.coef) || 2}</em></a>`;
@@ -96,8 +98,8 @@
   function carte(d) {
     const live = EN_JEU.has(d.statut), fini = FINIS.has(d.statut);
     const t = d.tbfo;
-    const mil = t && !t.vide ? `${t.score[0]}–${t.score[1]}` : live || fini ? '0–0' : 'VS';
-    const sous = live ? `SCORE TBFO · ${esc(d.minute ?? '')}’` : fini ? 'SCORE TBFO FINAL' : esc(quand(d.coup).toUpperCase());
+    const mil = t && !t.vide && t.points ? `${t.points[0]}–${t.points[1]}` : live || fini ? '0–0' : 'VS';
+    const sous = live ? `POINTS TBFO · ${esc(d.minute ?? '')}’` : fini ? 'POINTS TBFO FINAUX' : esc(quand(d.coup).toUpperCase());
     const x = Number(d.coef) || 2;
     const prime = (Number(d.victoire) || 20) * x;
     const action = fini ? 'LE RÉSUMÉ' : '⚡ JOUER LE DERBY';
