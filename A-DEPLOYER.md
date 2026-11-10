@@ -1,5 +1,13 @@
 # À déposer sur Infomaniak
 
+**Pastille BETA** (branche `claude/project-thread-f3ou5s`, 10 novembre 2026,
+Gaël : « une petite pastille "Beta" sur la page HOME, sur le loading et sur la
+page des non-connectés »). Code seul. Un petit sticker rouge « BETA » collé de
+travers sur la bâche du chargement, sur le panneau du nom de la vitrine (il se
+claque à l'entrée) et à l'épaule de l'avatar du hub. **Redémarrer**.
+
+---
+
 **Accueil : le bandeau du derby et le ticket ne dépassent plus** (branche
 `claude/project-thread-toxidb`, 9 novembre 2026, Gaël : « le bandeau jaune
 dépasse sur la droite, ainsi que la box prochain coup d'envoi »). Code seul.
