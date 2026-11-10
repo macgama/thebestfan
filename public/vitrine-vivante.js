@@ -172,6 +172,13 @@
     for (const [sel, d] of [['.logo small', 480], ['.beta', 560], ['.claim', 640], ['.sell', 720]]) {
       montee(v.querySelector(sel), d);
     }
+    /* La pastille BETA se colle d'un coup, comme un sticker qu'on claque sur
+       le panneau : grande et de travers, puis à plat à sa place. */
+    const beta = v.querySelector('.pitch>.pastille-beta');
+    if (beta) anim(beta, [{ opacity: 0, transform: 'scale(2.2) rotate(-14deg)' },
+      { opacity: 1, transform: 'scale(.92) rotate(2deg)', offset: 0.7 },
+      { opacity: 1, transform: 'none' }],
+    { duration: 380, delay: 600, easing: 'ease-out', fill: 'backwards' });
     v.querySelectorAll('.bullet').forEach((b, k) => anim(b,
       [{ opacity: 0, transform: 'scale(.55) rotate(-6deg)' },
         { opacity: 1, transform: 'scale(1.08) rotate(1deg)', offset: 0.6 },

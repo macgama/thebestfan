@@ -444,6 +444,39 @@ html[data-calme~="animations"] .preuve h3 i{animation:none}
   .sell{display:none}
 }
 
+/* ## La pastille BETA (demande de Gaël, 10 novembre 2026)
+
+   Un petit sticker rouge collé de travers, le même aux trois endroits qu'on
+   voit en premier : le rideau de chargement, la vitrine et le hub. Il dit
+   « bêta » d'un coup d'œil, à la façon d'un jeu, sans prendre la place de
+   rien : il est posé en absolu sur le bord d'un objet qui existe déjà.
+
+   **Sans `ui.css`** : le rideau s'affiche avant que la feuille commune soit
+   garantie là, donc chaque couleur a son repli écrit ici. La face est le
+   rouge foncé des bâches (`--face-flare`), où la craie tient 4,5:1 ; le
+   liseré craie puis encre est celui des stickers de la feuille commune.
+   Aucune animation en boucle : la vitrine le claque une fois à l'entrée
+   (`vitrine-vivante.js`), et c'est tout. */
+.pastille-beta{position:absolute;z-index:3;display:inline-flex;align-items:center;gap:4px;
+  height:18px;padding:0 6px 0 5px;border-radius:4px;box-sizing:border-box;
+  background:var(--face-flare,#B8321F);color:var(--craie,#F2EEE4);
+  box-shadow:0 0 0 1.5px var(--craie,#F2EEE4),0 0 0 3px var(--encre,#07090C),
+    2px 2px 0 3px rgba(7,9,12,.55);
+  font-family:var(--banner,"Oswald","Arial Narrow",Impact,sans-serif);font-weight:700;
+  font-size:10px;line-height:1;letter-spacing:.16em;text-transform:uppercase;
+  white-space:nowrap;pointer-events:none;rotate:-6deg}
+/* Le point devant le mot, comme le LIVE des tuiles : un témoin, pas un bouton. */
+.pastille-beta::before{content:"";width:5px;height:5px;flex:none;border-radius:50%;
+  background:currentColor}
+/* Sur la vitrine : collée sur le coin haut droit du panneau du nom. */
+.pitch{position:relative}
+.pitch>.pastille-beta{top:-7px;right:14px;rotate:5deg}
+/* Dans le hub : à l'épaule de l'avatar, au-dessus de la pastille « en ligne ». */
+.haut>.pastille-beta{left:44px;top:-5px;rotate:-8deg}
+/* Sur le rideau : à cheval sur le bas de la bâche du nom, côté droit. */
+.ouverture .enseigne{position:relative}
+.ouverture .enseigne>.pastille-beta{right:14px;bottom:-9px;rotate:-5deg}
+
 /* ============================================================== le hub
 
    Un écran de jeu, pas une page. Trois bandes : les compteurs en haut, le
@@ -1802,6 +1835,7 @@ html[data-calme~="animations"] .ouverture .fan img{animation:none}
     <div class="enseigne tbf-plaque tbf-grande tbf-colle" data-ton="craie">
       <h1>THEBESTFAN<span>.ONLINE</span></h1>
       <p>le jeu de cartes des tribunes</p>
+      <span class="pastille-beta" translate="no">Beta</span>
     </div>
     <!-- Le kop : voir « Le kop : les Fanzzy jouables, rang par rang », dans
          la feuille de cette page. Les rangs sont posés par ouverture.js. -->
@@ -1941,6 +1975,7 @@ html[data-calme~="animations"] .ouverture .fan img{animation:none}
     <div class="pitch pan">
       <img class="embleme" src="/img/logo.avif" alt=""
         onerror="this.onerror=null;this.src='/img/logo.png'">
+      <span class="pastille-beta" translate="no">Beta</span>
       <div class="logo">THE<em>BEST</em>FAN<small>LE JEU DES TRIBUNES</small></div>
       <!-- **La version, avant le bouton et non dans le pied de page.**
 
@@ -2028,6 +2063,7 @@ html[data-calme~="animations"] .ouverture .fan img{animation:none}
         <span class="tbf-anneau" id="anneau" style="--p:0%"><span class="tbf-avatar-buste"></span></span>
         <b class="tbf-sticker tbf-sticker--rond tbf-avatar-niv" id="nivPastille" hidden></b>
       </a>
+      <span class="pastille-beta" translate="no" aria-hidden="true">Beta</span>
       <!-- Les supporters en ligne (demande de Gaël du 5 novembre 2026) : un
            nombre posé sous l'avatar sans pousser le reste, caché tant qu'on
            est seul. Depuis le 6 novembre, un appui ouvre la page En ligne. -->
