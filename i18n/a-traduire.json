@@ -68,10 +68,10 @@
    "es"
   ]
  },
- "VIRAGE {0}–{1}": {
+ "· VIRAGE {0}–{1}": {
   "ou": [
    "public/a-jouer.js",
-   "public/tbfo-fete.js"
+   "public/aujourdhui.html"
   ],
   "langues": [
    "en",
@@ -80,7 +80,7 @@
    "es"
   ]
  },
- "EN JEU +{0} · +{1}": {
+ "EN JEU ·": {
   "ou": [
    "public/a-jouer.js"
   ],
@@ -91,7 +91,29 @@
    "es"
   ]
  },
- "Match TBFO : duels classés gagnés par chaque tribune": {
+ "Match TBFO : les points de chaque tribune": {
+  "ou": [
+   "public/a-jouer.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "EN JEU · DUELS {0}–{1}{2}": {
+  "ou": [
+   "public/a-jouer.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "DUELS {0}–{1}{2}": {
   "ou": [
    "public/a-jouer.js"
   ],
@@ -136,17 +158,6 @@
    "es"
   ]
  },
- "· VIRAGE {0}–{1}": {
-  "ou": [
-   "public/aujourdhui.html"
-  ],
-  "langues": [
-   "en",
-   "de",
-   "it",
-   "es"
-  ]
- },
  "Personne n’a encore joué": {
   "ou": [
    "public/aujourdhui.html"
@@ -169,7 +180,7 @@
    "es"
   ]
  },
- "{0} duels{1}": {
+ "POINTS EN JEU": {
   "ou": [
    "public/aujourdhui.html"
   ],
@@ -180,7 +191,7 @@
    "es"
   ]
  },
- "{0} duel{1}": {
+ "POINTS · duels {0}–{1}{2}": {
   "ou": [
    "public/aujourdhui.html"
   ],
@@ -191,7 +202,7 @@
    "es"
   ]
  },
- "Personne n’a encore joué · {0}+{1} · +{2}": {
+ "POINTS EN JEU · duels {0}–{1}{2}": {
   "ou": [
    "public/aujourdhui.html"
   ],
@@ -213,7 +224,7 @@
    "es"
   ]
  },
- "Personne n’a joué : 0–0 · {0}+{1} · +{2}": {
+ "Il exulte !": {
   "ou": [
    "public/aujourdhui.html"
   ],
@@ -224,7 +235,7 @@
    "es"
   ]
  },
- "{0} duels{1} · {2}+{3} · +{4}": {
+ "Il applaudit le but.": {
   "ou": [
    "public/aujourdhui.html"
   ],
@@ -235,7 +246,205 @@
    "es"
   ]
  },
- "{0} duel{1} · {2}+{3} · +{4}": {
+ "Il encaisse… et il y croit encore.": {
+  "ou": [
+   "public/aujourdhui.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Il retient son souffle.": {
+  "ou": [
+   "public/aujourdhui.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "L’adversaire est à dix : il pousse !": {
+  "ou": [
+   "public/aujourdhui.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Victoire : il fait la fête.": {
+  "ou": [
+   "public/aujourdhui.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Défaite : il range son écharpe.": {
+  "ou": [
+   "public/aujourdhui.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Match nul : un point chacun.": {
+  "ou": [
+   "public/aujourdhui.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Carton rouge : il n’en revient pas.": {
+  "ou": [
+   "public/aujourdhui.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Il attend le coup d’envoi.": {
+  "ou": [
+   "public/aujourdhui.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Mi-temps : il reprend son souffle.": {
+  "ou": [
+   "public/aujourdhui.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Coup de sifflet final.": {
+  "ou": [
+   "public/aujourdhui.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Victoire : il savoure.": {
+  "ou": [
+   "public/aujourdhui.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Défaite : la prochaine sera la bonne.": {
+  "ou": [
+   "public/aujourdhui.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Il regarde le match, sans parti pris.": {
+  "ou": [
+   "public/aujourdhui.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "On mène : il savoure.": {
+  "ou": [
+   "public/aujourdhui.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "On est menés : il pousse et il y croit !": {
+  "ou": [
+   "public/aujourdhui.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Tout est encore possible : il pousse avec la tribune.": {
+  "ou": [
+   "public/aujourdhui.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "● EN COURS": {
+  "ou": [
+   "public/aujourdhui.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "--lc": {
+  "ou": [
+   "public/aujourdhui.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "--lc2": {
   "ou": [
    "public/aujourdhui.html"
   ],
@@ -521,7 +730,7 @@
    "es"
   ]
  },
- "TBFO EN DIRECT": {
+ "POINTS TBFO EN DIRECT": {
   "ou": [
    "public/club.html"
   ],
@@ -532,7 +741,7 @@
    "es"
   ]
  },
- "SCORE TBFO": {
+ "POINTS TBFO": {
   "ou": [
    "public/club.html",
    "public/tbfo-fete.js"
@@ -566,7 +775,7 @@
    "es"
   ]
  },
- "TBFO EN DIRECT ›": {
+ "POINTS TBFO EN DIRECT ›": {
   "ou": [
    "public/club.html"
   ],
@@ -600,7 +809,7 @@
    "es"
   ]
  },
- "SCORE TBFO ›": {
+ "POINTS TBFO ›": {
   "ou": [
    "public/club.html"
   ],
@@ -710,7 +919,7 @@
    "es"
   ]
  },
- "· +2 VIR.": {
+ "· VIRAGE": {
   "ou": [
    "public/club.html"
   ],
@@ -732,7 +941,51 @@
    "es"
   ]
  },
+ "· duels {0}–{1}{2}": {
+  "ou": [
+   "public/club.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
  "{0} · personne n’a joué": {
+  "ou": [
+   "public/club.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "0–0 PTS ›": {
+  "ou": [
+   "public/club.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "{0}–{1} PTS ›": {
+  "ou": [
+   "public/club.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "{0} · duels {1}–{2}{3}": {
   "ou": [
    "public/club.html"
   ],
@@ -1260,7 +1513,7 @@
    "es"
   ]
  },
- "Le <0>score TBFO</0> s’affiche sous chaque match, à côté du vrai résultat, en direct : un duel de plus peut faire pencher la balance. Un vrai match où personne n’a joué compte <1>0–0</1> (en bleu-gris), 1 point chacun. Touche ce score pour voir tout ce qui s’est joué sur le match : les duels, le Virage, les meneurs.": {
+ "Le <0>score TBFO</0> s’affiche sous chaque match, à côté du vrai résultat, en direct : en grand, les <1>points</1> de chaque tribune (un Virage gagné compte, même sans duel), et dessous les duels gagnés et le Virage. Un duel de plus peut faire pencher la balance. Un vrai match où personne n’a joué compte <2>0–0</2> (en bleu-gris), 1 point chacun. Touche ce score pour voir tout ce qui s’est joué sur le match : les duels, le Virage, les meneurs.": {
   "ou": [
    "public/comment-jouer.html"
   ],
@@ -1403,40 +1656,7 @@
    "es"
   ]
  },
- "TBFO 0–0 · {0}’": {
-  "ou": [
-   "public/derby.js"
-  ],
-  "langues": [
-   "en",
-   "de",
-   "it",
-   "es"
-  ]
- },
- "TBFO 0–0 · ’": {
-  "ou": [
-   "public/derby.js"
-  ],
-  "langues": [
-   "en",
-   "de",
-   "it",
-   "es"
-  ]
- },
  "TBFO {0}": {
-  "ou": [
-   "public/derby.js"
-  ],
-  "langues": [
-   "en",
-   "de",
-   "it",
-   "es"
-  ]
- },
- "TBFO 0–0": {
   "ou": [
    "public/derby.js"
   ],
@@ -1458,7 +1678,7 @@
    "es"
   ]
  },
- "SCORE TBFO · {0}’": {
+ "POINTS TBFO · {0}’": {
   "ou": [
    "public/derby.js"
   ],
@@ -1469,7 +1689,7 @@
    "es"
   ]
  },
- "SCORE TBFO FINAL": {
+ "POINTS TBFO FINAUX": {
   "ou": [
    "public/derby.js"
   ],
@@ -1942,7 +2162,7 @@
    "es"
   ]
  },
- "Il manque <0>{0}{1}</0> duels gagnés pour repasser devant · +{2} contre +{3}": {
+ "Il manque <0>{0}{1}</0> duels gagnés pour repasser devant · duels {2}–{3}": {
   "ou": [
    "public/tbfo-alerte.js"
   ],
@@ -1964,7 +2184,7 @@
    "es"
   ]
  },
- "Il manque <0>{0}{1}</0> duels gagné pour repasser devant · +{2} contre +{3}": {
+ "Il manque <0>{0}{1}</0> duels gagné pour repasser devant · duels {2}–{3}": {
   "ou": [
    "public/tbfo-alerte.js"
   ],
@@ -1975,7 +2195,7 @@
    "es"
   ]
  },
- "Il manque <0>{0}{1}</0> duel gagnés pour repasser devant · +{2} contre +{3}": {
+ "Il manque <0>{0}{1}</0> duel gagnés pour repasser devant · duels {2}–{3}": {
   "ou": [
    "public/tbfo-alerte.js"
   ],
@@ -1986,7 +2206,7 @@
    "es"
   ]
  },
- "Il manque <0>{0}{1}</0> duel gagné pour repasser devant · +{2} contre +{3}": {
+ "Il manque <0>{0}{1}</0> duel gagné pour repasser devant · duels {2}–{3}": {
   "ou": [
    "public/tbfo-alerte.js"
   ],
@@ -1997,7 +2217,7 @@
    "es"
   ]
  },
- "Le Virage d’en face fait la différence · +{0} contre +{1}": {
+ "Le Virage d’en face fait la différence · duels {0}–{1}": {
   "ou": [
    "public/tbfo-alerte.js"
   ],
@@ -2130,6 +2350,29 @@
   ]
  },
  "{0} {1}–{2} {3} · DERBY": {
+  "ou": [
+   "public/tbfo-fete.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "SCORE TBFO": {
+  "ou": [
+   "public/tbfo-fete.js",
+   "public/tbfo.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "VIRAGE {0}–{1}": {
   "ou": [
    "public/tbfo-fete.js"
   ],
@@ -2516,7 +2759,7 @@
    "es"
   ]
  },
- "EN DIRECT · POINTS PROVISOIRES": {
+ "POINTS PROVISOIRES": {
   "ou": [
    "public/tbfo.html"
   ],
@@ -2560,7 +2803,7 @@
    "es"
   ]
  },
- "<0>SCORE TBFO</0>DUELS GAGNÉS<1/>{0}": {
+ "· {0} classés": {
   "ou": [
    "public/tbfo.html"
   ],
@@ -2571,7 +2814,7 @@
    "es"
   ]
  },
- "{0} duels classés": {
+ "· {0} classé": {
   "ou": [
    "public/tbfo.html"
   ],
@@ -2582,7 +2825,7 @@
    "es"
   ]
  },
- "{0} duels classé": {
+ "Duels <0>{0}–{1}</0> · {2} classés": {
   "ou": [
    "public/tbfo.html"
   ],
@@ -2593,7 +2836,7 @@
    "es"
   ]
  },
- "{0} duel classés": {
+ "Duels <0>{0}–{1}</0> · {2} classé": {
   "ou": [
    "public/tbfo.html"
   ],
@@ -2604,7 +2847,7 @@
    "es"
   ]
  },
- "{0} duel classé": {
+ "Duels <0>{0}–{1}</0>": {
   "ou": [
    "public/tbfo.html"
   ],
@@ -3539,7 +3782,7 @@
    "es"
   ]
  },
- "Sous chaque match de MATCHS et des compétitions, à côté du vrai résultat : le score des duels, le Virage et les points en jeu. Un 0–0 en bleu-gris veut dire que personne n’a encore joué. Pendant le match, il bouge en direct : un duel de plus peut faire pencher la balance.": {
+ "Sous chaque match de MATCHS et des compétitions, à côté du vrai résultat : en grand, les points de chaque tribune (un Virage gagné compte, même sans duel) ; dessous, les duels gagnés et le Virage. Un 0–0 en bleu-gris veut dire que personne n’a encore joué. Pendant le match, il bouge en direct : un duel de plus peut faire pencher la balance.": {
   "ou": [
    "src/shared/aide.js"
   ],

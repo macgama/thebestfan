@@ -231,6 +231,9 @@ export function createVirage({ pool, io, requireAuth, souvenirs, fanzzy,
 
   function buildRoom(f, fixtureId) {
     return new VirageRoom({
+      /* Les bots d'en face : un supporter seul n'a plus une tribune vide
+         devant lui (13 novembre 2026). Réglage `virage.bots`. */
+      bots: true,
       fixture: {
         id: f.id, leagueId: f.league_id,
         homeId: f.home_id, awayId: f.away_id,

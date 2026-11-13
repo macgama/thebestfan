@@ -369,6 +369,15 @@ const RUBRIQUES = [
           + 'entièrement pour la tribune — on ne décourage personne de venir. Ce qui '
           + 'est réduit de moitié, c’est la ferveur que tu gagnes, toi : on vient '
           + 'pousser partout, on ne se bâtit une réputation que chez soi.'],
+      ['Personne en face au Virage : est-ce que je gagne facilement ?',
+        () => (reglage('virage.bots') !== false
+          ? 'Non : des bots complètent la tribune d’en face, autant qu’il lui manque de '
+            + 'supporters. Seul, tu as un bot contre toi ; à trois contre personne, trois '
+            + 'bots ; à trois contre un, deux bots chantent avec celui qui est seul. Ils '
+            + 'poussent la corde et peuvent marquer, mais ne gagnent ni ferveur ni place. '
+            + 'Ils arrivent à ton premier chant et repartent quand tu t’arrêtes.'
+          : 'Sans personne en face, la corde retombe plus vite : il faut chanter bien '
+            + 'pour marquer.')],
       ['Si je reste sans rien faire, je compte quand même ?',
         () => `Non. Après ${reglage('virage.inactif_sec')} secondes sans geste, tu ne `
           + 'comptes plus dans la foule. Il faut chanter pour être là.'],
