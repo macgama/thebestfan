@@ -1,6 +1,6 @@
 {
   "id": "GD42",
-  "rev": 4,
+  "rev": 5,
   "evolutions": {
     "e1": {
       "skins": {
@@ -15,18 +15,6 @@
           "portrait": true,
           "sha": "108252a612ad"
         },
-        "apocalyptique": {
-          "etats": [
-            "neutre",
-            "pousse",
-            "joie",
-            "depit",
-            "colere"
-          ],
-          "portrait": true,
-          "repli": "base",
-          "sha": "42c137c297a7"
-        },
         "halloween": {
           "etats": [
             "neutre",
@@ -38,18 +26,6 @@
           "portrait": true,
           "repli": "base",
           "sha": "cd86bb3a76c8"
-        },
-        "prehistorique": {
-          "etats": [
-            "neutre",
-            "pousse",
-            "joie",
-            "depit",
-            "colere"
-          ],
-          "portrait": true,
-          "repli": "base",
-          "sha": "81d015c7f461"
         }
       }
     },
@@ -105,18 +81,6 @@
           ],
           "portrait": true,
           "sha": "cb6ea00d90bf"
-        },
-        "halloween": {
-          "etats": [
-            "neutre",
-            "pousse",
-            "joie",
-            "depit",
-            "colere"
-          ],
-          "portrait": true,
-          "repli": "base",
-          "sha": "8162096ea30e"
         }
       }
     }

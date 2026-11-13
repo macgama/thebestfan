@@ -1,6 +1,6 @@
 {
   "id": "VP14",
-  "rev": 2,
+  "rev": 3,
   "evolutions": {
     "e1": {
       "skins": {
@@ -26,18 +26,6 @@
           "portrait": true,
           "repli": "base",
           "sha": "19b73109c067"
-        },
-        "prehistorique": {
-          "etats": [
-            "neutre",
-            "pousse",
-            "joie",
-            "depit",
-            "colere"
-          ],
-          "portrait": true,
-          "repli": "base",
-          "sha": "6b5c39a0db43"
         }
       }
     }

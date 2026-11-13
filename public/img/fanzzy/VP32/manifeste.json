@@ -1,6 +1,6 @@
 {
   "id": "VP32",
-  "rev": 5,
+  "rev": 6,
   "evolutions": {
     "e1": {
       "skins": {
@@ -26,18 +26,6 @@
           "portrait": true,
           "repli": "base",
           "sha": "c5697c32c198"
-        },
-        "halloween": {
-          "etats": [
-            "neutre",
-            "pousse",
-            "joie",
-            "depit",
-            "colere"
-          ],
-          "portrait": true,
-          "repli": "base",
-          "sha": "50ff899b70b7"
         },
         "prehistorique": {
           "etats": [
@@ -78,18 +66,6 @@
           "portrait": true,
           "repli": "base",
           "sha": "742e5ec2f008"
-        },
-        "halloween": {
-          "etats": [
-            "neutre",
-            "pousse",
-            "joie",
-            "depit",
-            "colere"
-          ],
-          "portrait": true,
-          "repli": "base",
-          "sha": "836c6fdaa54b"
         },
         "prehistorique": {
           "etats": [

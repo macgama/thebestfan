@@ -1,6 +1,6 @@
 {
   "id": "VP47",
-  "rev": 3,
+  "rev": 4,
   "evolutions": {
     "e1": {
       "skins": {
@@ -14,18 +14,6 @@
           ],
           "portrait": true,
           "sha": "65cebc5c572e"
-        },
-        "apocalyptique": {
-          "etats": [
-            "neutre",
-            "pousse",
-            "joie",
-            "depit",
-            "colere"
-          ],
-          "portrait": true,
-          "repli": "base",
-          "sha": "1080855dda8a"
         }
       }
     },
@@ -92,18 +80,6 @@
           ],
           "portrait": true,
           "sha": "b836ead6102d"
-        },
-        "prehistorique": {
-          "etats": [
-            "neutre",
-            "pousse",
-            "joie",
-            "depit",
-            "colere"
-          ],
-          "portrait": true,
-          "repli": "base",
-          "sha": "9d365189239c"
         }
       }
     }

@@ -1,6 +1,6 @@
 {
   "id": "GD19",
-  "rev": 3,
+  "rev": 4,
   "evolutions": {
     "e1": {
       "skins": {
@@ -69,18 +69,6 @@
           ],
           "portrait": true,
           "sha": "8668db8e9a55"
-        },
-        "apocalyptique": {
-          "etats": [
-            "neutre",
-            "pousse",
-            "joie",
-            "depit",
-            "colere"
-          ],
-          "portrait": true,
-          "repli": "base",
-          "sha": "cc0b980f4489"
         }
       }
     }
