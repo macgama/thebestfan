@@ -21,6 +21,8 @@ import { seuilLegende, chantReussi } from '../../shared/legende.js';
 import { nouvelleJauge, chargerJauge, ultimePret, pousseeUltime, vueJauge }
   from '../../shared/ultime.js';
 import { chantReussiPour } from '../jeux/voix.js';
+// Le bot du duel : ses frappes et son choix de chant servent aussi ici.
+import { frappesDuBot, chantDuBot } from '../nvn/bot.js';
 
 /**
  * Les trois fins d'un match, celles que le contrat appelle « le coup de
@@ -191,6 +193,9 @@ export const RULES = {
   get realGoalJolt() { return reglage('virage.secousse_but_reel'); },
   /* Le plancher de partage de la ferveur. Voir `partFerveur`. */
   get tribuneMin() { return reglage('virage.tribune_min'); },
+  /* Les bots d'en face (13 novembre 2026, Gaël) : voir `bots`. */
+  get botsActifs() { return reglage('virage.bots'); },
+  get botAdresse() { return reglage('virage.bot_adresse'); },
 
   /* ------------------------------------------------- les cartes d'action
 
@@ -285,6 +290,9 @@ export function crowdFactor(n) {
 
 /** La page des deux tribunes : combien de figures par tribune. */
 export const TRIBUNES_EN_FACE = 12;
+/** Au-delà, les bots d'une tribune sont joués par ce nombre-ci, chacun
+    pesant pour plusieurs : la corde est la même, le battement reste léger. */
+const BOTS_JOUES = 30;
 /** « Qui pousse le plus en ce moment » : la ferveur gagnée, qui s'éteint de
     moitié en huit secondes. */
 const ELAN_DEMI_VIE = 8000;
@@ -295,8 +303,14 @@ export class VirageRoom {
   /**
    * @param fixture {id, homeId, awayId, homeName, awayName, leagueId, kickoffAt}
    */
-  constructor({ fixture, emit, emitVous, onPush, onGoal, log = console }) {
+  constructor({ fixture, emit, emitVous, onPush, onGoal, log = console, bots = false }) {
     this.fixture = fixture;
+    /* **Les bots d'en face** (13 novembre 2026, Gaël : « s'il est seul,
+       l'adversaire doit être représenté par un bot » ; « 3 users contre
+       3 bots »). Le serveur les allume ; une salle montée à la main — les
+       suites — reste entre humains, sauf à le demander. Voir `bots`. */
+    this.avecBots = Boolean(bots);
+    this.botsEtat = [[], []];
     this.emit = emit;                 // (event, payload) => void, vers la salle
     /* (userId, you) => void, vers **tous les onglets d'un seul joueur**.
        `emit` parle à la salle entière ; la main, elle, n'appartient qu'à
@@ -783,6 +797,9 @@ export class VirageRoom {
     return n ? { n, mods: { pushMult: 1 + n * force } } : null;
   }
 
+  /** Les humains qui chantent, tribune par tribune. Les bots n'y sont pas :
+      les listes de matchs et l'administration comptent des gens. La corde,
+      elle, lit `foule`. */
   crowd() {
     const now = Date.now();
     const n = [0, 0];
@@ -790,6 +807,74 @@ export class VirageRoom {
       if (now - m.lastPush < RULES.idleMs) n[m.side]++;
     }
     return n;
+  }
+
+  /**
+   * **Les bots de chaque tribune** : autant qu'il manque de supporters pour
+   * égaler celle d'en face (13 novembre 2026, Gaël). Un supporter seul a un
+   * bot en face, deux en ont deux, trois contre un donnent deux bots aux
+   * côtés de celui qui est seul. Sans personne qui chante, pas de bot : ils
+   * arrivent au premier chant et repartent avec le dernier actif. Après le
+   * coup de sifflet final, ils se taisent.
+   */
+  bots(n = this.crowd()) {
+    if (!this.avecBots || !RULES.botsActifs || this.finA) return [0, 0];
+    return [Math.max(0, n[1] - n[0]), Math.max(0, n[0] - n[1])];
+  }
+
+  /** La foule qui pèse sur la corde : les humains qui chantent, et les bots. */
+  foule() {
+    const n = this.crowd();
+    const b = this.bots(n);
+    return [n[0] + b[0], n[1] + b[1]];
+  }
+
+  /**
+   * Les bots chantent, au battement.
+   *
+   * Comme un supporter : un chant du répertoire qu'ils savent taper, le geste
+   * de la carte avec leur adresse (`virage.bot_adresse`), noté par le même
+   * correcteur, une pause le temps du geste et un peu plus. Leur poussée suit
+   * la règle du chant — minute double, foule, division par l'effectif de la
+   * tribune —, sans Fanzzy ni cartes d'action. Ils ne gagnent ni ferveur, ni
+   * place, ni présence : ils ne sont pas dans `members`.
+   */
+  faireChanterLesBots(now) {
+    const b = this.bots();
+    if (!b[0] && !b[1] && !this.botsEtat[0].length && !this.botsEtat[1].length) return;
+    const n = this.foule();
+    for (const side of [0, 1]) {
+      const etat = this.botsEtat[side];
+      const joues = Math.min(b[side], BOTS_JOUES);
+      etat.length = Math.min(etat.length, joues);
+      /* Un bot qui arrive attend un peu avant son premier chant : un
+         supporter qui entre ne pousse pas à la seconde non plus. */
+      while (etat.length < joues) etat.push({ breath: RULES.breathMax, regenAt: now,
+        prochainA: now + 1500 + Math.random() * 2500 });
+      if (!joues) continue;
+      const poids = b[side] / joues;
+      for (const bot of etat) {
+        if (now < bot.prochainA) continue;
+        bot.breath = Math.min(RULES.breathMax, bot.breath + RULES.breathPerSec * (now - bot.regenAt) / 1000);
+        bot.regenAt = now;
+        const rang = this.rangRepertoire();
+        const card = CARDS[chantDuBot(this.repertoire(rang))];
+        if (!card || bot.breath < card.cost) { bot.prochainA = now + 1000; continue; }
+        const taps = frappesDuBot(card.gest, RULES.botAdresse, {}, rang);
+        let quality = 0;
+        try { quality = grade(card.gest, taps, {}, { motif: rang }); } catch { /* geste refusé */ }
+        bot.breath -= card.cost;
+        bot.prochainA = now + Math.max(0, ...taps) + 1000 + Math.random() * 1500;
+        const surge = now < this.surgeUntil ? RULES.surgeFactor : 1;
+        const amount = card.power * quality * surge * crowdFactor(Math.max(1, n[side]));
+        const perCapita = amount / Math.max(1, n[side]) * poids;
+        if (!(perCapita > 0)) continue;
+        this.rope = clamp(this.rope + (side === 0 ? -perCapita : perCapita), -RULES.goalAt, RULES.goalAt);
+        this.poussees[side] = true;
+        this.dirty = true;
+        if (Math.abs(this.rope) >= RULES.goalAt) this.scoreGoal(this.rope > 0 ? 1 : 0);
+      }
+    }
   }
 
   /* -------------------------------------------------------------- chant */
@@ -920,7 +1005,9 @@ export class VirageRoom {
     if (card.effect === 'fatigue') m.fatigueUntil = now + 4000;
 
     const surge = now < this.surgeUntil ? RULES.surgeFactor : 1;
-    const n = this.crowd();
+    /* La foule de la corde, bots compris : un supporter qui chante à côté de
+       deux bots pousse comme un tiers de sa tribune. */
+    const n = this.foule();
     /* `pushMult` : la corde. Un bonus de KOP passe par cette clé, comme la
        carte « Prolongations » du duel — même vocabulaire, même endroit. Le
        moteur ne sait pas d’où vient le modificateur, et c’est ce qui permet
@@ -1092,7 +1179,7 @@ export class VirageRoom {
 
   /** L'effectif de sa tribune, jamais zéro : on divise par ce nombre. */
   effectif(m) {
-    return Math.max(1, this.crowd()[m.side]);
+    return Math.max(1, this.foule()[m.side]);
   }
 
   /**
@@ -1919,9 +2006,12 @@ export class VirageRoom {
        `virage.decroissance_vide`. Un seul chant en face, et elle retrouve la
        retombée ordinaire. La récolte n'y est pour rien : `partFerveur` règle
        déjà ce qu'un supporter seul gagne. */
+    /* Les bots d'en face chantent d'abord : avec eux, la tribune n'est plus
+       vide, et la retombée redevient l'ordinaire. */
+    this.faireChanterLesBots(now);
     let n = null;
     if (this.rope !== 0 && now >= this.geleeJusqua) {
-      n = this.crowd();
+      n = this.foule();
       const enFace = this.rope > 0 ? 0 : 1;
       const back = (n[enFace] === 0 ? RULES.decayVidePerSec : RULES.decayPerSec) * dt;
       this.rope = this.rope > 0 ? Math.max(0, this.rope - back) : Math.min(0, this.rope + back);
@@ -1984,7 +2074,9 @@ export class VirageRoom {
     this.push('virage:tick', {
       rope: Math.round(this.rope),
       goals: this.goals,
-      crowd: n ?? this.crowd(),
+      crowd: n ?? this.foule(),
+      /* Combien, dans `crowd`, sont des bots : la page l'écrit. */
+      bots: this.bots(),
       surge,
       pousse,
     });
@@ -2085,7 +2177,7 @@ export class VirageRoom {
       fixtureId: this.fixture?.id ?? null,
       mien: this.members.get(userId)?.side ?? null,
       goals: [...this.goals],
-      tribunes: tribunes.map((t) => {
+      tribunes: tribunes.map((t, side) => {
         const classes = t.filter((m) => m.perso?.id)
           .sort((a, b) => elanDe(b, now) - elanDe(a, now) || b.ferveur - a.ferveur);
         let gardes = classes.slice(0, combien);
@@ -2093,6 +2185,8 @@ export class VirageRoom {
         if (moi >= combien) gardes = [...gardes, classes[moi]];
         return {
           n: t.length,
+          /* Les bots de cette tribune : ils comptent, sans figure. */
+          bots: this.bots()[side],
           joueurs: gardes.map((m) => ({
             nom: m.name ?? '',
             rang: classes.indexOf(m) + 1,
@@ -2107,7 +2201,7 @@ export class VirageRoom {
 
   snapshotFor(userId) {
     const m = this.members.get(userId);
-    const n = this.crowd();
+    const n = this.foule();
     const now = Date.now();
     const surge = now < this.surgeUntil;
     const place = m ? this.placeDe(m, now) : null;
@@ -2117,6 +2211,7 @@ export class VirageRoom {
       goals: this.goals,
       realGoals: this.realGoals,
       crowd: n,
+      bots: this.bots(),
       surge,
       surgeUntil: this.surgeUntil,
       /* Ce qui reste de la minute double : voir `realGoal`. **Toujours servi,

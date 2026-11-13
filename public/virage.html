@@ -111,6 +111,9 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
 /* « PERSONNE EN FACE » : le même compte, cerné en pointillé comme une place
    qui attend quelqu'un (`.tbf-ages`, l'âge suivant). */
 #compteEux[data-personne]{box-shadow:none;outline:1px dashed rgba(242,238,228,.5);outline-offset:-1px}
+/* Les bots qui complètent une tribune (13 novembre 2026) : « 1 EN FACE · BOT ».
+   Le même mot dans les cinq langues, d'où le contenu écrit ici. */
+.compte[data-bots]::after{content:" · BOT";color:var(--projo)}
 /* Le Fanzzy, mains sur la corde, de mon côté : à 45 % de la hauteur de
    l'arène, à gauche de la corde et au-dessus de ma foule. Sous la corde
    (z 3 < 4) : le foulard passe devant lui, et le nombre qui bouge reste
@@ -961,7 +964,10 @@ function pousser(cote) {
     ne chante en face, « PERSONNE EN FACE » (5 octobre 2026) : un « 0 » se
     lisait comme un compteur pas encore arrivé, et c'est justement là que la
     corde résiste davantage (contrat § 16.7). */
-function compteDeTribune(el, n) {
+function compteDeTribune(el, n, bots = 0) {
+  /* Des bots dans ce compte : la mention le dit, même pendant que la foule
+     compte encore. */
+  poserAttr(el, 'data-bots', bots > 0 ? '' : null);
   if (performance.now() < P.compteJusqua) return;   // la foule compte encore
   const personne = el.id === 'compteEux' && !n;
   ecrire(el.firstElementChild, personne ? 'PERSONNE' : n);
@@ -993,8 +999,8 @@ function render() {
   const plus = Math.max(nous, eux, 1);
   allumer($('crowdMe'), nous, plus);
   allumer($('crowdFoe'), eux, plus);
-  compteDeTribune($('compteMoi'), nous);
-  compteDeTribune($('compteEux'), eux);
+  compteDeTribune($('compteMoi'), nous, S.bots?.[mine] ?? 0);
+  compteDeTribune($('compteEux'), eux, S.bots?.[mine ^ 1] ?? 0);
 
   // Le souffle affiché est celui du serveur **plus le regain écoulé depuis**.
   const souffle = Math.round(souffleCourant());
@@ -3052,6 +3058,7 @@ function connect() {
       if (!el.classList.contains('pousse')) pousser(cote);
     }
     S.rope = t.rope; S.goals = t.goals; S.crowd = t.crowd; S.surge = t.surge;
+    S.bots = t.bots;
     if (!t.surge) P.doubleFin = null;
     render();
   });

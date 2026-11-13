@@ -1,5 +1,15 @@
 # À déposer sur Infomaniak
 
+**Virage : des bots en face du joueur seul** (branche `claude/project-thread-a30py6`,
+13 novembre 2026, Gaël : « s'il est seul, il faut que l'adversaire soit représenté
+par un bot », « 3 users vs 3 bots »). Code seul, sans schéma. La tribune qui chante
+le moins reçoit autant de bots qu'il lui manque de supporters ; ils poussent et
+marquent, sans ferveur ni classement. Réglables dans /admin › LE GRAND VIRAGE
+(« Des bots complètent la tribune d'en face », « Adresse des bots » 0,35).
+**Redémarrer**.
+
+---
+
 **Pastille BETA** (branche `claude/project-thread-f3ou5s`, 10 novembre 2026,
 Gaël : « une petite pastille "Beta" sur la page HOME, sur le loading et sur la
 page des non-connectés »). Code seul. Un petit sticker rouge « BETA » collé de

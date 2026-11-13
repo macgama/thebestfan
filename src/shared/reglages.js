@@ -218,6 +218,24 @@ export const REGLAGES = [
       'buts contre une tribune vide. Un seul chant en face, et la corde revient ' +
       'à la retombée ordinaire. À la même valeur qu’elle, on revient à l’ancien jeu.' },
 
+  /* Gaël, 13 novembre 2026 : « si un User va jouer et qu'il est seul, il faut
+     que l'adversaire soit représenté par un bot » — autant de bots que de
+     supporters, « 3 users vs 3 bots ». */
+  { cle: 'virage.bots', section: 'virage', type: 'booleen',
+    titre: 'Des bots complètent la tribune d’en face', defaut: true,
+    aide: 'Allumé : la tribune qui chante le moins reçoit autant de bots qu’il lui ' +
+      'manque de supporters (un seul joueur affronte un bot, trois contre ' +
+      'personne affrontent trois bots). Les bots poussent la corde et marquent, ' +
+      'sans ferveur ni classement. Éteint : l’ancien jeu, avec la corde qui ' +
+      'retombe plus vite quand personne n’est en face.' },
+  { cle: 'virage.bot_adresse', section: 'virage', type: 'decimal',
+    titre: 'Adresse des bots du Virage', unite: 'de 0 à 1', min: 0, max: 1, pas: 0.05, defaut: 0.35,
+    aide: 'À 0, un bot tape au hasard ; à 1, il est juste à quelques millisecondes ' +
+      'près. À 0,35, un supporter seul et appliqué marque une dizaine de buts de ' +
+      'tribune sur un match (une soixantaine contre une tribune vide), un supporter ' +
+      'moyen n’en marque plus. À 0,5, le bot vaut un très bon joueur. Le bot du ' +
+      'duel est entre 0 et 0,25.' },
+
   { cle: 'virage.inactif_sec', section: 'virage', type: 'entier',
     titre: 'On sort de la foule après', unite: 'secondes sans geste', min: 15, max: 600, defaut: 90,
     aide: 'Sans ça, une tribune de trois cents dont deux cents sont partis ' +

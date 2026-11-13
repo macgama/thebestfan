@@ -92,6 +92,7 @@
     "carnet:ui": "node scripts/carnet-ui-smoke.mjs",
     "large:ui": "node scripts/large-ui-smoke.mjs",
     "virage:ui": "node scripts/virage-ui-smoke.mjs",
+    "virage-bots:smoke": "node scripts/virage-bots-smoke.mjs",
     "couleurs": "node scripts/couleurs-equipes.mjs",
     "couleurs:test": "node scripts/couleurs-smoke.mjs",
     "images": "node scripts/fanzzy-images.mjs",
